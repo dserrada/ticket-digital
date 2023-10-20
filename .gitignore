@@ -79,8 +79,9 @@ cmake-build-*/
 # IntelliJ
 build/
 
-# mpeltonen/sbt-idea plugin
+# IntelliJ
 .idea_modules/
+.idea/
 
 # JIRA plugin
 atlassian-ide-plugin.xml
