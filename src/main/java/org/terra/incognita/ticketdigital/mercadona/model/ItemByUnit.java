@@ -1,0 +1,90 @@
+package org.terra.incognita.ticketdigital.mercadona.model;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.ParseException;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Purchase of a product sold by units.
+ *
+ * @param id product name or identifier
+ * @param cantidad integer quantity, at least 1
+ * @param precioPorUnidad unit price in euros, with cent precision
+ * @param precio el precio de las unidades compradas en euros, con centimos
+ */
+public record ItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad, BigDecimal precio) implements PurchasedItem {
+
+    private static final Logger logger = LoggerFactory.getLogger(ItemByUnit.class);
+
+    private static final Pattern LINE_PATTERN = Pattern.compile(
+            "^\\s*(?<cantidad>\\d+)\\s+" +
+                    "(?<id>[0-9A-ZÑÁÉÍÓÚ/\\-\\s]+)\\s+" +
+                    "(?<precioUnidad>\\d,\\d{2})?\\s+" +
+                    "(?<precio>\\d,\\d{2})?\\s*$");
+
+    public ItemByUnit {
+        Objects.requireNonNull(id, "id must not be null");
+
+        if (id.isBlank()) {
+            throw new IllegalArgumentException("id must not be blank");
+        }
+        if (cantidad < 1) {
+            throw new IllegalArgumentException("cantidad must be at least 1");
+        }
+    }
+
+    @Override
+    public BigDecimal precioTotal() {
+        return precioPorUnidad.multiply(BigDecimal.valueOf(cantidad)).setScale(2, RoundingMode.UNNECESSARY);
+    }
+
+
+    /**
+     * Parsea la información de una linea de compra por unidades
+     */
+    public static ItemByUnit parse(final int position, final List<String> linea) throws ParseException {
+        if ( !isItemByUnit(position, linea) ) {
+            throw new ParseException("Invalid line format: " + linea, -1);
+        }
+        String line = linea.get(position);
+
+        Matcher matcher = LINE_PATTERN.matcher(line);
+        if (!matcher.matches()) {
+            throw new ParseException("Line does not match expected pattern: " + line, -1);
+        }
+
+        int cantidad = Integer.parseInt(matcher.group("cantidad"));
+        String id = matcher.group("id").trim();
+
+        BigDecimal precioPorUnidad = null;
+        BigDecimal precio = null;
+        if ( cantidad > 1 ) {
+            String precioPorUnidadStr = matcher.group("precioUnidad").trim();
+            if (precioPorUnidadStr != null && !precioPorUnidadStr.isEmpty()) {
+                precioPorUnidad = PurchasedItem.parseUnitPrice(precioPorUnidadStr);
+            } else {
+                throw new ParseException("Missing unit price in line: " + line, -1);
+            }
+        }
+
+        precio = PurchasedItem.parseUnitPrice(matcher.group("precio"));
+
+        return new ItemByUnit(id, cantidad, precioPorUnidad,precio);
+
+    }
+
+    public static boolean isItemByUnit(final int position, final List<String> lines) {
+        // La primera línea tiene que ser de alguna de las dos siguientes formas
+        // 1   PANECILLO 11UDS                                 1,10
+        // 2   FRANKFURT VIENA QUES                 2,80       5,60
+        // El primero es el número de unidades (entero) y el segundo, optativo, el precio por unidad
+        return LINE_PATTERN.matcher(lines.get(position)).matches();
+    }
+}
