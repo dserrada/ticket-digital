@@ -25,6 +25,7 @@ class ItemByWeightTest {
 
         ItemByWeight item = ItemByWeight.parse(0, lines);
 
+        assertNotNull(item);
         assertEquals("BANANA", item.id());
         assertEquals(new BigDecimal("0.336"), item.pesoKg());
         assertEquals(new BigDecimal("1.45"), item.precioPorKilogramo());
@@ -44,7 +45,7 @@ class ItemByWeightTest {
         );
 
         ItemByWeight item = ItemByWeight.parse(0, lines);
-
+        assertNotNull(item);
         assertEquals("PLÁTANO DE CANARIAS", item.id());
         assertEquals(new BigDecimal("0.336"), item.pesoKg());
         assertEquals(new BigDecimal("1235.45"), item.precioPorKilogramo());
@@ -77,50 +78,6 @@ class ItemByWeightTest {
 
         ParseException exception = assertThrows(ParseException.class, () -> ItemByWeight.parse(0, lines));
         assertTrue(exception.getMessage().contains("Invalid weight format in second line"));
-    }
-
-    /**
-     * Test for isItemByWeight with valid lines.
-     */
-    @Test
-    void testIsItemByWeightValid() {
-        List<String> lines = List.of(
-                "     1   BANANA",
-                "    0,336 kg                   1,45 €/kg        0,49"
-        );
-
-        boolean result = ItemByWeight.isItemByWeight(0, lines);
-        assertTrue(result);
-    }
-    
-    
-
-    /**
-     * Test for isItemByWeight with invalid first line.
-     */
-    @Test
-    void testIsItemByWeightInvalidFirstLine() {
-        List<String> lines = List.of(
-                "    INVALID LINE",
-                "      0,336 kg                   1,45 €/kg        0,49"
-        );
-
-        boolean result = ItemByWeight.isItemByWeight(0, lines);
-        assertFalse(result);
-    }
-
-    /**
-     * Test for isItemByWeight with invalid second line.
-     */
-    @Test
-    void testIsItemByWeightInvalidSecondLine() {
-        List<String> lines = List.of(
-                "   1   BANANA",
-                "     INVALID SECOND LINE"
-        );
-
-        boolean result = ItemByWeight.isItemByWeight(0, lines);
-        assertFalse(result);
     }
 
     /**

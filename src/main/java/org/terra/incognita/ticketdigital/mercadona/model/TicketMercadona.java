@@ -74,17 +74,17 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
         boolean byUnit = false;
         boolean byWeight = false;
         while( !lines.get(nCurrentLine).trim().startsWith("TOTAL (€)")) {
-            byUnit = ItemByUnit.isItemByUnit(nCurrentLine, lines);
-            logger.debug("NLinea: {}, linea: {},  byUnit: {}", nCurrentLine,lines.get(nCurrentLine), byUnit);
-            if (byUnit) {
-                items.add(ItemByUnit.parse(nCurrentLine, lines));
-                nCurrentLine++;  // Solo una vez que se alla añadido correctamente el objeto
-            } else {
-                // Probamos a ver si es byWeight
-                byWeight = ItemByWeight.isItemByWeight(nCurrentLine, lines);
-                logger.debug("NLinea: {}, linea: {},  byUnit: {}", nCurrentLine,lines.get(nCurrentLine), byWeight);
-                items.add(ItemByWeight.parse(nCurrentLine, lines));
+            PurchasedItem result = null;
+            // Primero vemos si es un producto vendido por unidades
+            if ( (result = ItemByUnit.parse(nCurrentLine, lines)) != null) {
+                items.add(result);
+                nCurrentLine++;
+            // Si no lo era pues probamos con producto al peso
+            } else if ( (result = ItemByWeight.parse(nCurrentLine, lines)) != null) {
+                items.add(result);
                 nCurrentLine+=2;
+            } else {
+                throw new ParseException("Invalid ticket format: expected item line, found: " + lines.get(nCurrentLine), nCurrentLine);
             }
         }
         // Estamos en la linea del total

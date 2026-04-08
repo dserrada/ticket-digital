@@ -61,44 +61,34 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
     }
 
 
-    public static boolean isItemByWeight(final int position, final List<String> lines) {
-        // 1   BANANA
-        //      0,336 kg                   1,45 €/kg        0,49
-        // El primero es el número de unidades (entero) y el segundo, optativo, el precio por unidad
-        String firstLine = lines.get(position);
-        String secondLine = lines.get(position + 1);
-        return FIRST_WEIGHT_PATTERN.matcher(firstLine).matches() && SECOND_WEIGHT_LINE.matcher(secondLine).matches();
-    }
 
 
     /**
      * Parses a text line and creates a weight-based purchase.
      * 
-     * <p>Implementation pending.</p>
-     *
      * @param lines text line to parse
-     * @return parsed weight purchase
+     * @return parsed weight purchase or null if the line is not a weight purchase
      */
     public static ItemByWeight parse(final int position, final List<String> lines) throws ParseException {
         // Analizo las dos líneas que contienen toda la información
-        // En la primera linea el producto
+        // 1   BANANA
+        //      0,336 kg                   1,45 €/kg        0,49
+        // El primero es el número de unidades (entero) y el segundo, optativo, el precio por unidad
+
         String firstLine = lines.get(position);
         String secondLine = lines.get(position + 1);
 
+        Matcher matcher1 = FIRST_WEIGHT_PATTERN.matcher(firstLine);
+        Matcher matcher2 = SECOND_WEIGHT_LINE.matcher(secondLine);
+        if ( !(matcher1.matches() && matcher2.matches()) ) {
+            logger.debug("Line {} no es del tipo {}",firstLine, ItemByWeight.class.getName());
+            return null;
+        }
+
+
         logger.debug("Parsing weight item, firstLine {}, secondLine: {}", firstLine, secondLine);
 
-        Matcher matcher1 = FIRST_WEIGHT_PATTERN.matcher(firstLine);
-        if ( !matcher1.matches() ) {
-            // FIXME: Necesario para que los grupos estén rellenos
-            throw new ParseException("Invalid weight format in first line: " + firstLine, position);
-        }
         String id = matcher1.group("id");
-
-        Matcher matcher2 = SECOND_WEIGHT_LINE.matcher(secondLine);
-        if ( !matcher2.matches() ) {
-            // FIXME: Necesario para que los grupos estén rellenos
-            throw new ParseException("Invalid weight format in second line: " + secondLine, position + 1);
-        }
         String sPeso = matcher2.group("peso");
         BigDecimal pesoKg = PurchasedItem.parseWeight(sPeso);
         String sPrecioKg = matcher2.group("precioKg");

@@ -42,7 +42,11 @@ public record ItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad, Bi
 
     @Override
     public BigDecimal precioTotal() {
-        return precioPorUnidad.multiply(BigDecimal.valueOf(cantidad)).setScale(2, RoundingMode.UNNECESSARY);
+        if ( precioPorUnidad == null ) {
+            return precio.setScale(2, RoundingMode.UNNECESSARY);
+        } else {
+            return precioPorUnidad.multiply(BigDecimal.valueOf(cantidad)).setScale(2, RoundingMode.UNNECESSARY);
+        }
     }
 
 
@@ -50,14 +54,16 @@ public record ItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad, Bi
      * Parsea la información de una linea de compra por unidades
      */
     public static ItemByUnit parse(final int position, final List<String> linea) throws ParseException {
-        if ( !isItemByUnit(position, linea) ) {
-            throw new ParseException("Invalid line format: " + linea, -1);
-        }
         String line = linea.get(position);
-
+        // La primera línea tiene que ser de alguna de las dos siguientes formas
+        // 1   PANECILLO 11UDS                                 1,10
+        // 2   FRANKFURT VIENA QUES                 2,80       5,60
+        // El primero es el número de unidades (entero) y el segundo, optativo, el precio por unidad
         Matcher matcher = LINE_PATTERN.matcher(line);
+
         if (!matcher.matches()) {
-            throw new ParseException("Line does not match expected pattern: " + line, -1);
+            logger.debug("Line does not match expected pattern: " + line);
+            return null;
         }
 
         int cantidad = Integer.parseInt(matcher.group("cantidad"));
@@ -80,11 +86,4 @@ public record ItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad, Bi
 
     }
 
-    public static boolean isItemByUnit(final int position, final List<String> lines) {
-        // La primera línea tiene que ser de alguna de las dos siguientes formas
-        // 1   PANECILLO 11UDS                                 1,10
-        // 2   FRANKFURT VIENA QUES                 2,80       5,60
-        // El primero es el número de unidades (entero) y el segundo, optativo, el precio por unidad
-        return LINE_PATTERN.matcher(lines.get(position)).matches();
-    }
 }
