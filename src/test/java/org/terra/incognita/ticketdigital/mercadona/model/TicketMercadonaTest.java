@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -21,6 +22,15 @@ class TicketMercadonaTest {
     private static final Logger logger = LoggerFactory.getLogger(TicketMercadonaTest.class);
 
 
+    @Test
+    public void pruebaFichero() throws Exception {
+        // Simplemente verificamos que no explota
+        TicketMercadona ticket = TicketMercadona.parse(Path.of("src/test/resources/20230101090000 Ticket Digital Mercadona.txt"));
+        assertNotNull(ticket);
+        logger.debug("Ticket parseado: {}", ticket);
+        // TODO: Comprobar que lo que ha leido sea correcto
+    }
+
 
     @Test
     void pruebaBasica() throws Exception {
@@ -31,10 +41,10 @@ class TicketMercadonaTest {
                                      TELÉFONO: 961309467
                                   01/01/2023 09:00 OP: 257136
                               FACTURA SIMPLIFICADA: 4567-891-113122
-                       
-                       
-                       
-                       
+                
+                
+                
+                
                            Descripción                       P. Unit    Importe
                        1   BARRA DE PAN                                    0,48
                        1   PANECILLO 11UDS                                 1,10
@@ -44,17 +54,17 @@ class TicketMercadonaTest {
                                0,336 kg                   1,45 €/kg        0,49
                                                          TOTAL (€)         9,64
                                                 TARJETA BANCARIA           9,64
-                       
+                
                             IVA           BASE IMPONIBLE (€)     CUOTA (€)
                             10%                   8,54             0,85
                              0%                   1,10             0,00
                            TOTAL                 11,65             0,85
-                       
+                
                        TARJ. BANCARIA: **** **** **** 1234
                        N.C: 1234567                                  AUT: Z12345
                        AID: A0000000041010                           ARC: 46113
-                       
-                       
+                
+                
                        MASTERCARD
                        Importe: 12,48 €                         MASTERCARD
                        

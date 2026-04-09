@@ -12,8 +12,7 @@
 
     <!-- Nivel de log a nivel ROOT para tests (DEBUG, INFO, WARN, ERROR) -->
     <!-- Se recomienda DEBUG para tests para tener detalle máximo -->
-    <root>
-        <level value="DEBUG"/>
+    <root level="DEBUG">
         <appender-ref ref="STDOUT" />
     </root>
 

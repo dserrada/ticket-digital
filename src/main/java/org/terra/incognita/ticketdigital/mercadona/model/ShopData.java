@@ -1,5 +1,8 @@
 package org.terra.incognita.ticketdigital.mercadona.model;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.text.ParseException;
 import java.util.List;
 
@@ -17,6 +20,8 @@ public record ShopData(String shopName, String cif, String address, String posta
 
     public static final int EXPECTED_LINES = 4;
 
+    private static final Logger logger = LoggerFactory.getLogger(ShopData.class);
+
     /**
      * Parsea el trozo de información del ticket
      *
@@ -25,6 +30,7 @@ public record ShopData(String shopName, String cif, String address, String posta
      * @throws ParseException Si ocurre un error durante el análisis del chunk
      */
     public static ShopData parse(final int position, final List<String> ticketLines) throws ParseException {
+        logger.debug("Parsing line {}", ticketLines.get(position));
         if ( ticketLines.size() < (position + EXPECTED_LINES) ) {
             throw new ParseException("Expected 4 lines, got " + ticketLines.size(),-1);
         }

@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,9 +41,24 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
     }
 
 
+    /**
+     * Parsea un ticket digital de Mercadona desde un archivo de texto.
+     *
+     * @param filePath Ruta al archivo que contiene los datos del ticket
+     * @return Un objeto TicketMercadona con los datos parseados
+     * @throws IOException    Si ocurre un error al leer el archivo
+     * @throws ParseException Si el formato del ticket no es válido
+     */
+    public static TicketMercadona parse(Path filePath) throws IOException, ParseException {
+        Objects.requireNonNull(filePath, "filePath");
+        String ticketData = Files.readString(filePath);
+        return parse(ticketData);
+    }
+
     public static TicketMercadona parse(String ticketData) throws IOException, ParseException {
         Objects.requireNonNull(ticketData, "ticketData");
 
+        // Lo pasamos a un array de strings
         List<String> lines = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new StringReader(ticketData))) {
             String line = null;
@@ -94,6 +111,8 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
         return new TicketMercadona(shopData, header,items,
                 null,null,null,null,null,null);
     }
+    
+    
 
 
 }
