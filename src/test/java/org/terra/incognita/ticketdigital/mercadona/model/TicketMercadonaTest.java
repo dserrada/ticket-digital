@@ -4,10 +4,17 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,7 +48,46 @@ class TicketMercadonaTest {
         logger.debug("Ticket parseado: {}", ticket);
         logger.debug("Importe final: {}", ticket.precioTotalEnEuros());
         // TODO: Comprobar que lo que ha leido sea correcto
+    }
 
+    @Test
+    public void pruebaFicheroAllPDF() throws Exception {
+        Path dataDir = Path.of("../data/");
+
+        // Skip test if directory doesn't exist
+        if (!Files.exists(dataDir)) {
+            logger.warn("Data directory does not exist: {}", dataDir.toAbsolutePath());
+            return;
+        }
+
+        List<Path> pdfFiles = new ArrayList<>();
+
+        // Tree walk to collect all PDF files
+        Files.walkFileTree(dataDir, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (file.toString().toLowerCase().endsWith(".pdf")) {
+                    pdfFiles.add(file);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        logger.info("Found {} PDF files in {}", pdfFiles.size(), dataDir.toAbsolutePath());
+
+        // Parse each PDF file
+        for (Path pdfFile : pdfFiles) {
+            logger.debug("Processing PDF: {}", pdfFile);
+            try {
+                TicketMercadona ticket = TicketMercadona.parse(pdfFile);
+                assertNotNull(ticket);
+                logger.debug("Successfully parsed ticket from: {}", pdfFile.getFileName());
+                logger.debug("Importe final: {}", ticket.precioTotalEnEuros());
+            } catch (Exception e) {
+                logger.error("Failed to parse PDF: {}", pdfFile, e);
+                throw e;
+            }
+        }
     }
 
     @Test

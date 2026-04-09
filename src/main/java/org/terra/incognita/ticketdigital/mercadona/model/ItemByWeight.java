@@ -24,7 +24,7 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
 
     private static final Pattern FIRST_WEIGHT_PATTERN = Pattern.compile(
             "^\\s*1\\s+" +
-                    "(?<id>[0-9A-ZÑÁÉÍÓÚ\\.\\s\\-]+)\\s*$");
+                    "(?<id>[0-9A-ZÑÁÉÍÓÚ\\./\\s\\-]+)\\s*$");
 
     /**
      * Expresión regular de la segunda línea de un artículo vendido por peso.

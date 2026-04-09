@@ -25,7 +25,7 @@ public record ItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad, Bi
 
     private static final Pattern LINE_PATTERN = Pattern.compile(
             "^\\s*(?<cantidad>\\d+)\\s+" +
-                    "(?<id>[0-9A-ZÑÁÉÍÓÚ\\./\\-\\s]+)\\s+" +
+                    "(?<id>[0-9A-ZÑÁÉÍÓÚ\\./\\s\\-]+)\\s+" +
                     "(?<precioUnidad>\\d,\\d{2})?\\s*" +
                     "(?<precio>\\d,\\d{2})\\s*$");
 
