@@ -1,5 +1,8 @@
 package org.terra.incognita.ticketdigital.mercadona.model;
 
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
@@ -42,7 +45,7 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
 
 
     /**
-     * Parsea un ticket digital de Mercadona desde un archivo de texto.
+     * Parsea un ticket digital de Mercadona desde un archivo de texto o PDF.
      *
      * @param filePath Ruta al archivo que contiene los datos del ticket
      * @return Un objeto TicketMercadona con los datos parseados
@@ -51,29 +54,55 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
      */
     public static TicketMercadona parse(Path filePath) throws IOException, ParseException {
         Objects.requireNonNull(filePath, "filePath");
-        String ticketData = Files.readString(filePath);
+
+        String fileName = filePath.getFileName().toString();
+        String fileNameLower = fileName.toLowerCase();
+
+        String ticketData;
+        if (fileNameLower.endsWith(".pdf")) {
+            ticketData = extractTextFromPdf(filePath);
+        } else if (fileNameLower.endsWith(".txt")) {
+            ticketData = Files.readString(filePath);
+        } else {
+            throw new ParseException("Invalid file extension: expected .txt or .pdf file, got " + fileName, -1);
+        }
+
         return parse(ticketData);
+    }
+
+    /**
+     * Extrae el contenido de texto de un archivo PDF.
+     *
+     * @param pdfPath Ruta al archivo PDF
+     * @return Contenido de texto extraído del PDF
+     * @throws IOException Si ocurre un error al leer el archivo PDF
+     */
+    private static String extractTextFromPdf(Path pdfPath) throws IOException {
+        try (PDDocument document = Loader.loadPDF(pdfPath.toFile())) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            return stripper.getText(document);
+        }
     }
 
     public static TicketMercadona parse(String ticketData) throws IOException, ParseException {
         Objects.requireNonNull(ticketData, "ticketData");
 
+        logger.debug("Parseando el ticket con data:\\n {}", ticketData);
+
         // Lo pasamos a un array de strings
-        List<String> lines = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new StringReader(ticketData))) {
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                lines.add(line);
-            }
-        }
+        List<String> lines = ticketData.lines()
+                // Prodiramos hacer aquí un procesamiento, como un trim(), pero de momento lo dejo tal cual
+                .toList();
 
         // Parseo parte a parte
         int nCurrentLine = 0;  // TODO: esto lo tendrían que mantener los parseadores (o en el arrayList)
         ShopData shopData = ShopData.parse(0, lines);
         nCurrentLine += ShopData.EXPECTED_LINES;
+        logger.info("Datos de la tienda parseados: {}", shopData);
 
         TicketHeader header = TicketHeader.parse(nCurrentLine,lines);
         nCurrentLine += TicketHeader.EXPECTED_LINES;
+        logger.info("Datos de  la cabecera parseados: {}", header);
 
         // Salto lineas en blanco hasta que llego a la cabecera de los items (TODO: esto debería estar embebido en alguno de los parseadores)
         while (nCurrentLine < lines.size() && lines.get(nCurrentLine).isBlank()) {
@@ -81,10 +110,11 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
         }
         // Linea de cabecera de los items
         String line = lines.get(nCurrentLine);
-        if ( !line.trim().equals("Descripción                       P. Unit    Importe") ) {
+        if ( !line.trim().matches("Descripción\\s*P. Unit\\s*Importe") ) {
             throw new ParseException("Invalid ticket format: expected 'Descripción                       P. Unit    Importe' header", nCurrentLine);
         }
         nCurrentLine++;
+        logger.info("Cabecera de los items parseada: {}", line);
 
         List<PurchasedItem> items = new ArrayList<>();
         // Y ahora compruebo la lista de items

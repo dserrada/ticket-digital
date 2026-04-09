@@ -28,9 +28,21 @@ class TicketMercadonaTest {
         TicketMercadona ticket = TicketMercadona.parse(Path.of("src/test/resources/20230101090000 Ticket Digital Mercadona.txt"));
         assertNotNull(ticket);
         logger.debug("Ticket parseado: {}", ticket);
+        logger.debug("Importe final: {}", ticket.precioTotalEnEuros());
         // TODO: Comprobar que lo que ha leido sea correcto
     }
 
+
+    @Test
+    public void pruebaFicheroPDF() throws Exception {
+        // Simplemente verificamos que no explota
+        TicketMercadona ticket = TicketMercadona.parse(Path.of("src/test/resources/20230907 Mercadona 33,50 €.pdf"));
+        assertNotNull(ticket);
+        logger.debug("Ticket parseado: {}", ticket);
+        logger.debug("Importe final: {}", ticket.precioTotalEnEuros());
+        // TODO: Comprobar que lo que ha leido sea correcto
+
+    }
 
     @Test
     void pruebaBasica() throws Exception {

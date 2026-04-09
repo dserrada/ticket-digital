@@ -3,9 +3,10 @@ package org.terra.incognita.ticketdigital.mercadona.model;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for the ItemByUnit class.
@@ -15,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 public class ItemByUnitTest {
 
+    // FIXME: Los tests auteogenerados son estupidos, borrar.
     @Test
     void testPrecioTotalWithValidSingleUnit() {
         // Arrange
@@ -25,6 +27,14 @@ public class ItemByUnitTest {
 
         // Assert
         assertEquals(new BigDecimal("5.60"), totalPrice, "Total price should match for single unit.");
+    }
+
+
+    @Test
+    void testLinea() throws ParseException {
+        String linea = "1 PAN BLANCO FAMILIAR 1,25";
+        ItemByUnit item = ItemByUnit.parse(0, List.of(linea));
+        assertNotNull(item);
     }
 
     @Test

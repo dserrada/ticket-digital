@@ -25,9 +25,9 @@ public record ItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad, Bi
 
     private static final Pattern LINE_PATTERN = Pattern.compile(
             "^\\s*(?<cantidad>\\d+)\\s+" +
-                    "(?<id>[0-9A-ZÑÁÉÍÓÚ/\\-\\s]+)\\s+" +
-                    "(?<precioUnidad>\\d,\\d{2})?\\s+" +
-                    "(?<precio>\\d,\\d{2})?\\s*$");
+                    "(?<id>[0-9A-ZÑÁÉÍÓÚ\\./\\-\\s]+)\\s+" +
+                    "(?<precioUnidad>\\d,\\d{2})?\\s*" +
+                    "(?<precio>\\d,\\d{2})\\s*$");
 
     public ItemByUnit {
         Objects.requireNonNull(id, "id must not be null");
@@ -66,6 +66,8 @@ public record ItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad, Bi
             return null;
         }
 
+        logger.debug("Parsing unitLine item, line {}", line);
+
         int cantidad = Integer.parseInt(matcher.group("cantidad"));
         String id = matcher.group("id").trim();
 
@@ -73,7 +75,7 @@ public record ItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad, Bi
         BigDecimal precio = null;
         if ( cantidad > 1 ) {
             String precioPorUnidadStr = matcher.group("precioUnidad").trim();
-            if (precioPorUnidadStr != null && !precioPorUnidadStr.isEmpty()) {
+            if (!precioPorUnidadStr.isEmpty()) {
                 precioPorUnidad = PurchasedItem.parseUnitPrice(precioPorUnidadStr);
             } else {
                 throw new ParseException("Missing unit price in line: " + line, -1);
@@ -81,6 +83,7 @@ public record ItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad, Bi
         }
 
         precio = PurchasedItem.parseUnitPrice(matcher.group("precio"));
+        logger.debug("cantidad {}, id {}, precioPorUnidad {}, precio {}", cantidad, id, precioPorUnidad, precio);
 
         return new ItemByUnit(id, cantidad, precioPorUnidad,precio);
 

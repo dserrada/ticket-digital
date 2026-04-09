@@ -24,7 +24,7 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
 
     private static final Pattern FIRST_WEIGHT_PATTERN = Pattern.compile(
             "^\\s*1\\s+" +
-                    "(?<id>[0-9A-ZÑÁÉÍÓÚ\\s\\-]+)\\s*$");
+                    "(?<id>[0-9A-ZÑÁÉÍÓÚ\\.\\s\\-]+)\\s*$");
 
     /**
      * Expresión regular de la segunda línea de un artículo vendido por peso.
@@ -95,6 +95,7 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
         BigDecimal precioPorKilogramo = PurchasedItem.parseUnitPrice(sPrecioKg);
         String sImporte = matcher2.group("importe");
         BigDecimal importe = PurchasedItem.parseUnitPrice(sImporte);
+        logger.debug("pesoKg {}, precioKg {}, importe {}", pesoKg, precioPorKilogramo, importe);
 
         return new ItemByWeight(id, pesoKg, precioPorKilogramo);
     }
