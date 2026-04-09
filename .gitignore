@@ -142,3 +142,6 @@ gradle-app.setting
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
 
+# No quiero subir nunca pdfs con tickets
+*.pdf
+
