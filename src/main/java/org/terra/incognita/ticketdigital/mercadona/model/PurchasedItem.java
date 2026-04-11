@@ -14,7 +14,7 @@ public sealed interface PurchasedItem permits OneItemByUnit, ItemByWeight, NItem
     public static String EURO_SYMBOL = "€";
 
     public static String REGEX_CANTIDAD = "\\s*(?<cantidad>\\d+)";
-    public static String REGEX_ID = "(.*?)(?<id>[0-9A-ZÑÁÉÍÓÚ,\\/\\.\\s\\-])";
+    public static String REGEX_ID = "(.*?)(?<id>[0-9A-ZÑÁÉÍÓÚ,%\\+\\/\\.\\s\\-])";
     public static String REGEX_PRECIO_UNIDAD = "(?<precioUnidad>\\d*,\\d{2})";
     public static String REGEX_PRECIO = "(?<precio>\\d*,\\d{2})";
 

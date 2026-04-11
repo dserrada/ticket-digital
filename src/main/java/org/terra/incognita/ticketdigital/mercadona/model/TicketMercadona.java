@@ -66,6 +66,11 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
             throw new ParseException("Invalid file extension: expected .txt or .pdf file, got " + fileName, -1);
         }
 
+        if ( ticketData.contains("PESCADO") ) {
+            logger.error("Ticket contains fish products, not supported", -1);
+            return null;
+        }
+
         return parse(ticketData);
     }
 
