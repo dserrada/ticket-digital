@@ -86,7 +86,7 @@ public record NItemsByUnit(String id, int cantidad, BigDecimal precioPorUnidad, 
         }
 
         precio = PurchasedItem.parseUnitPrice(matcher.group("precio"));
-        logger.debug("cantidad {}, id {}, precioPorUnidad {}, precio {}", cantidad, id, precioPorUnidad, precio);
+        logger.debug("cantidad {}, id [{}], precioPorUnidad {}, precio {}", cantidad, id, precioPorUnidad, precio);
 
         return new NItemsByUnit(id, cantidad, precioPorUnidad,precio);
 

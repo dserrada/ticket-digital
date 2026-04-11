@@ -22,7 +22,7 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
 
     private static final Logger logger = LoggerFactory.getLogger(ItemByWeight.class);
 
-    private static final Pattern FIRST_WEIGHT_PATTERN = Pattern.compile(
+    protected static final Pattern FIRST_WEIGHT_PATTERN = Pattern.compile(
             "^\\s*1\\s+" +
                     "(?<id>[0-9A-ZÑÁÉÍÓÚ\\./\\s\\-]+)\\s*" +
                     "$");
@@ -32,7 +32,7 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
      *
      * Ejemplo de línea que cumple esto es: "1 kg 2,50 €/kg 2,50"
      */
-    private static final Pattern SECOND_WEIGHT_LINE = Pattern.compile( // FIXME: PASAR A PARTES
+    protected static final Pattern SECOND_WEIGHT_LINE = Pattern.compile( // FIXME: PASAR A PARTES
             "^\\s*(?<peso>[0-9]+(?:[\\.,][0-9]{1,3})?)\\s+kg\\s+" +
                     "(?<precioKg>[0-9]+(?:[\\.,][0-9]{1,2})?)\\s*€\\/kg\\s+" +
                     "(?<importe>[0-9]+(?:[\\.,][0-9]{1,2})?)\\s*$"
@@ -96,7 +96,7 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
         BigDecimal precioPorKilogramo = PurchasedItem.parseUnitPrice(sPrecioKg);
         String sImporte = matcher2.group("importe");
         BigDecimal importe = PurchasedItem.parseUnitPrice(sImporte);
-        logger.debug("pesoKg {}, precioKg {}, importe {}", pesoKg, precioPorKilogramo, importe);
+        logger.debug("pesoKg {}, precioKg {}, importe {}, id: [{}]", pesoKg, precioPorKilogramo, importe, id);
 
         return new ItemByWeight(id, pesoKg, precioPorKilogramo);
     }

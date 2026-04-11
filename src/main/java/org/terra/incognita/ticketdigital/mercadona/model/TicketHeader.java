@@ -17,7 +17,7 @@ public record TicketHeader(LocalDateTime fechaCompra,
                            String codigoFacturaSimplificada)  {
 
 
-    private static final DateTimeFormatter MERCADONA_DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    public static final DateTimeFormatter MERCADONA_DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     public static final int EXPECTED_LINES = 2;
 

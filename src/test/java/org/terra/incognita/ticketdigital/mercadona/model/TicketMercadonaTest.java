@@ -49,19 +49,26 @@ class TicketMercadonaTest {
     }
 
     @Test
+    // 20230915 Mercadona 75,51 €.pdf
     public void pruebaFicheroAllPDF() throws Exception {
         Path dataDir = Path.of("../../GMailExtractor/mails/");
+        Set<String> excluded = Set.of( // PESCADO MULTIPLE
+            "20230915 Mercadona 75,51 €.pdf","20231013 Mercadona 198,28 €.pdf","20231117 Mercadona 95,51 €.pdf",
+            "20240223 Mercadona 60,99 €.pdf","20240517 Mercadona 64,85 €.pdf","20241108 Mercadona 77,71 €.pdf",
+                "20250926 Mercadona 73,32 €.pdf");
 
         List<Path> pdfFiles = FileUtils.searchInDir(dataDir);
         if (pdfFiles == null) return;
 
         logger.info("Found {} PDF files in {}", pdfFiles.size(), dataDir.toAbsolutePath());
 
+        StringBuffer sb = new StringBuffer();
         int countOK = 0, countErr = 0;
         // Parse each PDF file
         for (Path pdfFile : pdfFiles) {
             logger.debug("Processing PDF: {}", pdfFile);
             try {
+                if ( excluded.contains(pdfFile.getFileName().toString() ) ) continue;
                 TicketMercadona ticket = TicketMercadona.parse(pdfFile);
                 // assertNotNull(ticket); // FIXME: EL PESCADO DEVUELVE NULL, DE MOMENTO
                 if (ticket != null) {
@@ -69,15 +76,16 @@ class TicketMercadonaTest {
                 } else {
                     countErr++;
                 }
-                if ( ticket == null ) continue; // FIXME
                 logger.debug("Successfully parsed ticket from: {}", pdfFile.getFileName());
                 logger.debug("Importe final: {}", ticket.precioTotalEnEuros());
+                sb.append(ticket.toCVSString()).append("\n");
             } catch (Exception e) {
                 logger.error("Failed to parse PDF: {}", pdfFile, e);
                 throw e;
             }
         }
-        logger.info("Parsed {} tickets, ok: {}, error: {}", (countOK+countErr),countOK,countErr);
+        logger.info("Parsed {} tickets, ok: {}, error: {}, excluded: {}", (countOK+countErr),countOK,countErr, excluded.size() );
+        logger.info("CSV: {}", sb.toString());
     }
 
     @Test
@@ -155,7 +163,7 @@ class TicketMercadonaTest {
         // Third item: FRANKFURT VIENA QUES
         assertNotNull(ticket.items().get(2));
         assertEquals("FRANKFURT VIENA QUES", ticket.items().get(2).id());
-        assertEquals(2, ((OneItemByUnit)ticket.items().get(2)).cantidad());
+        assertEquals(2, ((NItemsByUnit)ticket.items().get(2)).cantidad());
         assertEquals(new BigDecimal("5.60"), ticket.items().get(2).precioTotal());
 
         // Fourth item: CHORIZO 4PACK

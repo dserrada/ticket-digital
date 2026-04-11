@@ -12,9 +12,11 @@ import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -65,12 +67,6 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
         } else {
             throw new ParseException("Invalid file extension: expected .txt or .pdf file, got " + fileName, -1);
         }
-
-        if ( ticketData.contains("PESCADO") ) {
-            logger.error("Ticket contains fish products, not supported", -1);
-            return null;
-        }
-
         return parse(ticketData);
     }
 
@@ -141,6 +137,9 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
             } else if ( (result = ItemByWeight.parse(nCurrentLine, lines)) != null) {
                 items.add(result);
                 nCurrentLine += 2;
+            } else if ( (result = FreshItemByWeight.parse(nCurrentLine, lines)) != null) {
+                items.add(result);
+                nCurrentLine += 3;
             } else {
                 logger.error("Invalid ticket format: expected item line, found: [{}], fileNumber: {}, expectedRegexp: {}",lines.get(nCurrentLine), nCurrentLine,null);
                 throw new ParseException("Invalid ticket format: expected item line, found: " + lines.get(nCurrentLine), nCurrentLine);
@@ -153,9 +152,19 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
         return new TicketMercadona(shopData, header,items, parking,
                 null,null,null,null,null,null);
     }
-    
-    
 
+    /**
+     * Genera un string de tipo CVS con la información de todos los productos comprados
+     *
+     */
+    public String toCVSString() {
+        String data = items.stream().map( i ->  {
+            return DateTimeFormatter.ofPattern("dd/MM/yyyy").format(header.fechaCompra())+ ";"
+                    + i.id() + ";"
+                    + i.precioTotal().toString();
+        }).collect(Collectors.joining("\n")) ;
+        return data;
+    }
 
 }
 
