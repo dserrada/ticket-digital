@@ -57,14 +57,18 @@ class TicketMercadonaTest {
 
         logger.info("Found {} PDF files in {}", pdfFiles.size(), dataDir.toAbsolutePath());
 
-        int count = 0;
+        int countOK = 0, countErr = 0;
         // Parse each PDF file
         for (Path pdfFile : pdfFiles) {
             logger.debug("Processing PDF: {}", pdfFile);
             try {
                 TicketMercadona ticket = TicketMercadona.parse(pdfFile);
                 // assertNotNull(ticket); // FIXME: EL PESCADO DEVUELVE NULL, DE MOMENTO
-                count++;
+                if (ticket != null) {
+                    countOK++;
+                } else {
+                    countErr++;
+                }
                 if ( ticket == null ) continue; // FIXME
                 logger.debug("Successfully parsed ticket from: {}", pdfFile.getFileName());
                 logger.debug("Importe final: {}", ticket.precioTotalEnEuros());
@@ -73,7 +77,7 @@ class TicketMercadonaTest {
                 throw e;
             }
         }
-        logger.info("Parsed {} tickets", count);
+        logger.info("Parsed {} tickets, ok: {}, error: {}", (countOK+countErr),countOK,countErr);
     }
 
     @Test
