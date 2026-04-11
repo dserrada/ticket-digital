@@ -5,9 +5,8 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.BufferedReader;
+
 import java.io.IOException;
-import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.Files;
@@ -27,7 +26,7 @@ import java.util.Objects;
  * Esta clase es un registro inmutable que facilita la gestión de los datos del ticket generado.
  */
 public record TicketMercadona(ShopData shopData, TicketHeader header, List<PurchasedItem> items,
-                              BigDecimal pagadoEnEuros, String tarjetaBancaria, String nc, String aut, String aid, String arc) {
+                              Parking parking, BigDecimal pagadoEnEuros, String tarjetaBancaria, String nc, String aut, String aid, String arc) {
 
     private static final Logger logger = LoggerFactory.getLogger(TicketMercadona.class);
 
@@ -120,17 +119,25 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
         // Y ahora compruebo la lista de items
         boolean byUnit = false;
         boolean byWeight = false;
+        Parking parking = null;
         while( !lines.get(nCurrentLine).trim().startsWith("TOTAL (€)")) {
             PurchasedItem result = null;
-            // Primero vemos si es un producto vendido por unidades
-            if ( (result = ItemByUnit.parse(nCurrentLine, lines)) != null) {
+            // Primero vemos si es info del parking por que se puede confundir con una itemByUnit
+            if ( (parking = Parking.parse(nCurrentLine,lines)) != null) {
+                nCurrentLine += 2;
+                // Luego vemos si es un producto vendido por unidades
+            } else if ( (result = OneItemByUnit.parse(nCurrentLine, lines)) != null) {
                 items.add(result);
-                nCurrentLine++;
+                nCurrentLine += 1;
+            } else if ( (result = NItemsByUnit.parse(nCurrentLine, lines)) != null) {
+                items.add(result);
+                nCurrentLine += 1;
             // Si no lo era pues probamos con producto al peso
             } else if ( (result = ItemByWeight.parse(nCurrentLine, lines)) != null) {
                 items.add(result);
-                nCurrentLine+=2;
+                nCurrentLine += 2;
             } else {
+                logger.error("Invalid ticket format: expected item line, found: [{}], fileNumber: {}, expectedRegexp: {}",lines.get(nCurrentLine), nCurrentLine,null);
                 throw new ParseException("Invalid ticket format: expected item line, found: " + lines.get(nCurrentLine), nCurrentLine);
             }
         }
@@ -138,7 +145,7 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
         logger.info("Total: {}", lines.get(nCurrentLine));
 
 
-        return new TicketMercadona(shopData, header,items,
+        return new TicketMercadona(shopData, header,items, parking,
                 null,null,null,null,null,null);
     }
     

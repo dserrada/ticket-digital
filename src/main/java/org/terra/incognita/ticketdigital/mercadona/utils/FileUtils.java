@@ -1,0 +1,43 @@
+package org.terra.incognita.ticketdigital.mercadona.utils;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terra.incognita.ticketdigital.mercadona.model.TicketMercadona;
+
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.List;
+
+
+
+public class FileUtils {
+
+    private static final Logger logger = LoggerFactory.getLogger(TicketMercadona.class);
+
+    public static List<Path> searchInDir(Path dataDir) throws IOException {
+        // Skip test if directory doesn't exist
+        if (!Files.exists(dataDir)) {
+            logger.warn("Data directory does not exist: {}", dataDir.toAbsolutePath());
+            return null;
+        }
+
+        List<Path> pdfFiles = new ArrayList<>();
+
+        // Tree walk to collect all PDF files
+        Files.walkFileTree(dataDir, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (file.toString().toLowerCase().endsWith(".pdf")) {
+                    pdfFiles.add(file);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        return pdfFiles;
+    }
+}

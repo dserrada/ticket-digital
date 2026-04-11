@@ -24,14 +24,15 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
 
     private static final Pattern FIRST_WEIGHT_PATTERN = Pattern.compile(
             "^\\s*1\\s+" +
-                    "(?<id>[0-9A-ZÑÁÉÍÓÚ\\./\\s\\-]+)\\s*$");
+                    "(?<id>[0-9A-ZÑÁÉÍÓÚ\\./\\s\\-]+)\\s*" +
+                    "$");
 
     /**
      * Expresión regular de la segunda línea de un artículo vendido por peso.
      *
      * Ejemplo de línea que cumple esto es: "1 kg 2,50 €/kg 2,50"
      */
-    private static final Pattern SECOND_WEIGHT_LINE = Pattern.compile(
+    private static final Pattern SECOND_WEIGHT_LINE = Pattern.compile( // FIXME: PASAR A PARTES
             "^\\s*(?<peso>[0-9]+(?:[\\.,][0-9]{1,3})?)\\s+kg\\s+" +
                     "(?<precioKg>[0-9]+(?:[\\.,][0-9]{1,2})?)\\s*€\\/kg\\s+" +
                     "(?<importe>[0-9]+(?:[\\.,][0-9]{1,2})?)\\s*$"
@@ -81,7 +82,7 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
         Matcher matcher1 = FIRST_WEIGHT_PATTERN.matcher(firstLine);
         Matcher matcher2 = SECOND_WEIGHT_LINE.matcher(secondLine);
         if ( !(matcher1.matches() && matcher2.matches()) ) {
-            logger.debug("Line {} no es del tipo {}",firstLine, ItemByWeight.class.getName());
+            logger.debug("Line [{}] no es del tipo {} , matcher1: {}, matcher2: {}",firstLine, ItemByWeight.class.getSimpleName(), matcher1.matches(), matcher2.matches());
             return null;
         }
 

@@ -3,18 +3,16 @@ package org.terra.incognita.ticketdigital.mercadona.model;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terra.incognita.ticketdigital.mercadona.utils.FileUtils;
 
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -52,35 +50,25 @@ class TicketMercadonaTest {
 
     @Test
     public void pruebaFicheroAllPDF() throws Exception {
-        Path dataDir = Path.of("../data/");
+        Path dataDir = Path.of("../data/mercadona/");
+        Set<String> excluded = new HashSet<>();
+        excluded.add(dataDir + "\\20230906 Mercadona 17,37 €.pdf");  // PESCADO
+        excluded.add(dataDir + "\\20230915 Mercadona 75,51 €.pdf");  // PESCADO
 
-        // Skip test if directory doesn't exist
-        if (!Files.exists(dataDir)) {
-            logger.warn("Data directory does not exist: {}", dataDir.toAbsolutePath());
-            return;
-        }
-
-        List<Path> pdfFiles = new ArrayList<>();
-
-        // Tree walk to collect all PDF files
-        Files.walkFileTree(dataDir, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (file.toString().toLowerCase().endsWith(".pdf")) {
-                    pdfFiles.add(file);
-                }
-                return FileVisitResult.CONTINUE;
-            }
-        });
+        List<Path> pdfFiles = FileUtils.searchInDir(dataDir);
+        if (pdfFiles == null) return;
 
         logger.info("Found {} PDF files in {}", pdfFiles.size(), dataDir.toAbsolutePath());
 
+        int count = 0;
         // Parse each PDF file
         for (Path pdfFile : pdfFiles) {
             logger.debug("Processing PDF: {}", pdfFile);
             try {
+                if ( excluded.contains(pdfFile.toString() ) ) continue;
                 TicketMercadona ticket = TicketMercadona.parse(pdfFile);
                 assertNotNull(ticket);
+                count++;
                 logger.debug("Successfully parsed ticket from: {}", pdfFile.getFileName());
                 logger.debug("Importe final: {}", ticket.precioTotalEnEuros());
             } catch (Exception e) {
@@ -88,6 +76,7 @@ class TicketMercadonaTest {
                 throw e;
             }
         }
+        logger.info("Parsed {} tickets", count);
     }
 
     @Test
@@ -165,7 +154,7 @@ class TicketMercadonaTest {
         // Third item: FRANKFURT VIENA QUES
         assertNotNull(ticket.items().get(2));
         assertEquals("FRANKFURT VIENA QUES", ticket.items().get(2).id());
-        assertEquals(2, ((ItemByUnit)ticket.items().get(2)).cantidad());
+        assertEquals(2, ((OneItemByUnit)ticket.items().get(2)).cantidad());
         assertEquals(new BigDecimal("5.60"), ticket.items().get(2).precioTotal());
 
         // Fourth item: CHORIZO 4PACK

@@ -19,17 +19,20 @@ import java.util.regex.Pattern;
  * @param precioPorUnidad unit price in euros, with cent precision
  * @param precio el precio de las unidades compradas en euros, con centimos
  */
-public record ItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad, BigDecimal precio) implements PurchasedItem {
+public record NItemsByUnit(String id, int cantidad, BigDecimal precioPorUnidad, BigDecimal precio) implements PurchasedItem {
 
-    private static final Logger logger = LoggerFactory.getLogger(ItemByUnit.class);
+    private static final Logger logger = LoggerFactory.getLogger(NItemsByUnit.class);
 
+//    4 TORTILLA PAT C/CEB 1,5L 2,60 10,40
     private static final Pattern LINE_PATTERN = Pattern.compile(
-            "^\\s*(?<cantidad>\\d+)\\s+" +
-                    "(?<id>[0-9A-ZÑÁÉÍÓÚ\\./\\s\\-]+)\\s+" +
-                    "(?<precioUnidad>\\d,\\d{2})?\\s*" +
-                    "(?<precio>\\d,\\d{2})\\s*$");
+            "^\\s*" +
+                    REGEX_CANTIDAD + "\\s+" +
+                    REGEX_ID + "\\s+" +
+                    REGEX_PRECIO_UNIDAD + "\\s+" +
+                    REGEX_PRECIO + "\\s*" +
+                    "$");
 
-    public ItemByUnit {
+    public NItemsByUnit {
         Objects.requireNonNull(id, "id must not be null");
 
         if (id.isBlank()) {
@@ -53,7 +56,7 @@ public record ItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad, Bi
     /**
      * Parsea la información de una linea de compra por unidades
      */
-    public static ItemByUnit parse(final int position, final List<String> linea) throws ParseException {
+    public static NItemsByUnit parse(final int position, final List<String> linea) throws ParseException {
         String line = linea.get(position);
         // La primera línea tiene que ser de alguna de las dos siguientes formas
         // 1   PANECILLO 11UDS                                 1,10
@@ -62,7 +65,7 @@ public record ItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad, Bi
         Matcher matcher = LINE_PATTERN.matcher(line);
 
         if (!matcher.matches()) {
-            logger.debug("Line does not match expected pattern: " + line);
+            logger.debug("Line [{}] no es del tipo {}, regex: {}",line, NItemsByUnit.class.getSimpleName(), matcher.pattern());
             return null;
         }
 
@@ -85,7 +88,7 @@ public record ItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad, Bi
         precio = PurchasedItem.parseUnitPrice(matcher.group("precio"));
         logger.debug("cantidad {}, id {}, precioPorUnidad {}, precio {}", cantidad, id, precioPorUnidad, precio);
 
-        return new ItemByUnit(id, cantidad, precioPorUnidad,precio);
+        return new NItemsByUnit(id, cantidad, precioPorUnidad,precio);
 
     }
 

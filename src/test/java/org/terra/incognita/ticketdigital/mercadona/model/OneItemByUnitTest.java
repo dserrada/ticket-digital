@@ -14,13 +14,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * Specifically, these tests cover the `precioTotal` method, which calculates
  * the total price of a product sold by unit.
  */
-public class ItemByUnitTest {
+public class OneItemByUnitTest {
 
     // FIXME: Los tests auteogenerados son estupidos, borrar.
     @Test
     void testPrecioTotalWithValidSingleUnit() {
         // Arrange
-        ItemByUnit item = new ItemByUnit("FRANKFURT VIENA QUES", 1, new BigDecimal("5.60"), new BigDecimal("5.60"));
+        OneItemByUnit item = new OneItemByUnit("FRANKFURT VIENA QUES", 1, new BigDecimal("5.60"), new BigDecimal("5.60"));
 
         // Act
         BigDecimal totalPrice = item.precioTotal();
@@ -31,16 +31,31 @@ public class ItemByUnitTest {
 
 
     @Test
-    void testLinea() throws ParseException {
+    void testLinea1() throws ParseException {
         String linea = "1 PAN BLANCO FAMILIAR 1,25";
-        ItemByUnit item = ItemByUnit.parse(0, List.of(linea));
+        OneItemByUnit item = OneItemByUnit.parse(0, List.of(linea));
         assertNotNull(item);
     }
 
     @Test
+    void testLinea2() throws ParseException {
+        String linea = "1 SOLOMILLO CERDO 3,05";
+        OneItemByUnit item = OneItemByUnit.parse(0, List.of(linea));
+        assertNotNull(item);
+        linea = "4 TORTILLA PAT C/CEB 1,5L 2,60 10,40";
+        item = OneItemByUnit.parse(0, List.of(linea));
+        assertNotNull(item);
+    }
+
+
+
+
+
+
+    @Test
     void testPrecioTotalWithValidMultipleUnits() {
         // Arrange
-        ItemByUnit item = new ItemByUnit("FRANKFURT VIENA QUES", 3, new BigDecimal("2.80"), new BigDecimal("8.40"));
+        OneItemByUnit item = new OneItemByUnit("FRANKFURT VIENA QUES", 3, new BigDecimal("2.80"), new BigDecimal("8.40"));
 
         // Act
         BigDecimal totalPrice = item.precioTotal();
@@ -52,7 +67,7 @@ public class ItemByUnitTest {
     @Test
     void testPrecioTotalThrowsExceptionOnRounding() {
         // Arrange
-        ItemByUnit item = new ItemByUnit("INVALID ROUNDING", 3, new BigDecimal("2.333"), new BigDecimal("6.999"));
+        OneItemByUnit item = new OneItemByUnit("INVALID ROUNDING", 3, new BigDecimal("2.333"), new BigDecimal("6.999"));
 
         // Act & Assert
         assertThrows(ArithmeticException.class, item::precioTotal, "Should throw ArithmeticException due to unnecessary rounding.");
@@ -61,7 +76,7 @@ public class ItemByUnitTest {
     @Test
     void testPrecioTotalWithZeroCentDifferenceInCalculation() {
         // Arrange
-        ItemByUnit item = new ItemByUnit("PERFECT ROUNDING", 2, new BigDecimal("4.00"), new BigDecimal("8.00"));
+        OneItemByUnit item = new OneItemByUnit("PERFECT ROUNDING", 2, new BigDecimal("4.00"), new BigDecimal("8.00"));
 
         // Act
         BigDecimal totalPrice = item.precioTotal();
