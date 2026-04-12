@@ -1,0 +1,11 @@
+plugins {
+    id 'application'
+}
+
+application {
+    mainClass = 'org.terra.incognita.ticketdigital.mercadona.Main'
+}
+
+dependencies {
+    implementation project(':ticket-digital-parser')
+}

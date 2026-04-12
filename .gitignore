@@ -145,3 +145,5 @@ gradle-app.setting
 # No quiero subir nunca pdfs con tickets
 *.pdf
 
+
+.junie/memory/

@@ -1,2 +1,8 @@
 rootProject.name = 'ticket-digital'
 
+include 'ticket-digital-parser'
+project(':ticket-digital-parser').projectDir = file('projects/ticket-digital-parser')
+
+include 'ticket-digital-engine'
+project(':ticket-digital-engine').projectDir = file('projects/ticket-digital-engine')
+

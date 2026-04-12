@@ -1,27 +1,26 @@
-plugins {
-    id 'java'
+allprojects {
+    group = 'org.terra.incognita'
+    version = '1.0-SNAPSHOT'
 }
 
-group = 'org.terra.incognita'
-version = '1.0-SNAPSHOT'
+subprojects {
+    apply plugin: 'java'
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_24
-    targetCompatibility = JavaVersion.VERSION_24
-}
+    java {
+        sourceCompatibility = JavaVersion.VERSION_24
+        targetCompatibility = JavaVersion.VERSION_24
+    }
 
-repositories {
-    mavenCentral()
-}
+    repositories {
+        mavenCentral()
+    }
 
-dependencies {
-    implementation 'org.slf4j:slf4j-api:2.0.+'
-    implementation 'org.apache.pdfbox:pdfbox:3.0.3'
-    testImplementation 'ch.qos.logback:logback-classic:1.5.+', { transitive = true}
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.0.+'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.0.+'
-}
+    dependencies {
+        testImplementation 'org.junit.jupiter:junit-jupiter-api:5.0.+'
+        testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.0.+'
+    }
 
-test {
-    useJUnitPlatform()
+    test {
+        useJUnitPlatform()
+    }
 }
