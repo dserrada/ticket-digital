@@ -8,4 +8,5 @@ application {
 
 dependencies {
     implementation project(':ticket-digital-parser')
+    testImplementation 'ch.qos.logback:logback-classic:1.5.+', { transitive = true}
 }

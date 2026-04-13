@@ -25,6 +25,7 @@ public class FileUtils {
             logger.warn("Data directory does not exist: {}", dataDir.toAbsolutePath());
             return null;
         }
+        logger.info("Searching for PDF files in {}", dataDir.toAbsolutePath());
 
         List<Path> pdfFiles = new ArrayList<>();
 
@@ -32,12 +33,14 @@ public class FileUtils {
         Files.walkFileTree(dataDir, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                logger.debug("Found file: {}", file);
                 if (file.toString().toLowerCase().endsWith(".pdf")) {
                     pdfFiles.add(file);
                 }
                 return FileVisitResult.CONTINUE;
             }
         });
+        logger.info("Found {} PDF files in {}", pdfFiles.size(), dataDir.toAbsolutePath());
         return pdfFiles;
     }
 }
