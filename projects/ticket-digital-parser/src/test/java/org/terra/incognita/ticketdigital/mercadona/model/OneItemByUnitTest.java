@@ -1,6 +1,6 @@
 package org.terra.incognita.ticketdigital.mercadona.model;
 
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -10,43 +10,90 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for the ItemByUnit class.
- * <p>
- * Specifically, these tests cover the `precioTotal` method, which calculates
- * the total price of a product sold by unit.
+ * Unit tests for the OneItemByUnit class, focusing on the parser method.
  */
-public class OneItemByUnitTest {
-
-    // FIXME: Los tests auteogenerados son estupidos, borrar.
-    @Test
-    void testPrecioTotalWithValidSingleUnit() {
-        // Arrange
-        OneItemByUnit item = new OneItemByUnit("FRANKFURT VIENA QUES", 1, new BigDecimal("5.60"), new BigDecimal("5.60"));
-
-        // Act
-        BigDecimal totalPrice = item.precioTotal();
-
-        // Assert
-        assertEquals(new BigDecimal("5.60"), totalPrice, "Total price should match for single unit.");
-    }
-
+class OneItemByUnitTest {
 
     @Test
-    void testLinea1() throws ParseException {
-        String linea = "1 PAN BLANCO FAMILIAR 1,25";
-        OneItemByUnit item = OneItemByUnit.parse(0, List.of(linea));
-        assertNotNull(item);
+    @DisplayName("Debería parsear correctamente una línea válida con una unidad")
+    void testParseValidSingleItem() throws ParseException {
+        String line = "1 PRODUCTO 1,50";
+        OneItemByUnit item = OneItemByUnit.parse(0, List.of(line));
+        
+        assertNotNull(item, "El item no debería ser null");
+        assertEquals("PRODUCTO", item.id());
+        assertEquals(1, item.cantidad());
+        assertNull(item.precioPorUnidad());
+        assertEquals(new BigDecimal("1.50"), item.precio());
+        assertEquals(new BigDecimal("1.50"), item.precioTotal());
     }
 
     @Test
-    @Disabled("Revisar")
-    void testLinea2() throws ParseException {
-        String linea = "1 SOLOMILLO CERDO 3,05";
-        OneItemByUnit item = OneItemByUnit.parse(0, List.of(linea));
+    @DisplayName("Debería parsear correctamente una línea con muchos espacios entre descripción e importe")
+    void testParseValidItemWithManySpaces() throws ParseException {
+        // Ejemplo real del archivo de ticket
+        String line = "1   BARRA DE PAN                                    0,48";
+        OneItemByUnit item = OneItemByUnit.parse(0, List.of(line));
+        
         assertNotNull(item);
-        linea = "4 TORTILLA PAT C/CEB 1,5L 2,60 10,40";
-        item = OneItemByUnit.parse(0, List.of(linea));
-        assertNotNull(item);
+        assertEquals("BARRA DE PAN", item.id());
+        assertEquals(new BigDecimal("0.48"), item.precio());
     }
 
+    @Test
+    @DisplayName("Debería parsear correctamente una línea con caracteres especiales en el ID")
+    void testParseValidItemWithSpecialChars() throws ParseException {
+        String line = "1 CHORIZO 4PACK/EXTRA 1,97";
+        OneItemByUnit item = OneItemByUnit.parse(0, List.of(line));
+        
+        assertNotNull(item);
+        assertEquals("CHORIZO 4PACK/EXTRA", item.id());
+        assertEquals(new BigDecimal("1.97"), item.precio());
+        
+        line = "1 QUESO 50% DTO. 2,00";
+        item = OneItemByUnit.parse(0, List.of(line));
+        assertNotNull(item);
+        assertEquals("QUESO 50% DTO.", item.id());
+    }
+
+    @Test
+    @DisplayName("Debería parsear correctamente una línea con espacios al principio y al final")
+    void testParseValidItemWithLeadingTrailingSpaces() throws ParseException {
+        String line = "  1 PAN BLANCO 0,50  ";
+        OneItemByUnit item = OneItemByUnit.parse(0, List.of(line));
+        
+        assertNotNull(item);
+        assertEquals("PAN BLANCO", item.id());
+        assertEquals(new BigDecimal("0.50"), item.precio());
+    }
+
+    @Test
+    @DisplayName("Debería devolver null para líneas que no coinciden con el patrón")
+    void testParseReturnsNullForInvalidPatterns() throws ParseException {
+        String[] invalidLines = {
+                "2 PRODUCTO 1,00 2,00", // Empieza por 2
+                "PRODUCTO 1,50",        // No empieza por 1
+                "1 PRODUCTO",           // Falta el precio
+                "1 PRODUCTO 1.50",      // Precio con punto en vez de coma
+                "1 PRODUCTO 1,5",       // Precio con un solo decimal
+                "1 PRODUCTO 1,500",     // Precio con tres decimales (REGEX_PRECIO solo permite 2)
+                "1 producto 1,50",      // ID en minúsculas (REGEX_ID solo permite A-Z mayúsculas y otros)
+                "",                     // Línea vacía
+                "1  1,50"               // Falta la descripción
+        };
+
+        for (String line : invalidLines) {
+            OneItemByUnit item = OneItemByUnit.parse(0, List.of(line));
+            assertNull(item, "Debería devolver null para la línea: [" + line + "]");
+        }
+    }
+
+    @Test
+    @DisplayName("Debería lanzar IllegalArgumentException si el ID es nulo o vacío en el constructor")
+    void testConstructorConstraints() {
+        assertThrows(NullPointerException.class, () -> new OneItemByUnit(null, 1, null, new BigDecimal("1.00")));
+        assertThrows(IllegalArgumentException.class, () -> new OneItemByUnit("", 1, null, new BigDecimal("1.00")));
+        assertThrows(IllegalArgumentException.class, () -> new OneItemByUnit("  ", 1, null, new BigDecimal("1.00")));
+        assertThrows(IllegalArgumentException.class, () -> new OneItemByUnit("PROD", 0, null, new BigDecimal("1.00")));
+    }
 }

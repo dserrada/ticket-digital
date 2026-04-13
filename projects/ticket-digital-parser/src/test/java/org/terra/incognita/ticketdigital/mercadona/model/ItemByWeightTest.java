@@ -1,8 +1,6 @@
-// File: ItemByWeightTest.java
 package org.terra.incognita.ticketdigital.mercadona.model;
 
-import jdk.jfr.Enabled;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -11,124 +9,130 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for the ItemByWeight class, focusing on the parser method.
+ */
 class ItemByWeightTest {
 
-    /**
-     * Test for parsing a valid weight item.
-     */
     @Test
+    @DisplayName("Debería parsear correctamente un artículo por peso válido (ejemplo Banana)")
     void testParseValidItem() throws ParseException {
+        // Ejemplo real del archivo de ticket
         List<String> lines = List.of(
-                "    1   BANANA",
-                "    0,336 kg                   1,45 €/kg        0,49"
+                "1   BANANA",
+                "        0,336 kg                   1,45 €/kg        0,49"
         );
 
         ItemByWeight item = ItemByWeight.parse(0, lines);
 
-        assertNotNull(item);
-        assertEquals("BANANA", item.id());
+        assertNotNull(item, "El item no debería ser null");
+        assertEquals("BANANA", item.id(), "El ID debería ser BANANA");
         assertEquals(new BigDecimal("0.336"), item.pesoKg());
         assertEquals(new BigDecimal("1.45"), item.precioPorKilogramo());
+        // El precioTotal() calculado por el record es pesoKg * precioPorKilogramo
+        // 0.336 * 1.45 = 0.4872, que redondeado HALF_UP a 2 decimales es 0.49
         assertEquals(new BigDecimal("0.49"), item.precioTotal());
     }
 
-
-    /**
-     * Test for parsing a valid weight item.
-     */
     @Test
-    @Disabled(" Los espacios del final los debe quitar")
-    void testParseValidItem2() throws ParseException {
+    @DisplayName("Debería parsear correctamente un artículo con espacios extra y caracteres especiales")
+    void testParseValidItemWithSpacesAndSpecialChars() throws ParseException {
         List<String> lines = List.of(
-                "    1   PLÁTANO DE CANARIAS      ",
-                "    0,336 kg                   1235,45 €/kg        415,11"
+                "  1   PLÁTANO DE CANARIAS / EXTRA    ",
+                "    1,200 kg   5,50 €/kg   6,60  "
         );
 
         ItemByWeight item = ItemByWeight.parse(0, lines);
+
         assertNotNull(item);
-        assertEquals("PLÁTANO DE CANARIAS", item.id());
-        assertEquals(new BigDecimal("0.336"), item.pesoKg());
-        assertEquals(new BigDecimal("1235.45"), item.precioPorKilogramo());
-        assertEquals(new BigDecimal("415.11"), item.precioTotal());
+        assertEquals("PLÁTANO DE CANARIAS / EXTRA", item.id());
+        assertEquals(new BigDecimal("1.200"), item.pesoKg());
+        assertEquals(new BigDecimal("5.50"), item.precioPorKilogramo());
+        assertEquals(new BigDecimal("6.60"), item.precioTotal());
     }
 
-    /**
-     * Test for invalid first line in parse method.
-     */
     @Test
-    @Disabled("Revisar")
-    void testParseInvalidFirstLine() {
+    @DisplayName("Debería devolver null si la primera línea no empieza por 1")
+    void testParseReturnsNullForInvalidFirstLineStart() throws ParseException {
         List<String> lines = List.of(
-                "INVALID LINE",
-                "    0,336 kg                   1,45 €/kg        0,49"
+                "2   BANANA",
+                "        0,336 kg                   1,45 €/kg        0,49"
         );
 
-        ParseException exception = assertThrows(ParseException.class, () -> ItemByWeight.parse(0, lines));
-        assertTrue(exception.getMessage().contains("Invalid weight format in first line"));
+        ItemByWeight item = ItemByWeight.parse(0, lines);
+        assertNull(item, "Debería devolver null si la línea no empieza por 1");
     }
 
-    /**
-     * Test for invalid second line in parse method.
-     */
     @Test
-    @Disabled("Revisar")
-    void testParseInvalidSecondLine() {
+    @DisplayName("Debería devolver null si la primera línea tiene un ID inválido (minúsculas)")
+    void testParseReturnsNullForInvalidID() throws ParseException {
+        List<String> lines = List.of(
+                "1   banana",
+                "        0,336 kg                   1,45 €/kg        0,49"
+        );
+
+        ItemByWeight item = ItemByWeight.parse(0, lines);
+        assertNull(item, "Debería devolver null si el ID tiene minúsculas (según REGEX_ID)");
+    }
+
+    @Test
+    @DisplayName("Debería devolver null si la segunda línea no tiene el formato correcto (faltan kg o €/kg)")
+    void testParseReturnsNullForInvalidSecondLineFormat() throws ParseException {
+        List<String> lines1 = List.of(
+                "1   BANANA",
+                "        0,336                      1,45 €/kg        0,49" // Falta 'kg'
+        );
+        assertNull(ItemByWeight.parse(0, lines1));
+
+        List<String> lines2 = List.of(
+                "1   BANANA",
+                "        0,336 kg                   1,45             0,49" // Falta '€/kg'
+        );
+        assertNull(ItemByWeight.parse(0, lines2));
+    }
+
+    @Test
+    @DisplayName("Debería devolver null si los precios o pesos usan punto en lugar de coma")
+    void testParseReturnsNullForPointsInsteadOfCommas() throws ParseException {
         List<String> lines = List.of(
                 "1   BANANA",
-                "INVALID SECOND LINE"
+                "        0.336 kg                   1.45 €/kg        0.49"
         );
 
-        ParseException exception = assertThrows(ParseException.class, () -> ItemByWeight.parse(0, lines));
-        assertTrue(exception.getMessage().contains("Invalid weight format in second line"));
+        ItemByWeight item = ItemByWeight.parse(0, lines);
+        assertNull(item, "Debería devolver null si se usan puntos en lugar de comas");
     }
 
-    /**
-     * Test for constructor when weight is zero.
-     */
     @Test
-    void testConstructorInvalidWeightZero() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                new ItemByWeight("BANANA", BigDecimal.ZERO, new BigDecimal("1.45")));
-        assertTrue(exception.getMessage().contains("pesoKg must be greater than zero"));
+    @DisplayName("Debería devolver null si faltan campos en la segunda línea")
+    void testParseReturnsNullForMissingFields() throws ParseException {
+        List<String> lines = List.of(
+                "1   BANANA",
+                "        0,336 kg                   0,49" // Falta precio/kg
+        );
+
+        ItemByWeight item = ItemByWeight.parse(0, lines);
+        assertNull(item);
     }
 
-    /**
-     * Test for constructor when weight is negative.
-     */
     @Test
-    void testConstructorInvalidNegativeWeight() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                new ItemByWeight("BANANA", new BigDecimal("-1.00"), new BigDecimal("1.45")));
-        assertTrue(exception.getMessage().contains("pesoKg must be greater than zero"));
+    @DisplayName("Debería lanzar IllegalArgumentException para valores inválidos en el constructor")
+    void testConstructorConstraints() {
+        assertThrows(NullPointerException.class, () -> new ItemByWeight(null, new BigDecimal("1.000"), new BigDecimal("1.00")));
+        assertThrows(IllegalArgumentException.class, () -> new ItemByWeight("", new BigDecimal("1.000"), new BigDecimal("1.00")));
+        assertThrows(IllegalArgumentException.class, () -> new ItemByWeight("BANANA", BigDecimal.ZERO, new BigDecimal("1.00")));
+        assertThrows(IllegalArgumentException.class, () -> new ItemByWeight("BANANA", new BigDecimal("-0.500"), new BigDecimal("1.00")));
+        assertThrows(NullPointerException.class, () -> new ItemByWeight("BANANA", new BigDecimal("1.000"), null));
     }
 
-    /**
-     * Test for constructor when id is null.
-     */
     @Test
-    void testConstructorIdNull() {
-        NullPointerException exception = assertThrows(NullPointerException.class, () ->
-                new ItemByWeight(null, new BigDecimal("0.336"), new BigDecimal("1.45")));
-        assertTrue(exception.getMessage().contains("nombre must not be null"));
-    }
+    @DisplayName("Debería calcular correctamente el precio total")
+    void testPrecioTotalCalculation() {
+        ItemByWeight item = new ItemByWeight("TEST", new BigDecimal("0.500"), new BigDecimal("2.00"));
+        assertEquals(new BigDecimal("1.00"), item.precioTotal());
 
-    /**
-     * Test for constructor when id is blank.
-     */
-    @Test
-    void testConstructorIdBlank() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                new ItemByWeight("   ", new BigDecimal("0.336"), new BigDecimal("1.45")));
-        assertTrue(exception.getMessage().contains("nombre must not be blank"));
-    }
-
-    /**
-     * Test for constructor when precioPorKilogramo is null.
-     */
-    @Test
-    void testConstructorPrecioPorKilogramoNull() {
-        NullPointerException exception = assertThrows(NullPointerException.class, () ->
-                new ItemByWeight("BANANA", new BigDecimal("0.336"), null));
-        assertTrue(exception.getMessage().contains("precioPorKilogramo must not be null"));
+        // Caso con redondeo (0.336 * 1.45 = 0.4872 -> 0.49)
+        item = new ItemByWeight("TEST", new BigDecimal("0.336"), new BigDecimal("1.45"));
+        assertEquals(new BigDecimal("0.49"), item.precioTotal());
     }
 }

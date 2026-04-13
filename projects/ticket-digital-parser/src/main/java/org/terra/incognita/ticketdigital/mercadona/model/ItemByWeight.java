@@ -91,7 +91,7 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
 
         logger.debug("Parsing weight item, firstLine {}, secondLine: {}", firstLine, secondLine);
 
-        String id = matcher1.group("id");
+        String id = matcher1.group("id").trim();
         String sPeso = matcher2.group("peso");
         BigDecimal pesoKg = PurchasedItem.parseWeight(sPeso);
         String sPrecioKg = matcher2.group("precioKg");
