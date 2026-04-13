@@ -14,13 +14,16 @@ public sealed interface PurchasedItem permits OneItemByUnit, ItemByWeight, NItem
      * The purchased products are all sold in euros.
      */
     public static String EURO_SYMBOL = "€";
-    public static Locale spanishLocale = new Locale("es", "ES");
-    public static NumberFormat SPANISH_PRICE_FORMAT = NumberFormat.getCurrencyInstance(spanishLocale);
+    public static Locale SPANISH_LOCALE = new Locale("es", "ES");
+    public static NumberFormat SPANISH_PRICE_FORMAT = NumberFormat.getCurrencyInstance(SPANISH_LOCALE);
 
     public static String REGEX_CANTIDAD = "\\s*(?<cantidad>\\d+)";
     public static String REGEX_ID = "(.*?)(?<id>[0-9A-ZÑÁÉÍÓÚ`,%\\+\\/\\.\\s\\-]+)";
     public static String REGEX_PRECIO_UNIDAD = "(?<precioUnidad>\\d*,\\d{2})";
     public static String REGEX_PRECIO = "(?<precio>\\d*,\\d{2})";
+    public static String REGEX_PESO = "(?<peso>[0-9]+(?:[\\.,][0-9]{1,3})?)\\s+kg";
+    public static String REGEX_PRECIO_KG = "(?<precioKg>[0-9]+(?:[\\.,][0-9]{1,2})?)\\s*€\\/kg";
+
 
     /**
      * Nombre o identificador del producto comparado

@@ -23,8 +23,9 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
     private static final Logger logger = LoggerFactory.getLogger(ItemByWeight.class);
 
     protected static final Pattern FIRST_WEIGHT_PATTERN = Pattern.compile(
-            "^\\s*1\\s+" +
-                    "(?<id>[0-9A-ZÑÁÉÍÓÚ\\./\\s\\-]+)\\s*" +
+            "^\\s*" +
+                    "1" + "\\s+" +
+                    REGEX_ID + "\\s*" +
                     "$");
 
     /**
@@ -32,10 +33,11 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
      *
      * Ejemplo de línea que cumple esto es: "1 kg 2,50 €/kg 2,50"
      */
-    protected static final Pattern SECOND_WEIGHT_LINE = Pattern.compile( // FIXME: PASAR A PARTES
-            "^\\s*(?<peso>[0-9]+(?:[\\.,][0-9]{1,3})?)\\s+kg\\s+" +
-                    "(?<precioKg>[0-9]+(?:[\\.,][0-9]{1,2})?)\\s*€\\/kg\\s+" +
-                    "(?<importe>[0-9]+(?:[\\.,][0-9]{1,2})?)\\s*$"
+    protected static final Pattern SECOND_WEIGHT_LINE = Pattern.compile(
+            "^\\s*" +
+                    REGEX_PESO + "\\s+" +
+                    REGEX_PRECIO_KG + "\\s+" +
+                    REGEX_PRECIO + "\\s*$"
 
     );
 
@@ -94,9 +96,9 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
         BigDecimal pesoKg = PurchasedItem.parseWeight(sPeso);
         String sPrecioKg = matcher2.group("precioKg");
         BigDecimal precioPorKilogramo = PurchasedItem.parseUnitPrice(sPrecioKg);
-        String sImporte = matcher2.group("importe");
-        BigDecimal importe = PurchasedItem.parseUnitPrice(sImporte);
-        logger.debug("pesoKg {}, precioKg {}, importe {}, id: [{}]", pesoKg, precioPorKilogramo, importe, id);
+        String sPrecio = matcher2.group("precio");
+        BigDecimal precio = PurchasedItem.parseUnitPrice(sPrecio);
+        logger.debug("pesoKg {}, precioKg {}, precio {}, id: [{}]", pesoKg, precioPorKilogramo, precio, id);
 
         return new ItemByWeight(id, pesoKg, precioPorKilogramo);
     }

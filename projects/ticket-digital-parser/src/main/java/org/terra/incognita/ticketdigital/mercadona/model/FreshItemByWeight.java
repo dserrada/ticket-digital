@@ -18,7 +18,7 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
 
     protected static final Pattern FIRST_WEIGHT_PATTERN = Pattern.compile(
             "^\\s*" +
-                    "(.*?)(?<id>[0-9A-ZÑÁÉÍÓÚ\\./\\s\\-]+)\\s*" +
+                    REGEX_ID +
                     "$");
 
     protected static final Pattern SECOND_WEIGHT_LINE = ItemByWeight.SECOND_WEIGHT_LINE;
