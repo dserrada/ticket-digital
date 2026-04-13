@@ -33,21 +33,27 @@ public record Parking(LocalTime start, LocalTime end) {
     /**
      * Parsea dos lineas para obtener información del parking
      *
-     * @param lines text line to parse
+     * @param status Estado del parseador con el iterador de líneas
      * @return información del parking o null si no es un parking
      */
-    public static Parking parse(final int position, final List<String> lines) throws ParseException {
+    public static Parking parse(ParserStatusInfo status) throws ParseException {
         // Analizo las dos líneas que contienen toda la información
         // 1 PARKING 0,00
         //  ENTRADA  19:10       SALIDA  19:48
-
-        String firstLine = lines.get(position);
-        String secondLine = lines.get(position + 1);
+        if (!status.iterator().hasNext()) return null;
+        String firstLine = status.iterator().next();
+        if (!status.iterator().hasNext()) {
+            status.iterator().previous();
+            return null;
+        }
+        String secondLine = status.iterator().next();
 
         Matcher matcher1 = FIRST_PARKING_PATTERN.matcher(firstLine);
         Matcher matcher2 = SECOND_PARKING_LINE.matcher(secondLine);
         if ( !(matcher1.matches() && matcher2.matches()) ) {
             logger.debug("Line {} no es del tipo {}",firstLine, Parking.class.getSimpleName());
+            status.iterator().previous();
+            status.iterator().previous();
             return null;
         }
 

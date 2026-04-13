@@ -22,8 +22,8 @@ class ParkingTest {
                 "1 PARKING 0,00",
                 "ENTRADA 19:10       SALIDA 19:48"
         );
-
-        Parking parking = Parking.parse(0, lines);
+        ParserStatusInfo status = new ParserStatusInfo(lines.listIterator());
+        Parking parking = Parking.parse(status);
 
         assertNotNull(parking, "El parking no debería ser null");
         assertEquals(LocalTime.of(19, 10), parking.start());
@@ -37,8 +37,8 @@ class ParkingTest {
                 "  1 PARKING 0,00  ",
                 "   ENTRADA   09:30   SALIDA   10:15   "
         );
-
-        Parking parking = Parking.parse(0, lines);
+        ParserStatusInfo status = new ParserStatusInfo(lines.listIterator());
+        Parking parking = Parking.parse(status);
 
         assertNotNull(parking);
         assertEquals(LocalTime.of(9, 30), parking.start());
@@ -52,15 +52,16 @@ class ParkingTest {
                 "1 PARKING 1,50", // El parking siempre parece ser 0,00 según el regex
                 "ENTRADA 19:10 SALIDA 19:48"
         );
-
-        Parking parking = Parking.parse(0, lines);
+        ParserStatusInfo status = new ParserStatusInfo(lines.listIterator());
+        Parking parking = Parking.parse(status);
         assertNull(parking, "Debería ser null si el precio del parking no es 0,00");
+        assertEquals(0, status.iterator().nextIndex());
 
         lines = List.of(
                 "2 PARKING 0,00", // No empieza por 1
                 "ENTRADA 19:10 SALIDA 19:48"
         );
-        assertNull(Parking.parse(0, lines));
+        assertNull(Parking.parse(new ParserStatusInfo(lines.listIterator())));
     }
 
     @Test
@@ -70,19 +71,19 @@ class ParkingTest {
                 "1 PARKING 0,00",
                 "ENTRADA 19:10" // Falta la salida
         );
-        assertNull(Parking.parse(0, lines));
+        assertNull(Parking.parse(new ParserStatusInfo(lines.listIterator())));
 
         lines = List.of(
                 "1 PARKING 0,00",
                 "INGRESO 19:10 SALIDA 19:48" // Palabra INGRESO en vez de ENTRADA
         );
-        assertNull(Parking.parse(0, lines));
+        assertNull(Parking.parse(new ParserStatusInfo(lines.listIterator())));
         
         lines = List.of(
                 "1 PARKING 0,00",
                 "ENTRADA 7:10 SALIDA 7:48" // Formato de hora sin dos dígitos (H:MM en vez de HH:MM)
         );
-        assertNull(Parking.parse(0, lines));
+        assertNull(Parking.parse(new ParserStatusInfo(lines.listIterator())));
     }
 
     @Test
@@ -93,9 +94,9 @@ class ParkingTest {
     }
 
     @Test
-    @DisplayName("Debería lanzar IndexOutOfBoundsException si no hay suficientes líneas")
-    void testParseThrowsExceptionForMissingSecondLine() {
+    @DisplayName("Debería devolver null si no hay suficientes líneas")
+    void testParseReturnsNullForMissingSecondLine() throws ParseException {
         List<String> lines = List.of("1 PARKING 0,00");
-        assertThrows(IndexOutOfBoundsException.class, () -> Parking.parse(0, lines));
+        assertNull(Parking.parse(new ParserStatusInfo(lines.listIterator())));
     }
 }

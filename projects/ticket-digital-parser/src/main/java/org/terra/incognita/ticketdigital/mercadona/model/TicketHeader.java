@@ -3,6 +3,7 @@ package org.terra.incognita.ticketdigital.mercadona.model;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,13 +22,17 @@ public record TicketHeader(LocalDateTime fechaCompra,
 
     public static final int EXPECTED_LINES = 2;
 
-    public static TicketHeader parse(int position, List<String> ticketLines) throws ParseException {
+    public static TicketHeader parse(ParserStatusInfo status) throws ParseException {
 
-        // FIXME: Es común a todos los parseadores, extraer
-        if ( ticketLines.size() < (position + EXPECTED_LINES) ) {
-            throw new ParseException("Expected 4 lines, got " + ticketLines.size(),-1);
+        List<String> lines = new ArrayList<>();
+        for (int i = 0; i < EXPECTED_LINES; i++) {
+            if (status.iterator().hasNext()) {
+                lines.add(status.iterator().next());
+            } else {
+                for (int j = 0; j < lines.size(); j++) status.iterator().previous();
+                throw new ParseException("Expected " + EXPECTED_LINES + " lines, got " + lines.size(), -1);
+            }
         }
-        List<String> lines = ticketLines.subList(position, position + EXPECTED_LINES);
         // TODO: Mejor validarlas una a una para poder dar información de que linea falla
         boolean missingLine = lines.stream().anyMatch(line -> line == null || line.isBlank());
         if ( missingLine ) {

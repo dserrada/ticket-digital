@@ -68,23 +68,30 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
 
     /**
      * Parses a text line and creates a weight-based purchase.
-     * 
-     * @param lines text line to parse
+     *
+     * @param status Estado del parseador con el iterador de líneas
      * @return parsed weight purchase or null if the line is not a weight purchase
      */
-    public static ItemByWeight parse(final int position, final List<String> lines) throws ParseException {
+    public static ItemByWeight parse(ParserStatusInfo status) throws ParseException {
         // Analizo las dos líneas que contienen toda la información
         // 1   BANANA
         //      0,336 kg                   1,45 €/kg        0,49
         // El primero es el número de unidades (entero) y el segundo, optativo, el precio por unidad
 
-        String firstLine = lines.get(position);
-        String secondLine = lines.get(position + 1);
+        if (!status.iterator().hasNext()) return null;
+        String firstLine = status.iterator().next();
+        if (!status.iterator().hasNext()) {
+            status.iterator().previous();
+            return null;
+        }
+        String secondLine = status.iterator().next();
 
         Matcher matcher1 = FIRST_WEIGHT_PATTERN.matcher(firstLine);
         Matcher matcher2 = SECOND_WEIGHT_LINE.matcher(secondLine);
         if ( !(matcher1.matches() && matcher2.matches()) ) {
             logger.debug("Line [{}] no es del tipo {} , matcher1: {}, matcher2: {}",firstLine, ItemByWeight.class.getSimpleName(), matcher1.matches(), matcher2.matches());
+            status.iterator().previous();
+            status.iterator().previous();
             return null;
         }
 

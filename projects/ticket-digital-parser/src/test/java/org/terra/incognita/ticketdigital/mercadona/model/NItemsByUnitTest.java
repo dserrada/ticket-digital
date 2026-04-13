@@ -19,8 +19,9 @@ class NItemsByUnitTest {
     void testParseValidMultipleItems() throws ParseException {
         // Ejemplo real del ticket: 2   FRANKFURT VIENA QUES                 2,80       5,60
         String line = "2   FRANKFURT VIENA QUES                 2,80       5,60";
-        NItemsByUnit item = NItemsByUnit.parse(0, List.of(line));
-        
+        ParserStatusInfo status = new ParserStatusInfo(List.of(line).listIterator());
+        NItemsByUnit item = NItemsByUnit.parse(status);
+
         assertNotNull(item, "El item no debería ser null");
         assertEquals("FRANKFURT VIENA QUES", item.id());
         assertEquals(2, item.cantidad());
@@ -34,8 +35,9 @@ class NItemsByUnitTest {
     void testParseValid4Items() throws ParseException {
         // Ejemplo del comentario en el código: 4 TORTILLA PAT C/CEB 1,5L 2,60 10,40
         String line = "4   TORTILLA PAT C/CEB 1,5L            2,60       10,40";
-        NItemsByUnit item = NItemsByUnit.parse(0, List.of(line));
-        
+        ParserStatusInfo status = new ParserStatusInfo(List.of(line).listIterator());
+        NItemsByUnit item = NItemsByUnit.parse(status);
+
         assertNotNull(item);
         assertEquals("TORTILLA PAT C/CEB 1,5L", item.id());
         assertEquals(4, item.cantidad());
@@ -49,8 +51,9 @@ class NItemsByUnitTest {
         // En el código actual, si cantidad es 1, el precioPorUnidad se queda como null 
         // a pesar de que el regex lo captura.
         String line = "1 PRODUCTO EXPLICITO 1,50 1,50";
-        NItemsByUnit item = NItemsByUnit.parse(0, List.of(line));
-        
+        ParserStatusInfo status = new ParserStatusInfo(List.of(line).listIterator());
+        NItemsByUnit item = NItemsByUnit.parse(status);
+
         assertNotNull(item);
         assertEquals("PRODUCTO EXPLICITO", item.id());
         assertEquals(1, item.cantidad());
@@ -62,15 +65,17 @@ class NItemsByUnitTest {
     @DisplayName("Debería parsear correctamente una línea con caracteres especiales en el ID")
     void testParseValidItemWithSpecialChars() throws ParseException {
         String line = "3 CHORIZO 4PACK/EXTRA 2,00 6,00";
-        NItemsByUnit item = NItemsByUnit.parse(0, List.of(line));
-        
+        ParserStatusInfo status = new ParserStatusInfo(List.of(line).listIterator());
+        NItemsByUnit item = NItemsByUnit.parse(status);
+
         assertNotNull(item);
         assertEquals("CHORIZO 4PACK/EXTRA", item.id());
         assertEquals(new BigDecimal("2.00"), item.precioPorUnidad());
         assertEquals(new BigDecimal("6.00"), item.precio());
-        
+
         line = "2 QUESO 50% DTO. 1,50 3,00";
-        item = NItemsByUnit.parse(0, List.of(line));
+        status = new ParserStatusInfo(List.of(line).listIterator());
+        item = NItemsByUnit.parse(status);
         assertNotNull(item);
         assertEquals("QUESO 50% DTO.", item.id());
     }
@@ -79,8 +84,9 @@ class NItemsByUnitTest {
     @DisplayName("Debería parsear correctamente una línea con espacios al principio y al final")
     void testParseValidItemWithLeadingTrailingSpaces() throws ParseException {
         String line = "  2 PAN BLANCO 0,50 1,00  ";
-        NItemsByUnit item = NItemsByUnit.parse(0, List.of(line));
-        
+        ParserStatusInfo status = new ParserStatusInfo(List.of(line).listIterator());
+        NItemsByUnit item = NItemsByUnit.parse(status);
+
         assertNotNull(item);
         assertEquals("PAN BLANCO", item.id());
         assertEquals(new BigDecimal("0.50"), item.precioPorUnidad());
@@ -103,8 +109,13 @@ class NItemsByUnitTest {
         };
 
         for (String line : invalidLines) {
-            NItemsByUnit item = NItemsByUnit.parse(0, List.of(line));
+            ParserStatusInfo status = new ParserStatusInfo(List.of(line).listIterator());
+            NItemsByUnit item = NItemsByUnit.parse(status);
             assertNull(item, "Debería devolver null para la línea: [" + line + "]");
+            // Verificar que el iterador volvió atrás
+            assertTrue(status.iterator().hasNext());
+            assertEquals(0, status.iterator().nextIndex());
+            assertEquals(line, status.iterator().next());
         }
     }
 

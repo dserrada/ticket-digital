@@ -54,9 +54,14 @@ public record OneItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad,
 
     /**
      * Parsea la información de una linea de compra por unidades
+     *
+     * @param status Estado del parseador con el iterador de líneas
+     * @return El item parseado o null si no coincide con el patrón
      */
-    public static OneItemByUnit parse(final int position, final List<String> linea) throws ParseException {
-        String line = linea.get(position);
+    public static OneItemByUnit parse(ParserStatusInfo status) throws ParseException {
+        if (!status.iterator().hasNext()) return null;
+        String line = status.iterator().next();
+
         // La primera línea tiene que ser de alguna de las dos siguientes formas
         // 1   PANECILLO 11UDS                                 1,10
         // 2   FRANKFURT VIENA QUES                 2,80       5,60
@@ -65,6 +70,7 @@ public record OneItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad,
 
         if (!matcher.matches()) {
             logger.debug("Line [{}] no es del tipo {}, regex: {}",line, OneItemByUnit.class.getSimpleName(), matcher.pattern());
+            status.iterator().previous();
             return null;
         }
 

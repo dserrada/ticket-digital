@@ -95,58 +95,59 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
                 .toList();
 
         // Parseo parte a parte
-        int nCurrentLine = 0;  // TODO: esto lo tendrían que mantener los parseadores (o en el arrayList)
-        ShopData shopData = ShopData.parse(0, lines);
-        nCurrentLine += ShopData.EXPECTED_LINES;
+        ParserStatusInfo status = new ParserStatusInfo(lines.listIterator());
+
+        ShopData shopData = ShopData.parse(status);
         logger.info("Datos de la tienda parseados: {}", shopData);
 
-        TicketHeader header = TicketHeader.parse(nCurrentLine,lines);
-        nCurrentLine += TicketHeader.EXPECTED_LINES;
+        TicketHeader header = TicketHeader.parse(status);
         logger.info("Datos de  la cabecera parseados: {}", header);
 
         // Salto lineas en blanco hasta que llego a la cabecera de los items (TODO: esto debería estar embebido en alguno de los parseadores)
-        while (nCurrentLine < lines.size() && lines.get(nCurrentLine).isBlank()) {
-            nCurrentLine++;
+        while (status.iterator().hasNext()) {
+            String l = status.iterator().next();
+            if (l.isBlank()) {
+                continue;
+            }
+            // Linea de cabecera de los items
+            if (!l.trim().matches("Descripción\\s*P. Unit\\s*Importe")) {
+                throw new ParseException("Invalid ticket format: expected 'Descripción                       P. Unit    Importe' header", status.iterator().previousIndex());
+            }
+            logger.info("Cabecera de los items parseada: {}", l);
+            break;
         }
-        // Linea de cabecera de los items
-        String line = lines.get(nCurrentLine);
-        if ( !line.trim().matches("Descripción\\s*P. Unit\\s*Importe") ) {
-            throw new ParseException("Invalid ticket format: expected 'Descripción                       P. Unit    Importe' header", nCurrentLine);
-        }
-        nCurrentLine++;
-        logger.info("Cabecera de los items parseada: {}", line);
 
         List<PurchasedItem> items = new ArrayList<>();
         // Y ahora compruebo la lista de items
-        boolean byUnit = false;
-        boolean byWeight = false;
         Parking parking = null;
-        while( !lines.get(nCurrentLine).trim().startsWith("TOTAL (€)")) {
+        while (status.iterator().hasNext()) {
+            String currentLine = status.iterator().next();
+            if (currentLine.trim().startsWith("TOTAL (€)")) {
+                logger.info("Total: {}", currentLine);
+                break;
+            }
+            status.iterator().previous(); // Volver atrás para que los parsers lean la línea
+
             PurchasedItem result = null;
             // Primero vemos si es info del parking por que se puede confundir con una itemByUnit
-            if ( (parking = Parking.parse(nCurrentLine,lines)) != null) {
-                nCurrentLine += 2;
+            if ((parking = Parking.parse(status)) != null) {
+                // El parking ya avanza el iterador
                 // Luego vemos si es un producto vendido por unidades
-            } else if ( (result = OneItemByUnit.parse(nCurrentLine, lines)) != null) {
+            } else if ((result = OneItemByUnit.parse(status)) != null) {
                 items.add(result);
-                nCurrentLine += 1;
-            } else if ( (result = NItemsByUnit.parse(nCurrentLine, lines)) != null) {
+            } else if ((result = NItemsByUnit.parse(status)) != null) {
                 items.add(result);
-                nCurrentLine += 1;
-            // Si no lo era pues probamos con producto al peso
-            } else if ( (result = ItemByWeight.parse(nCurrentLine, lines)) != null) {
+                // Si no lo era pues probamos con producto al peso
+            } else if ((result = ItemByWeight.parse(status)) != null) {
                 items.add(result);
-                nCurrentLine += 2;
-            } else if ( (result = FreshItemByWeight.parse(nCurrentLine, lines)) != null) {
+            } else if ((result = FreshItemByWeight.parse(status)) != null) {
                 items.add(result);
-                nCurrentLine += 3;
             } else {
-                logger.error("Invalid ticket format: expected item line, found: [{}], fileNumber: {}, expectedRegexp: {}",lines.get(nCurrentLine), nCurrentLine,null);
-                throw new ParseException("Invalid ticket format: expected item line, found: " + lines.get(nCurrentLine), nCurrentLine);
+                String errorLine = status.iterator().next();
+                logger.error("Invalid ticket format: expected item line, found: [{}], fileNumber: {}", errorLine, status.iterator().previousIndex());
+                throw new ParseException("Invalid ticket format: expected item line, found: " + errorLine, status.iterator().previousIndex());
             }
         }
-        // Estamos en la linea del total
-        logger.info("Total: {}", lines.get(nCurrentLine));
 
 
         return new TicketMercadona(shopData, header,items, parking,

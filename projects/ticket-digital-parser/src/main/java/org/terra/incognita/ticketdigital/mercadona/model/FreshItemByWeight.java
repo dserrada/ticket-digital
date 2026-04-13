@@ -55,16 +55,15 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
     /**
      * Parses a text line and creates a weight-based purchase.
      *
-     * @param lines text line to parse
+     * @param status Estado del parseador con el iterador de líneas
      * @return parsed weight purchase or null if the line is not a weight purchase
      */
-    public static FreshItemByWeight parse(final int position, final List<String> lines) throws ParseException {
+    public static FreshItemByWeight parse(ParserStatusInfo status) throws ParseException {
         // Analizo las dos líneas que contienen toda la información
         // PESCADO
         //     SALMON ENTERO
         //      0,336 kg                   1,45 €/kg        0,49
         // El primero es el número de unidades (entero) y el segundo, optativo, el precio por unidad
-
         // Pero ojo, agrupa, y puedo tener lo siguiente
         // PESCADO
         //    LUBINA
@@ -74,16 +73,28 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
         //    LANGOSTINO COCIDO
         //  0,536 kg 10,95 €/kg 5,87
 
-
-        String freshTypeLine = lines.get(position);
-        String firstLine = lines.get(position+1);
-        String secondLine = lines.get(position+2);
+        if (!status.iterator().hasNext()) return null;
+        String freshTypeLine = status.iterator().next();
+        if (!status.iterator().hasNext()) {
+            status.iterator().previous();
+            return null;
+        }
+        String firstLine = status.iterator().next();
+        if (!status.iterator().hasNext()) {
+            status.iterator().previous();
+            status.iterator().previous();
+            return null;
+        }
+        String secondLine = status.iterator().next();
 
         Matcher matcherType = FRESH_TYPE_PATTERN.matcher(freshTypeLine);
         Matcher matcher1 = FIRST_WEIGHT_PATTERN.matcher(firstLine);
         Matcher matcher2 = SECOND_WEIGHT_LINE.matcher(secondLine);
         if ( !(matcherType.matches() && matcher1.matches() && matcher2.matches()) ) {
-            logger.debug("Line [{}] no es del tipo {} , matcherType: {}, matcher1: {}, matcher2: {}",matcherType, FreshItemByWeight.class.getSimpleName(), matcherType.matches(), matcher1.matches(), matcher2.matches());
+            logger.debug("Line [{}] no es del tipo {} , matcherType: {}, matcher1: {}, matcher2: {}", freshTypeLine, FreshItemByWeight.class.getSimpleName(), matcherType.matches(), matcher1.matches(), matcher2.matches());
+            status.iterator().previous();
+            status.iterator().previous();
+            status.iterator().previous();
             return null;
         }
 
@@ -96,7 +107,7 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
         BigDecimal pesoKg = PurchasedItem.parseWeight(sPeso);
         String sPrecioKg = matcher2.group("precioKg");
         BigDecimal precioPorKilogramo = PurchasedItem.parseUnitPrice(sPrecioKg);
-        String sImporte = matcher2.group("importe");
+        String sImporte = matcher2.group("precio");
         BigDecimal importe = PurchasedItem.parseUnitPrice(sImporte);
         logger.debug("pesoKg {}, precioKg {}, importe {}, type: {}, id: [{}]", pesoKg, precioPorKilogramo, importe, freshType, id);
 

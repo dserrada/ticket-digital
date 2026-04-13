@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -25,16 +26,22 @@ public record ShopData(String shopName, String cif, String address, String posta
     /**
      * Parsea el trozo de información del ticket
      *
-     * @param lines    Un array de líneas que componen el chunk de información
+     * @param status    Estado del parseador con el iterador de líneas
      * @return          Un objeto que representa la información contenida en el chunk
      * @throws ParseException Si ocurre un error durante el análisis del chunk
      */
-    public static ShopData parse(final int position, final List<String> ticketLines) throws ParseException {
-        logger.debug("Parsing line {}", ticketLines.get(position));
-        if ( ticketLines.size() < (position + EXPECTED_LINES) ) {
-            throw new ParseException("Expected 4 lines, got " + ticketLines.size(),-1);
+    public static ShopData parse(ParserStatusInfo status) throws ParseException {
+        List<String> lines = new ArrayList<>();
+        for (int i = 0; i < EXPECTED_LINES; i++) {
+            if (status.iterator().hasNext()) {
+                lines.add(status.iterator().next());
+            } else {
+                for (int j = 0; j < lines.size(); j++) status.iterator().previous();
+                throw new ParseException("Expected 4 lines, got " + lines.size(), -1);
+            }
         }
-        List<String> lines = ticketLines.subList(position, position + EXPECTED_LINES);
+
+        logger.debug("Parsing lines {}", lines);
 
         // TODO: Mejor validarlas una a una para poder dar información de que linea falla
         boolean missingLine = lines.stream().anyMatch(line -> line == null || line.isBlank());
