@@ -23,7 +23,7 @@ class TicketHeaderTest {
                 "           01/01/2023 09:00 OP: 257136",
                 "       FACTURA SIMPLIFICADA: 4567-891-113122"
         );
-        ParserStatusInfo status = new ParserStatusInfo(lines.listIterator());
+        ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
         TicketHeader header = TicketHeader.parse(status);
 
         assertNotNull(header);
@@ -39,7 +39,7 @@ class TicketHeaderTest {
                 "01/01/2023 09:00 OP: 257136"
                 // Falta la 2ª línea
         );
-        ParserStatusInfo status = new ParserStatusInfo(lines.listIterator());
+        ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
         assertThrows(ParseException.class, () -> TicketHeader.parse(status));
     }
 
@@ -50,7 +50,7 @@ class TicketHeaderTest {
                 "  ", // Línea en blanco
                 "FACTURA SIMPLIFICADA: 4567-891-113122"
         );
-        ParserStatusInfo status = new ParserStatusInfo(lines.listIterator());
+        ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
         assertThrows(ParseException.class, () -> TicketHeader.parse(status));
     }
 
@@ -61,13 +61,13 @@ class TicketHeaderTest {
                 "01/01/2023 09:00 OP:", // Falta el valor de OP
                 "FACTURA SIMPLIFICADA: 4567-891-113122"
         );
-        assertThrows(ParseException.class, () -> TicketHeader.parse(new ParserStatusInfo(lines.listIterator())));
+        assertThrows(ParseException.class, () -> TicketHeader.parse(new ParserStatusInfo(String.join("\n", lines))));
 
         List<String> lines2 = List.of(
                 "01/01/2023 09:00 257136", // Falta "OP:"
                 "FACTURA SIMPLIFICADA: 4567-891-113122"
         );
-        assertThrows(ParseException.class, () -> TicketHeader.parse(new ParserStatusInfo(lines2.listIterator())));
+        assertThrows(ParseException.class, () -> TicketHeader.parse(new ParserStatusInfo(String.join("\n", lines2))));
     }
 
     @Test
@@ -77,7 +77,7 @@ class TicketHeaderTest {
                 "01-01-2023 09:00 OP: 257136", // Guiones en vez de barras
                 "FACTURA SIMPLIFICADA: 4567-891-113122"
         );
-        assertThrows(DateTimeParseException.class, () -> TicketHeader.parse(new ParserStatusInfo(lines.listIterator())));
+        assertThrows(DateTimeParseException.class, () -> TicketHeader.parse(new ParserStatusInfo(String.join("\n", lines))));
     }
 
     @Test
@@ -87,6 +87,6 @@ class TicketHeaderTest {
                 "01/01/2023 09:00 OP: 257136",
                 "FACTURA SIMPLIFICADA 4567-891-113122" // Falta ':'
         );
-        assertThrows(ParseException.class, () -> TicketHeader.parse(new ParserStatusInfo(lines.listIterator())));
+        assertThrows(ParseException.class, () -> TicketHeader.parse(new ParserStatusInfo(String.join("\n", lines))));
     }
 }

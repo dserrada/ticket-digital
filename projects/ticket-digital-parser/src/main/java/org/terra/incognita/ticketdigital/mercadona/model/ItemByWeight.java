@@ -78,20 +78,19 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
         //      0,336 kg                   1,45 €/kg        0,49
         // El primero es el número de unidades (entero) y el segundo, optativo, el precio por unidad
 
-        if (!status.iterator().hasNext()) return null;
-        String firstLine = status.iterator().next();
-        if (!status.iterator().hasNext()) {
-            status.iterator().previous();
+        if (!status.hasNext()) return null;
+        String firstLine = status.next();
+        if (!status.hasNext()) {
+            status.rollback(1);
             return null;
         }
-        String secondLine = status.iterator().next();
+        String secondLine = status.next();
 
         Matcher matcher1 = FIRST_WEIGHT_PATTERN.matcher(firstLine);
         Matcher matcher2 = SECOND_WEIGHT_LINE.matcher(secondLine);
         if ( !(matcher1.matches() && matcher2.matches()) ) {
             logger.debug("Line [{}] no es del tipo {} , matcher1: {}, matcher2: {}",firstLine, ItemByWeight.class.getSimpleName(), matcher1.matches(), matcher2.matches());
-            status.iterator().previous();
-            status.iterator().previous();
+            status.rollback(2);
             return null;
         }
 

@@ -59,8 +59,8 @@ public record OneItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad,
      * @return El item parseado o null si no coincide con el patrón
      */
     public static OneItemByUnit parse(ParserStatusInfo status) throws ParseException {
-        if (!status.iterator().hasNext()) return null;
-        String line = status.iterator().next();
+        if (!status.hasNext()) return null;
+        String line = status.next();
 
         // La primera línea tiene que ser de alguna de las dos siguientes formas
         // 1   PANECILLO 11UDS                                 1,10
@@ -70,7 +70,7 @@ public record OneItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad,
 
         if (!matcher.matches()) {
             logger.debug("Line [{}] no es del tipo {}, regex: {}",line, OneItemByUnit.class.getSimpleName(), matcher.pattern());
-            status.iterator().previous();
+            status.rollback(1);
             return null;
         }
 

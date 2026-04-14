@@ -23,7 +23,7 @@ class ShopDataTest {
                 "                46113 MONCADA",
                 "              TELÉFONO: 961309467"
         );
-        ParserStatusInfo status = new ParserStatusInfo(lines.listIterator());
+        ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
         ShopData shopData = ShopData.parse(status);
 
         assertNotNull(shopData);
@@ -44,7 +44,7 @@ class ShopDataTest {
                 "28001 MADRID",
                 "TELÉFONO: 912345678"
         );
-        ParserStatusInfo status = new ParserStatusInfo(lines.listIterator());
+        ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
         ShopData shopData = ShopData.parse(status);
 
         assertNotNull(shopData);
@@ -65,10 +65,10 @@ class ShopDataTest {
                 "46113 MONCADA"
                 // Falta la 4ª línea
         );
-        ParserStatusInfo status = new ParserStatusInfo(lines.listIterator());
+        ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
         assertThrows(ParseException.class, () -> ShopData.parse(status));
         // Verificar que el iterador volvió al principio
-        assertEquals(0, status.iterator().nextIndex());
+        assertEquals(0, status.nextIndex());
     }
 
     @Test
@@ -80,7 +80,7 @@ class ShopDataTest {
                 "46113 MONCADA",
                 "TELÉFONO: 961309467"
         );
-        ParserStatusInfo status = new ParserStatusInfo(lines.listIterator());
+        ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
         assertThrows(ParseException.class, () -> ShopData.parse(status));
     }
 
@@ -93,7 +93,7 @@ class ShopDataTest {
                 "12345 LOCALIDAD",
                 "TELÉFONO: 123"
         );
-        ParserStatusInfo status = new ParserStatusInfo(lines.listIterator());
+        ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
         assertThrows(IllegalArgumentException.class, () -> ShopData.parse(status));
     }
 
@@ -106,7 +106,7 @@ class ShopDataTest {
                 "46113", // Falta la localidad
                 "TELÉFONO: 123"
         );
-        ParserStatusInfo status = new ParserStatusInfo(lines.listIterator());
+        ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
         assertThrows(ParseException.class, () -> ShopData.parse(status));
     }
 
@@ -119,7 +119,7 @@ class ShopDataTest {
                 "46113 MONCADA",
                 "TELÉFONO 961309467" // Falta ':'
         );
-        ParserStatusInfo status = new ParserStatusInfo(lines.listIterator());
+        ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
         assertThrows(ParseException.class, () -> ShopData.parse(status));
     }
 }

@@ -18,7 +18,7 @@ class OneItemByUnitTest {
     @DisplayName("Debería parsear correctamente una línea válida con una unidad")
     void testParseValidSingleItem() throws ParseException {
         String line = "1 PRODUCTO 1,50";
-        ParserStatusInfo status = new ParserStatusInfo(List.of(line).listIterator());
+        ParserStatusInfo status = new ParserStatusInfo(line);
         OneItemByUnit item = OneItemByUnit.parse(status);
 
         assertNotNull(item, "El item no debería ser null");
@@ -34,7 +34,7 @@ class OneItemByUnitTest {
     void testParseValidItemWithManySpaces() throws ParseException {
         // Ejemplo real del archivo de ticket
         String line = "1   BARRA DE PAN                                    0,48";
-        ParserStatusInfo status = new ParserStatusInfo(List.of(line).listIterator());
+        ParserStatusInfo status = new ParserStatusInfo(line);
         OneItemByUnit item = OneItemByUnit.parse(status);
 
         assertNotNull(item);
@@ -46,7 +46,7 @@ class OneItemByUnitTest {
     @DisplayName("Debería parsear correctamente una línea con caracteres especiales en el ID")
     void testParseValidItemWithSpecialChars() throws ParseException {
         String line = "1 CHORIZO 4PACK/EXTRA 1,97";
-        ParserStatusInfo status = new ParserStatusInfo(List.of(line).listIterator());
+        ParserStatusInfo status = new ParserStatusInfo(line);
         OneItemByUnit item = OneItemByUnit.parse(status);
 
         assertNotNull(item);
@@ -54,7 +54,7 @@ class OneItemByUnitTest {
         assertEquals(new BigDecimal("1.97"), item.precio());
 
         line = "1 QUESO 50% DTO. 2,00";
-        status = new ParserStatusInfo(List.of(line).listIterator());
+        status = new ParserStatusInfo(line);
         item = OneItemByUnit.parse(status);
         assertNotNull(item);
         assertEquals("QUESO 50% DTO.", item.id());
@@ -64,7 +64,7 @@ class OneItemByUnitTest {
     @DisplayName("Debería parsear correctamente una línea con espacios al principio y al final")
     void testParseValidItemWithLeadingTrailingSpaces() throws ParseException {
         String line = "  1 PAN BLANCO 0,50  ";
-        ParserStatusInfo status = new ParserStatusInfo(List.of(line).listIterator());
+        ParserStatusInfo status = new ParserStatusInfo(line);
         OneItemByUnit item = OneItemByUnit.parse(status);
 
         assertNotNull(item);
@@ -88,13 +88,13 @@ class OneItemByUnitTest {
         };
 
         for (String line : invalidLines) {
-            ParserStatusInfo status = new ParserStatusInfo(List.of(line).listIterator());
+            ParserStatusInfo status = new ParserStatusInfo(line + "\n");
             OneItemByUnit item = OneItemByUnit.parse(status);
             assertNull(item, "Debería devolver null para la línea: [" + line + "]");
             // Verificar que el iterador volvió atrás
-            assertTrue(status.iterator().hasNext());
-            assertEquals(0, status.iterator().nextIndex());
-            assertEquals(line, status.iterator().next());
+            assertTrue(status.hasNext());
+            assertEquals(0, status.nextIndex());
+            assertEquals(line, status.next());
         }
     }
 

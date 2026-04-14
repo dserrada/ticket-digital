@@ -33,10 +33,10 @@ public record ShopData(String shopName, String cif, String address, String posta
     public static ShopData parse(ParserStatusInfo status) throws ParseException {
         List<String> lines = new ArrayList<>();
         for (int i = 0; i < EXPECTED_LINES; i++) {
-            if (status.iterator().hasNext()) {
-                lines.add(status.iterator().next());
+            if (status.hasNext()) {
+                lines.add(status.next());
             } else {
-                for (int j = 0; j < lines.size(); j++) status.iterator().previous();
+                status.rollback(lines.size());
                 throw new ParseException("Expected 4 lines, got " + lines.size(), -1);
             }
         }

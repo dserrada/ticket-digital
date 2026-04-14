@@ -23,13 +23,12 @@ public record TicketHeader(LocalDateTime fechaCompra,
     public static final int EXPECTED_LINES = 2;
 
     public static TicketHeader parse(ParserStatusInfo status) throws ParseException {
-
         List<String> lines = new ArrayList<>();
         for (int i = 0; i < EXPECTED_LINES; i++) {
-            if (status.iterator().hasNext()) {
-                lines.add(status.iterator().next());
+            if (status.hasNext()) {
+                lines.add(status.next());
             } else {
-                for (int j = 0; j < lines.size(); j++) status.iterator().previous();
+                status.rollback(lines.size());
                 throw new ParseException("Expected " + EXPECTED_LINES + " lines, got " + lines.size(), -1);
             }
         }

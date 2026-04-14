@@ -87,15 +87,10 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
     public static TicketMercadona parse(String ticketData) throws IOException, ParseException {
         Objects.requireNonNull(ticketData, "ticketData");
 
-        logger.debug("Parseando el ticket con data:\\n {}", ticketData);
-
-        // Lo pasamos a un array de strings
-        List<String> lines = ticketData.lines()
-                // Prodiramos hacer aquí un procesamiento, como un trim(), pero de momento lo dejo tal cual
-                .toList();
+        logger.debug("Parseando el ticket con data:\n {}", ticketData);
 
         // Parseo parte a parte
-        ParserStatusInfo status = new ParserStatusInfo(lines.listIterator());
+        ParserStatusInfo status = new ParserStatusInfo(ticketData);
 
         ShopData shopData = ShopData.parse(status);
         logger.info("Datos de la tienda parseados: {}", shopData);
@@ -104,14 +99,14 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
         logger.info("Datos de  la cabecera parseados: {}", header);
 
         // Salto lineas en blanco hasta que llego a la cabecera de los items (TODO: esto debería estar embebido en alguno de los parseadores)
-        while (status.iterator().hasNext()) {
-            String l = status.iterator().next();
+        while (status.hasNext()) {
+            String l = status.next();
             if (l.isBlank()) {
                 continue;
             }
             // Linea de cabecera de los items
             if (!l.trim().matches("Descripción\\s*P. Unit\\s*Importe")) {
-                throw new ParseException("Invalid ticket format: expected 'Descripción                       P. Unit    Importe' header", status.iterator().previousIndex());
+                throw new ParseException("Invalid ticket format: expected 'Descripción                       P. Unit    Importe' header", status.previousIndex());
             }
             logger.info("Cabecera de los items parseada: {}", l);
             break;
@@ -120,13 +115,13 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
         List<PurchasedItem> items = new ArrayList<>();
         // Y ahora compruebo la lista de items
         Parking parking = null;
-        while (status.iterator().hasNext()) {
-            String currentLine = status.iterator().next();
+        while (status.hasNext()) {
+            String currentLine = status.next();
             if (currentLine.trim().startsWith("TOTAL (€)")) {
                 logger.info("Total: {}", currentLine);
                 break;
             }
-            status.iterator().previous(); // Volver atrás para que los parsers lean la línea
+            status.rollback(1); // Volver atrás para que los parsers lean la línea
 
             PurchasedItem result = null;
             // Primero vemos si es info del parking por que se puede confundir con una itemByUnit
@@ -143,9 +138,9 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
             } else if ((result = FreshItemByWeight.parse(status)) != null) {
                 items.add(result);
             } else {
-                String errorLine = status.iterator().next();
-                logger.error("Invalid ticket format: expected item line, found: [{}], fileNumber: {}", errorLine, status.iterator().previousIndex());
-                throw new ParseException("Invalid ticket format: expected item line, found: " + errorLine, status.iterator().previousIndex());
+                String errorLine = status.next();
+                logger.error("Invalid ticket format: expected item line, found: [{}], fileNumber: {}", errorLine, status.previousIndex());
+                throw new ParseException("Invalid ticket format: expected item line, found: " + errorLine, status.previousIndex());
             }
         }
 

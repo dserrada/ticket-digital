@@ -73,28 +73,25 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
         //    LANGOSTINO COCIDO
         //  0,536 kg 10,95 €/kg 5,87
 
-        if (!status.iterator().hasNext()) return null;
-        String freshTypeLine = status.iterator().next();
-        if (!status.iterator().hasNext()) {
-            status.iterator().previous();
+        if (!status.hasNext()) return null;
+        String freshTypeLine = status.next();
+        if (!status.hasNext()) {
+            status.rollback(1);
             return null;
         }
-        String firstLine = status.iterator().next();
-        if (!status.iterator().hasNext()) {
-            status.iterator().previous();
-            status.iterator().previous();
+        String firstLine = status.next();
+        if (!status.hasNext()) {
+            status.rollback(2);
             return null;
         }
-        String secondLine = status.iterator().next();
+        String secondLine = status.next();
 
         Matcher matcherType = FRESH_TYPE_PATTERN.matcher(freshTypeLine);
         Matcher matcher1 = FIRST_WEIGHT_PATTERN.matcher(firstLine);
         Matcher matcher2 = SECOND_WEIGHT_LINE.matcher(secondLine);
         if ( !(matcherType.matches() && matcher1.matches() && matcher2.matches()) ) {
             logger.debug("Line [{}] no es del tipo {} , matcherType: {}, matcher1: {}, matcher2: {}", freshTypeLine, FreshItemByWeight.class.getSimpleName(), matcherType.matches(), matcher1.matches(), matcher2.matches());
-            status.iterator().previous();
-            status.iterator().previous();
-            status.iterator().previous();
+            status.rollback(3);
             return null;
         }
 

@@ -40,20 +40,19 @@ public record Parking(LocalTime start, LocalTime end) {
         // Analizo las dos líneas que contienen toda la información
         // 1 PARKING 0,00
         //  ENTRADA  19:10       SALIDA  19:48
-        if (!status.iterator().hasNext()) return null;
-        String firstLine = status.iterator().next();
-        if (!status.iterator().hasNext()) {
-            status.iterator().previous();
+        if (!status.hasNext()) return null;
+        String firstLine = status.next();
+        if (!status.hasNext()) {
+            status.rollback(1);
             return null;
         }
-        String secondLine = status.iterator().next();
+        String secondLine = status.next();
 
         Matcher matcher1 = FIRST_PARKING_PATTERN.matcher(firstLine);
         Matcher matcher2 = SECOND_PARKING_LINE.matcher(secondLine);
         if ( !(matcher1.matches() && matcher2.matches()) ) {
             logger.debug("Line {} no es del tipo {}",firstLine, Parking.class.getSimpleName());
-            status.iterator().previous();
-            status.iterator().previous();
+            status.rollback(2);
             return null;
         }
 

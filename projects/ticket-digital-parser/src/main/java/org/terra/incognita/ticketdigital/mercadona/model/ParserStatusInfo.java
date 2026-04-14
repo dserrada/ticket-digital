@@ -11,18 +11,58 @@ public class ParserStatusInfo {
     /**
      * Constructor para ParserStatusInfo.
      *
-     * @param iterator Iterador sobre las líneas del ticket.
+     * @param ticketData Contenido en texto del fichero ticket.
      */
-    public ParserStatusInfo(ListIterator<String> iterator) {
-        this.iterator = iterator;
+    public ParserStatusInfo(String ticketData) {
+        this.iterator = ticketData.lines().toList().listIterator();
     }
 
     /**
-     * Devuelve el iterador sobre las líneas del ticket.
+     * Comprueba si hay más líneas para leer.
      *
-     * @return El iterador.
+     * @return true si hay más líneas, false en caso contrario.
      */
-    public ListIterator<String> iterator() {
-        return iterator;
+    public boolean hasNext() {
+        return iterator.hasNext();
+    }
+
+    /**
+     * Devuelve la siguiente línea del ticket.
+     *
+     * @return La siguiente línea.
+     */
+    public String next() {
+        return iterator.next();
+    }
+
+    /**
+     * Vuelve atrás un número determinado de posiciones.
+     *
+     * @param n Número de posiciones a volver atrás.
+     */
+    public void rollback(int n) {
+        for (int i = 0; i < n; i++) {
+            if (iterator.hasPrevious()) {
+                iterator.previous();
+            }
+        }
+    }
+
+    /**
+     * Devuelve el índice de la siguiente línea que se va a leer.
+     *
+     * @return El índice de la siguiente línea.
+     */
+    public int nextIndex() {
+        return iterator.nextIndex();
+    }
+
+    /**
+     * Devuelve el índice de la línea que se acaba de leer.
+     *
+     * @return El índice de la línea leída.
+     */
+    public int previousIndex() {
+        return iterator.previousIndex();
     }
 }
