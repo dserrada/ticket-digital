@@ -53,6 +53,14 @@ class TicketMercadonaTest {
         // TODO: Comprobar que lo que ha leido sea correcto
     }
 
+    @Test
+    public void pruebaFicheroPDFConProductosFrescos() throws Exception {
+        // Simplemente verificamos que no explota
+        TicketMercadona ticket = TicketMercadona.parse(Path.of("src/test/resources/" + "20241108 Mercadona 77,71 €.pdf"));
+        assertNotNull(ticket);
+        logger.debug("Ticket parseado: {}", ticket);
+        logger.debug("Importe final: {}", ticket.precioTotalEnEuros());
+        // TODO: Comprobar que lo que ha leido sea correcto
     }
 
 

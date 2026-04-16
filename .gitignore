@@ -144,6 +144,8 @@ gradle-app.setting
 
 # No quiero subir nunca pdfs con tickets
 *.pdf
+# Excepto los tests especificamente puestos en el directorio de testing
+!projects/ticket-digital-parser/src/test/resources/*.pdf
 
 
 .junie/memory/
