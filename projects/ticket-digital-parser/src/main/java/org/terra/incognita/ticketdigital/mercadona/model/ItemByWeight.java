@@ -72,7 +72,7 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
      * @param status Estado del parseador con el iterador de líneas
      * @return parsed weight purchase or null if the line is not a weight purchase
      */
-    public static ItemByWeight parse(ParserStatusInfo status) throws ParseException {
+    public static ItemByWeight parser(ParserStatusInfo status) throws ParseException {
         // Analizo las dos líneas que contienen toda la información
         // 1   BANANA
         //      0,336 kg                   1,45 €/kg        0,49

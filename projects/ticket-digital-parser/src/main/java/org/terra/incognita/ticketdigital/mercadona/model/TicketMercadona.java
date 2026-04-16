@@ -92,10 +92,10 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
         // Parseo parte a parte
         ParserStatusInfo status = new ParserStatusInfo(ticketData);
 
-        ShopData shopData = ShopData.parse(status);
+        ShopData shopData = ShopData.parser(status);
         logger.info("Datos de la tienda parseados: {}", shopData);
 
-        TicketHeader header = TicketHeader.parse(status);
+        TicketHeader header = TicketHeader.parser(status);
         logger.info("Datos de  la cabecera parseados: {}", header);
 
         // Salto lineas en blanco hasta que llego a la cabecera de los items (TODO: esto debería estar embebido en alguno de los parseadores)
@@ -125,17 +125,17 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
 
             PurchasedItem result = null;
             // Primero vemos si es info del parking por que se puede confundir con una itemByUnit
-            if ((parking = Parking.parse(status)) != null) {
+            if ((parking = Parking.parser(status)) != null) {
                 // El parking ya avanza el iterador
                 // Luego vemos si es un producto vendido por unidades
-            } else if ((result = OneItemByUnit.parse(status)) != null) {
+            } else if ((result = OneItemByUnit.parser(status)) != null) {
                 items.add(result);
-            } else if ((result = NItemsByUnit.parse(status)) != null) {
+            } else if ((result = NItemsByUnit.parser(status)) != null) {
                 items.add(result);
                 // Si no lo era pues probamos con producto al peso
-            } else if ((result = ItemByWeight.parse(status)) != null) {
+            } else if ((result = ItemByWeight.parser(status)) != null) {
                 items.add(result);
-            } else if ((result = FreshItemByWeight.parse(status)) != null) {
+            } else if ((result = FreshItemByWeight.parser(status)) != null) {
                 items.add(result);
             } else {
                 String errorLine = status.next();

@@ -58,7 +58,7 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
      * @param status Estado del parseador con el iterador de líneas
      * @return parsed weight purchase or null if the line is not a weight purchase
      */
-    public static FreshItemByWeight parse(ParserStatusInfo status) throws ParseException {
+    public static FreshItemByWeight parser(ParserStatusInfo status) throws ParseException {
         // Analizo las dos líneas que contienen toda la información
         // PESCADO
         //     SALMON ENTERO

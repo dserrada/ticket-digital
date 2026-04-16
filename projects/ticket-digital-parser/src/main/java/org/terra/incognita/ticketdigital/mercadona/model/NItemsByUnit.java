@@ -59,7 +59,7 @@ public record NItemsByUnit(String id, int cantidad, BigDecimal precioPorUnidad, 
      * @param status Estado del parseador con el iterador de líneas
      * @return El item parseado o null si no coincide con el patrón
      */
-    public static NItemsByUnit parse(ParserStatusInfo status) throws ParseException {
+    public static NItemsByUnit parser(ParserStatusInfo status) throws ParseException {
         if (!status.hasNext()) return null;
         String line = status.next();
 

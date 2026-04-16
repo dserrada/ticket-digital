@@ -30,7 +30,7 @@ public record ShopData(String shopName, String cif, String address, String posta
      * @return          Un objeto que representa la información contenida en el chunk
      * @throws ParseException Si ocurre un error durante el análisis del chunk
      */
-    public static ShopData parse(ParserStatusInfo status) throws ParseException {
+    public static ShopData parser(ParserStatusInfo status) throws ParseException {
         List<String> lines = new ArrayList<>();
         for (int i = 0; i < EXPECTED_LINES; i++) {
             if (status.hasNext()) {

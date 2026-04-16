@@ -20,7 +20,7 @@ class NItemsByUnitTest {
         // Ejemplo real del ticket: 2   FRANKFURT VIENA QUES                 2,80       5,60
         String line = "2   FRANKFURT VIENA QUES                 2,80       5,60";
         ParserStatusInfo status = new ParserStatusInfo(line);
-        NItemsByUnit item = NItemsByUnit.parse(status);
+        NItemsByUnit item = NItemsByUnit.parser(status);
 
         assertNotNull(item, "El item no debería ser null");
         assertEquals("FRANKFURT VIENA QUES", item.id());
@@ -36,7 +36,7 @@ class NItemsByUnitTest {
         // Ejemplo del comentario en el código: 4 TORTILLA PAT C/CEB 1,5L 2,60 10,40
         String line = "4   TORTILLA PAT C/CEB 1,5L            2,60       10,40";
         ParserStatusInfo status = new ParserStatusInfo(line);
-        NItemsByUnit item = NItemsByUnit.parse(status);
+        NItemsByUnit item = NItemsByUnit.parser(status);
 
         assertNotNull(item);
         assertEquals("TORTILLA PAT C/CEB 1,5L", item.id());
@@ -52,7 +52,7 @@ class NItemsByUnitTest {
         // a pesar de que el regex lo captura.
         String line = "1 PRODUCTO EXPLICITO 1,50 1,50";
         ParserStatusInfo status = new ParserStatusInfo(line);
-        NItemsByUnit item = NItemsByUnit.parse(status);
+        NItemsByUnit item = NItemsByUnit.parser(status);
 
         assertNotNull(item);
         assertEquals("PRODUCTO EXPLICITO", item.id());
@@ -66,7 +66,7 @@ class NItemsByUnitTest {
     void testParseValidItemWithSpecialChars() throws ParseException {
         String line = "3 CHORIZO 4PACK/EXTRA 2,00 6,00";
         ParserStatusInfo status = new ParserStatusInfo(line);
-        NItemsByUnit item = NItemsByUnit.parse(status);
+        NItemsByUnit item = NItemsByUnit.parser(status);
 
         assertNotNull(item);
         assertEquals("CHORIZO 4PACK/EXTRA", item.id());
@@ -75,7 +75,7 @@ class NItemsByUnitTest {
 
         line = "2 QUESO 50% DTO. 1,50 3,00";
         status = new ParserStatusInfo(line);
-        item = NItemsByUnit.parse(status);
+        item = NItemsByUnit.parser(status);
         assertNotNull(item);
         assertEquals("QUESO 50% DTO.", item.id());
     }
@@ -85,7 +85,7 @@ class NItemsByUnitTest {
     void testParseValidItemWithLeadingTrailingSpaces() throws ParseException {
         String line = "  2 PAN BLANCO 0,50 1,00  ";
         ParserStatusInfo status = new ParserStatusInfo(line);
-        NItemsByUnit item = NItemsByUnit.parse(status);
+        NItemsByUnit item = NItemsByUnit.parser(status);
 
         assertNotNull(item);
         assertEquals("PAN BLANCO", item.id());
@@ -110,7 +110,7 @@ class NItemsByUnitTest {
 
         for (String line : invalidLines) {
             ParserStatusInfo status = new ParserStatusInfo(line + "\n");
-            NItemsByUnit item = NItemsByUnit.parse(status);
+            NItemsByUnit item = NItemsByUnit.parser(status);
             assertNull(item, "Debería devolver null para la línea: [" + line + "]");
             // Verificar que el iterador volvió atrás
             assertTrue(status.hasNext());
