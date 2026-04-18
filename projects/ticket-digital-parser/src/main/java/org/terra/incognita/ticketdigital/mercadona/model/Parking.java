@@ -36,7 +36,7 @@ public record Parking(LocalTime start, LocalTime end) {
      * @param status Estado del parseador con el iterador de líneas
      * @return información del parking o null si no es un parking
      */
-    public static Parking parser(ParserStatusInfo status) throws ParseException {
+    public static Parking parse(ParserStatusInfo status) throws ParseException, UnsupportedOperationException  {
         // Analizo las dos líneas que contienen toda la información
         // 1 PARKING 0,00
         //  ENTRADA  19:10       SALIDA  19:48

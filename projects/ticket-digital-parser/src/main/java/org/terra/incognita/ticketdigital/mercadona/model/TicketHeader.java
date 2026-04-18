@@ -22,7 +22,7 @@ public record TicketHeader(LocalDateTime fechaCompra,
 
     public static final int EXPECTED_LINES = 2;
 
-    public static TicketHeader parser(ParserStatusInfo status) throws ParseException {
+    public static TicketHeader parse(ParserStatusInfo status) throws ParseException, UnsupportedOperationException  {
         List<String> lines = new ArrayList<>();
         for (int i = 0; i < EXPECTED_LINES; i++) {
             if (status.hasNext()) {

@@ -24,7 +24,7 @@ class ShopDataTest {
                 "              TELÉFONO: 961309467"
         );
         ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
-        ShopData shopData = ShopData.parser(status);
+        ShopData shopData = ShopData.parse(status);
 
         assertNotNull(shopData);
         assertEquals("MERCADONA, S.A.", shopData.shopName());
@@ -45,7 +45,7 @@ class ShopDataTest {
                 "TELÉFONO: 912345678"
         );
         ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
-        ShopData shopData = ShopData.parser(status);
+        ShopData shopData = ShopData.parse(status);
 
         assertNotNull(shopData);
         assertEquals("OTRA EMPRESA, S.A.", shopData.shopName());
@@ -66,7 +66,7 @@ class ShopDataTest {
                 // Falta la 4ª línea
         );
         ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
-        assertThrows(ParseException.class, () -> ShopData.parser(status));
+        assertThrows(ParseException.class, () -> ShopData.parse(status));
         // Verificar que el iterador volvió al principio
         assertEquals(0, status.nextIndex());
     }
@@ -81,7 +81,7 @@ class ShopDataTest {
                 "TELÉFONO: 961309467"
         );
         ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
-        assertThrows(ParseException.class, () -> ShopData.parser(status));
+        assertThrows(ParseException.class, () -> ShopData.parse(status));
     }
 
     @Test
@@ -94,7 +94,7 @@ class ShopDataTest {
                 "TELÉFONO: 123"
         );
         ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
-        assertThrows(IllegalArgumentException.class, () -> ShopData.parser(status));
+        assertThrows(IllegalArgumentException.class, () -> ShopData.parse(status));
     }
 
     @Test
@@ -107,7 +107,7 @@ class ShopDataTest {
                 "TELÉFONO: 123"
         );
         ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
-        assertThrows(ParseException.class, () -> ShopData.parser(status));
+        assertThrows(ParseException.class, () -> ShopData.parse(status));
     }
 
     @Test
@@ -120,6 +120,6 @@ class ShopDataTest {
                 "TELÉFONO 961309467" // Falta ':'
         );
         ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
-        assertThrows(ParseException.class, () -> ShopData.parser(status));
+        assertThrows(ParseException.class, () -> ShopData.parse(status));
     }
 }

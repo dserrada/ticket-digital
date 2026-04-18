@@ -8,6 +8,7 @@ import org.terra.incognita.ticketdigital.mercadona.model.TicketMercadona;
 import org.terra.incognita.ticketdigital.mercadona.utils.FileUtils;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.List;
@@ -23,15 +24,20 @@ public class ItemsAggregator {
     private static final Logger logger = LoggerFactory.getLogger(ItemsAggregator.class);
 
 
-    public static List<PurchasedItem> extractFromPDF(Path basePath, Set<String> excluded) throws IOException {
+    public static List<PurchasedItem> extractFromPDF(Path basePath) throws IOException {
         List<Path> files = FileUtils.searchInDir(basePath);
         if ( files == null ) return List.of();
         List<PurchasedItem> items = files.stream()
-                .filter( file -> !excluded.contains(file.getFileName().toString()))
                 .map( file -> {
                     try {
                         return TicketMercadona.parse(file).items();
-                    } catch (Exception e) {System.err.println("Error parsing " + file); return null;}
+                    } catch (UnsupportedOperationException e) {
+                        logger.error("Todavía no podemos procesar el archivo " + file);
+                        return null;
+                    } catch  ( Exception e ) {
+                        logger.error("Error parsing " + file, e);
+                        throw new RuntimeException("Error al procesar el archivo: " + file );
+                    }
                 })
                 .filter(Objects::nonNull)
                 .flatMap(List::stream).toList();

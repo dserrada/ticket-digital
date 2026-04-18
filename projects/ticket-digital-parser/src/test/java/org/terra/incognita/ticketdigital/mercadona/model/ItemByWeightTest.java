@@ -23,7 +23,7 @@ class ItemByWeightTest {
                 "        0,336 kg                   1,45 €/kg        0,49"
         );
         ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
-        ItemByWeight item = ItemByWeight.parser(status);
+        ItemByWeight item = ItemByWeight.parse(status);
 
         assertNotNull(item, "El item no debería ser null");
         assertEquals("BANANA", item.id(), "El ID debería ser BANANA");
@@ -42,7 +42,7 @@ class ItemByWeightTest {
                 "    1,200 kg   5,50 €/kg   6,60  "
         );
         ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
-        ItemByWeight item = ItemByWeight.parser(status);
+        ItemByWeight item = ItemByWeight.parse(status);
 
         assertNotNull(item);
         assertEquals("PLÁTANO DE CANARIAS / EXTRA", item.id());
@@ -59,7 +59,7 @@ class ItemByWeightTest {
                 "        0,336 kg                   1,45 €/kg        0,49"
         );
         ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
-        ItemByWeight item = ItemByWeight.parser(status);
+        ItemByWeight item = ItemByWeight.parse(status);
         assertNull(item, "Debería devolver null si la línea no empieza por 1");
         // Verificar que el iterador volvió al principio
         assertEquals(0, status.nextIndex());
@@ -73,7 +73,7 @@ class ItemByWeightTest {
                 "        0,336 kg                   1,45 €/kg        0,49"
         );
         ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
-        ItemByWeight item = ItemByWeight.parser(status);
+        ItemByWeight item = ItemByWeight.parse(status);
         assertNull(item, "Debería devolver null si el ID tiene minúsculas (según REGEX_ID)");
         assertEquals(0, status.nextIndex());
     }
@@ -85,13 +85,13 @@ class ItemByWeightTest {
                 "1   BANANA",
                 "        0,336                      1,45 €/kg        0,49" // Falta 'kg'
         );
-        assertNull(ItemByWeight.parser(new ParserStatusInfo(String.join("\n", lines1))));
+        assertNull(ItemByWeight.parse(new ParserStatusInfo(String.join("\n", lines1))));
 
         List<String> lines2 = List.of(
                 "1   BANANA",
                 "        0,336 kg                   1,45             0,49" // Falta '€/kg'
         );
-        assertNull(ItemByWeight.parser(new ParserStatusInfo(String.join("\n", lines2))));
+        assertNull(ItemByWeight.parse(new ParserStatusInfo(String.join("\n", lines2))));
     }
 
     @Test
@@ -102,7 +102,7 @@ class ItemByWeightTest {
                 "        0.336 kg                   1.45 €/kg        0.49"
         );
         ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
-        ItemByWeight item = ItemByWeight.parser(status);
+        ItemByWeight item = ItemByWeight.parse(status);
         assertNull(item, "Debería devolver null si se usan puntos en lugar de comas");
     }
 
@@ -114,7 +114,7 @@ class ItemByWeightTest {
                 "        0,336 kg                   0,49" // Falta precio/kg
         );
         ParserStatusInfo status = new ParserStatusInfo(String.join("\n", lines));
-        ItemByWeight item = ItemByWeight.parser(status);
+        ItemByWeight item = ItemByWeight.parse(status);
         assertNull(item);
     }
 

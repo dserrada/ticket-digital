@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.ParseException;
-import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,7 +57,7 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
      * @param status Estado del parseador con el iterador de líneas
      * @return parsed weight purchase or null if the line is not a weight purchase
      */
-    public static FreshItemByWeight parser(ParserStatusInfo status) throws ParseException {
+    public static FreshItemByWeight parse(ParserStatusInfo status) throws ParseException, UnsupportedOperationException {
         // Analizo las dos líneas que contienen toda la información
         // PESCADO
         //     SALMON ENTERO
@@ -87,8 +86,10 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
         String secondLine = status.next();
 
         Matcher matcherType = FRESH_TYPE_PATTERN.matcher(freshTypeLine);
+        /*
         Matcher matcher1 = FIRST_WEIGHT_PATTERN.matcher(firstLine);
         Matcher matcher2 = SECOND_WEIGHT_LINE.matcher(secondLine);
+
         if ( !(matcherType.matches() && matcher1.matches() && matcher2.matches()) ) {
             logger.debug("Line [{}] no es del tipo {} , matcherType: {}, matcher1: {}, matcher2: {}", freshTypeLine, FreshItemByWeight.class.getSimpleName(), matcherType.matches(), matcher1.matches(), matcher2.matches());
             status.rollback(3);
@@ -99,16 +100,27 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
         logger.debug("Parsing weight item, typeLine: {} firstLine {}, secondLine: {}", freshTypeLine,  firstLine, secondLine);
 
         String freshType = matcherType.group("tipo");
-        String id = matcher1.group("id");
-        // TODO: Codigo duplicdo
-        String sPeso = matcher2.group("peso");
-        BigDecimal pesoKg = PurchasedItem.parseWeight(sPeso);
-        String sPrecioKg = matcher2.group("precioKg");
-        BigDecimal precioPorKilogramo = PurchasedItem.parseUnitPrice(sPrecioKg);
-        String sPrecio = matcher2.group("precio");
-        BigDecimal precio = PurchasedItem.parseUnitPrice(sPrecio);
-        logger.debug("pesoKg {}, precioKg {}, precio {}, type: {}, id: [{}]", pesoKg, precioPorKilogramo, precio, freshType, id);
+        // Realmente todavía no se como implementar esta información, teniendo en cuenta que solo me afecta a 9 ficheros
+        // (de 500)
+        // Los ficheros con datos erroeneos son
+        String [] pdfsWithThisData = {"20230915 Mercadona 75,51 €.pdf",
+                "20231013 Mercadona 198,28 €.pdf",
+                "20231117 Mercadona 95,51 €.pdf",
+                "20240223 Mercadona 60,99 €.pdf",
+                "20240517 Mercadona 64,85 €.pdf",
+                "20241108 Mercadona 77,71 €.pdf",
+                "20250926 Mercadona 73,32 €.pdf"};
+        // De momento damos como que no somos capaces de parsear estos datos, es tarea
+        // del que lo llama ignorar el fichero en este caso
+         */
+        if ( matcherType.matches() ) {
+            throw new UnsupportedOperationException("No se puede parsear el tipo de producto en la linea:  " +
+                    freshTypeLine);
+        } else {
+            logger.debug("Line [{}] no es del tipo {}",freshTypeLine, FreshItemByWeight.class.getSimpleName());
+            status.rollback(1);
+            return null;
+        }
 
-        return new FreshItemByWeight(id, pesoKg, precioPorKilogramo,precio, freshType);
     }
 }

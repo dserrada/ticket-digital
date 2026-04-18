@@ -18,7 +18,7 @@ class OneItemByUnitTest {
     void testParseValidSingleItem() throws ParseException {
         String line = "1 PRODUCTO 1,50";
         ParserStatusInfo status = new ParserStatusInfo(line);
-        OneItemByUnit item = OneItemByUnit.parser(status);
+        OneItemByUnit item = OneItemByUnit.parse(status);
 
         assertNotNull(item, "El item no debería ser null");
         assertEquals("PRODUCTO", item.id());
@@ -34,7 +34,7 @@ class OneItemByUnitTest {
         // Ejemplo real del archivo de ticket
         String line = "1   BARRA DE PAN                                    0,48";
         ParserStatusInfo status = new ParserStatusInfo(line);
-        OneItemByUnit item = OneItemByUnit.parser(status);
+        OneItemByUnit item = OneItemByUnit.parse(status);
 
         assertNotNull(item);
         assertEquals("BARRA DE PAN", item.id());
@@ -46,7 +46,7 @@ class OneItemByUnitTest {
     void testParseValidItemWithSpecialChars() throws ParseException {
         String line = "1 CHORIZO 4PACK/EXTRA 1,97";
         ParserStatusInfo status = new ParserStatusInfo(line);
-        OneItemByUnit item = OneItemByUnit.parser(status);
+        OneItemByUnit item = OneItemByUnit.parse(status);
 
         assertNotNull(item);
         assertEquals("CHORIZO 4PACK/EXTRA", item.id());
@@ -54,7 +54,7 @@ class OneItemByUnitTest {
 
         line = "1 QUESO 50% DTO. 2,00";
         status = new ParserStatusInfo(line);
-        item = OneItemByUnit.parser(status);
+        item = OneItemByUnit.parse(status);
         assertNotNull(item);
         assertEquals("QUESO 50% DTO.", item.id());
     }
@@ -64,7 +64,7 @@ class OneItemByUnitTest {
     void testParseValidItemWithLeadingTrailingSpaces() throws ParseException {
         String line = "  1 PAN BLANCO 0,50  ";
         ParserStatusInfo status = new ParserStatusInfo(line);
-        OneItemByUnit item = OneItemByUnit.parser(status);
+        OneItemByUnit item = OneItemByUnit.parse(status);
 
         assertNotNull(item);
         assertEquals("PAN BLANCO", item.id());
@@ -88,7 +88,7 @@ class OneItemByUnitTest {
 
         for (String line : invalidLines) {
             ParserStatusInfo status = new ParserStatusInfo(line + "\n");
-            OneItemByUnit item = OneItemByUnit.parser(status);
+            OneItemByUnit item = OneItemByUnit.parse(status);
             assertNull(item, "Debería devolver null para la línea: [" + line + "]");
             // Verificar que el iterador volvió atrás
             assertTrue(status.hasNext());
