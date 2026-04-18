@@ -1,0 +1,39 @@
+package org.terra.incognita.ticketdigital.mercadona;
+
+import org.terra.incognita.ticketdigital.mercadona.model.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * Un registro de la compra de un producto.
+ * Se va a utilizar paar representar en una hoja de calculo el registro de la compra de un producto.
+ *
+ * @param id el identificador del producto
+ * @param fecha la fecha de compra del producto
+ * @param unidades el número de unidades compradas
+ * @param precioPorUnidad el precio por unidad del producto
+ * @param pesoKg el peso del producto en kilogramos (incompatible con producto comprado por unidades)
+ * @param precioKg el precio por kilogramo del producto
+ * @param precio el precio total de la compra del producto
+ */
+public record PurchasedItemRecord(String id, LocalDateTime fecha, Integer unidades, BigDecimal precioPorUnidad,
+                                  BigDecimal pesoKg, BigDecimal precioKg, BigDecimal precio) {
+
+    public static  List<PurchasedItemRecord> fromTicket(TicketMercadona ticket) {
+        LocalDateTime fecha = ticket.header().fechaCompra();
+        return ticket.items().stream()
+                .map(item -> switch (item) {
+                    case OneItemByUnit u ->
+                            new PurchasedItemRecord(u.id(), fecha, u.cantidad(), u.precioPorUnidad(), null, null, u.precio());
+                    case NItemsByUnit n ->
+                            new PurchasedItemRecord(n.id(), fecha, n.cantidad(), n.precioPorUnidad(), null, null, n.precio());
+                    case ItemByWeight w ->
+                            new PurchasedItemRecord(w.id(), fecha, null, null, w.pesoKg(), w.precioPorKilogramo(), w.precio());
+                    case FreshItemByWeight f ->
+                            new PurchasedItemRecord(f.id(), fecha, null, null, f.pesoKg(), f.precioPorKilogramo(), f.precio());
+                })
+                .toList();
+    }
+}
