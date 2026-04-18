@@ -27,13 +27,24 @@ public sealed interface PurchasedItem permits OneItemByUnit, ItemByWeight, NItem
 
     /**
      * Nombre o identificador del producto comparado
+     *
+     * Debe existir en todos las clases (records) que lo implementen un dato id que corresponda con este
      */
     String id();
 
     /**
-     * Precio total del producto comparado, en euros y con precisión de centimos
+     * El precio total del producto comprado. Este campo es extraido del ticket
+     *
+     * Debe existir en todos las clases (records) que lo implementen un dato precio que corresponda con este
      */
-    BigDecimal precioTotal();
+    BigDecimal precio();
+
+    /**
+     * Precio total del producto comparado, en euros y con precisión de centimos.
+     * Se cálcula a partir del precio unitario o por kg y la cantidad de producto comprado.
+     * Debe ser igual al precio que aparece en el ticket (campo precio)
+     */
+    BigDecimal precioCalculado();
 
     static BigDecimal parseUnitPrice(String precio) {
         return new BigDecimal(precio.replace(',', '.')).setScale(2, RoundingMode.UNNECESSARY);

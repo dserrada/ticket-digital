@@ -17,10 +17,10 @@ class PurchasedItemRecordTest {
         LocalDateTime fechaCompra = LocalDateTime.of(2024, 4, 18, 10, 30);
         TicketHeader header = new TicketHeader(fechaCompra, "123", "456");
         
-        PurchasedItem item1 = new OneItemByUnit("Item 1", 1, new BigDecimal("1.50"));
-        PurchasedItem item2 = new NItemsByUnit("Item 2", 2, new BigDecimal("2.00"));
-        PurchasedItem item3 = new ItemByWeight("Item 3", new BigDecimal("0.500"), new BigDecimal("10.00")); // 500g
-        PurchasedItem item4 = new FreshItemByWeight("Item 4", new BigDecimal("1.250"), new BigDecimal("8.00"), "PESCADO"); // 1250g
+        PurchasedItem item1 = new OneItemByUnit("Item 1", 1, new BigDecimal("1.50"),new BigDecimal("1.50"));
+        PurchasedItem item2 = new NItemsByUnit("Item 2", 2, new BigDecimal("2.00"),new BigDecimal("4.00"));
+        PurchasedItem item3 = new ItemByWeight("Item 3", new BigDecimal("0.500"), new BigDecimal("10.00"),new BigDecimal("5.00")); // 500g
+        PurchasedItem item4 = new FreshItemByWeight("Item 4", new BigDecimal("1.250"), new BigDecimal("8.00"), new BigDecimal("0.00"),"PESCADO"); // 1250g
 
         TicketMercadona ticket = new TicketMercadona(
                 null, 
@@ -75,6 +75,6 @@ class PurchasedItemRecordTest {
         assertNull(record4.precioPorUnidad());
         assertEquals(new BigDecimal("1.250"), record4.pesoKg());
         assertEquals(new BigDecimal("8.00"), record4.precioKg());
-        assertEquals(new BigDecimal("10.00"), record4.precio()); // 1.25 * 8.00
+        assertEquals(new BigDecimal("0.00"), record4.precio());
     }
 }

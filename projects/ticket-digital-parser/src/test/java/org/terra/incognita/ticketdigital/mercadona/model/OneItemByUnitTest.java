@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,7 +25,7 @@ class OneItemByUnitTest {
         assertEquals(1, item.cantidad());
         assertNull(item.precioPorUnidad());
         assertEquals(new BigDecimal("1.50"), item.precio());
-        assertEquals(new BigDecimal("1.50"), item.precioTotal());
+        assertEquals(new BigDecimal("1.50"), item.precioCalculado());
     }
 
     @Test

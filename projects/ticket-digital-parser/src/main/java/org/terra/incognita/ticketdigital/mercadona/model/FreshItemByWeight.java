@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 
 // INFO: Debería externder ItemByWeight pero Java no permite la externsión de records
 // Este código SMELLS porque es una copia de ItemByWeight, pero con un constructor diferente
-public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKilogramo, String freshType) implements PurchasedItem {
+public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKilogramo, BigDecimal precio, String freshType) implements PurchasedItem {
     private static final Logger logger = LoggerFactory.getLogger(FreshItemByWeight.class);
 
     protected static final Pattern FIRST_WEIGHT_PATTERN = Pattern.compile(
@@ -45,7 +45,7 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
     }
 
     @Override
-    public BigDecimal precioTotal() {
+    public BigDecimal precioCalculado() {
         return pesoKg.multiply(precioPorKilogramo).setScale(2, RoundingMode.HALF_UP);
     }
 
@@ -100,14 +100,15 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
 
         String freshType = matcherType.group("tipo");
         String id = matcher1.group("id");
+        // TODO: Codigo duplicdo
         String sPeso = matcher2.group("peso");
         BigDecimal pesoKg = PurchasedItem.parseWeight(sPeso);
         String sPrecioKg = matcher2.group("precioKg");
         BigDecimal precioPorKilogramo = PurchasedItem.parseUnitPrice(sPrecioKg);
-        String sImporte = matcher2.group("precio");
-        BigDecimal importe = PurchasedItem.parseUnitPrice(sImporte);
-        logger.debug("pesoKg {}, precioKg {}, importe {}, type: {}, id: [{}]", pesoKg, precioPorKilogramo, importe, freshType, id);
+        String sPrecio = matcher2.group("precio");
+        BigDecimal precio = PurchasedItem.parseUnitPrice(sPrecio);
+        logger.debug("pesoKg {}, precioKg {}, precio {}, type: {}, id: [{}]", pesoKg, precioPorKilogramo, precio, freshType, id);
 
-        return new FreshItemByWeight(id, pesoKg, precioPorKilogramo,freshType);
+        return new FreshItemByWeight(id, pesoKg, precioPorKilogramo,precio, freshType);
     }
 }

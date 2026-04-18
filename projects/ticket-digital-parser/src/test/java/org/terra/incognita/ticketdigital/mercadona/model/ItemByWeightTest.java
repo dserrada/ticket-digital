@@ -31,7 +31,7 @@ class ItemByWeightTest {
         assertEquals(new BigDecimal("1.45"), item.precioPorKilogramo());
         // El precioTotal() calculado por el record es pesoKg * precioPorKilogramo
         // 0.336 * 1.45 = 0.4872, que redondeado HALF_UP a 2 decimales es 0.49
-        assertEquals(new BigDecimal("0.49"), item.precioTotal());
+        assertEquals(new BigDecimal("0.49"), item.precioCalculado());
     }
 
     @Test
@@ -48,7 +48,7 @@ class ItemByWeightTest {
         assertEquals("PLÁTANO DE CANARIAS / EXTRA", item.id());
         assertEquals(new BigDecimal("1.200"), item.pesoKg());
         assertEquals(new BigDecimal("5.50"), item.precioPorKilogramo());
-        assertEquals(new BigDecimal("6.60"), item.precioTotal());
+        assertEquals(new BigDecimal("6.60"), item.precioCalculado());
     }
 
     @Test
@@ -121,21 +121,21 @@ class ItemByWeightTest {
     @Test
     @DisplayName("Debería lanzar IllegalArgumentException para valores inválidos en el constructor")
     void testConstructorConstraints() {
-        assertThrows(NullPointerException.class, () -> new ItemByWeight(null, new BigDecimal("1.000"), new BigDecimal("1.00")));
-        assertThrows(IllegalArgumentException.class, () -> new ItemByWeight("", new BigDecimal("1.000"), new BigDecimal("1.00")));
-        assertThrows(IllegalArgumentException.class, () -> new ItemByWeight("BANANA", BigDecimal.ZERO, new BigDecimal("1.00")));
-        assertThrows(IllegalArgumentException.class, () -> new ItemByWeight("BANANA", new BigDecimal("-0.500"), new BigDecimal("1.00")));
-        assertThrows(NullPointerException.class, () -> new ItemByWeight("BANANA", new BigDecimal("1.000"), null));
+        assertThrows(NullPointerException.class, () -> new ItemByWeight(null, new BigDecimal("1.000"), new BigDecimal("1.00"),new BigDecimal("1.00")));
+        assertThrows(IllegalArgumentException.class, () -> new ItemByWeight("", new BigDecimal("1.000"), new BigDecimal("1.00"),new BigDecimal("1.00")));
+        assertThrows(IllegalArgumentException.class, () -> new ItemByWeight("BANANA", BigDecimal.ZERO, new BigDecimal("1.00"),new BigDecimal("1.00")));
+        assertThrows(IllegalArgumentException.class, () -> new ItemByWeight("BANANA", new BigDecimal("-0.500"), new BigDecimal("1.00"),new BigDecimal("1.00")));
+        assertThrows(NullPointerException.class, () -> new ItemByWeight("BANANA", new BigDecimal("1.000"), null,null));
     }
 
     @Test
     @DisplayName("Debería calcular correctamente el precio total")
-    void testPrecioTotalCalculation() {
-        ItemByWeight item = new ItemByWeight("TEST", new BigDecimal("0.500"), new BigDecimal("2.00"));
-        assertEquals(new BigDecimal("1.00"), item.precioTotal());
+    void testPrecioCalculadoCalculation() {
+        ItemByWeight item = new ItemByWeight("TEST", new BigDecimal("0.500"), new BigDecimal("2.00"),new BigDecimal("1.00"));
+        assertEquals(new BigDecimal("1.00"), item.precioCalculado());
 
         // Caso con redondeo (0.336 * 1.45 = 0.4872 -> 0.49)
-        item = new ItemByWeight("TEST", new BigDecimal("0.336"), new BigDecimal("1.45"));
-        assertEquals(new BigDecimal("0.49"), item.precioTotal());
+        item = new ItemByWeight("TEST", new BigDecimal("0.336"), new BigDecimal("1.45"),new BigDecimal("0.49"));
+        assertEquals(new BigDecimal("0.49"), item.precioCalculado());
     }
 }

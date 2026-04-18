@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
  * @param pesoKg product weight in kilograms, with gram precision
  * @param precioPorKilogramo price per kilogram in euros, with cent precision
  */
-public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKilogramo) implements PurchasedItem {
+public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKilogramo, BigDecimal precio) implements PurchasedItem {
 
     private static final Logger logger = LoggerFactory.getLogger(ItemByWeight.class);
 
@@ -59,7 +59,7 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
     }
 
     @Override
-    public BigDecimal precioTotal() {
+    public BigDecimal precioCalculado() {
         return pesoKg.multiply(precioPorKilogramo).setScale(2, RoundingMode.HALF_UP);
     }
 
@@ -106,6 +106,6 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
         BigDecimal precio = PurchasedItem.parseUnitPrice(sPrecio);
         logger.debug("pesoKg {}, precioKg {}, precio {}, id: [{}]", pesoKg, precioPorKilogramo, precio, id);
 
-        return new ItemByWeight(id, pesoKg, precioPorKilogramo);
+        return new ItemByWeight(id, pesoKg, precioPorKilogramo, precio);
     }
 }

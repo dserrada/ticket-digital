@@ -43,7 +43,7 @@ public record OneItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad,
     }
 
     @Override
-    public BigDecimal precioTotal() {
+    public BigDecimal precioCalculado() {
         if ( precioPorUnidad == null ) {
             return precio.setScale(2, RoundingMode.UNNECESSARY);
         } else {

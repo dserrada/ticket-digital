@@ -135,28 +135,28 @@ class TicketMercadonaTest {
         // First item: BARRA DE PAN
         assertNotNull(ticket.items().get(0));
         assertEquals("BARRA DE PAN", ticket.items().get(0).id());
-        assertEquals(new BigDecimal("0.48"), ticket.items().get(0).precioTotal());
+        assertEquals(new BigDecimal("0.48"), ticket.items().get(0).precioCalculado());
 
         // Second item: PANECILLO 11UDS
         assertNotNull(ticket.items().get(1));
         assertEquals("PANECILLO 11UDS", ticket.items().get(1).id());
-        assertEquals(new BigDecimal("1.10"), ticket.items().get(1).precioTotal());
+        assertEquals(new BigDecimal("1.10"), ticket.items().get(1).precioCalculado());
 
         // Third item: FRANKFURT VIENA QUES
         assertNotNull(ticket.items().get(2));
         assertEquals("FRANKFURT VIENA QUES", ticket.items().get(2).id());
         assertEquals(2, ((NItemsByUnit)ticket.items().get(2)).cantidad());
-        assertEquals(new BigDecimal("5.60"), ticket.items().get(2).precioTotal());
+        assertEquals(new BigDecimal("5.60"), ticket.items().get(2).precioCalculado());
 
         // Fourth item: CHORIZO 4PACK
         assertNotNull(ticket.items().get(3));
         assertEquals("CHORIZO 4PACK", ticket.items().get(3).id());
-        assertEquals(new BigDecimal("1.97"), ticket.items().get(3).precioTotal());
+        assertEquals(new BigDecimal("1.97"), ticket.items().get(3).precioCalculado());
 
         // Fifth item: BANANA
         assertNotNull(ticket.items().get(4));
         assertEquals("BANANA", ticket.items().get(4).id());
-        assertEquals(new BigDecimal("0.49"), ticket.items().get(4).precioTotal());
+        assertEquals(new BigDecimal("0.49"), ticket.items().get(4).precioCalculado());
     }
 
 }

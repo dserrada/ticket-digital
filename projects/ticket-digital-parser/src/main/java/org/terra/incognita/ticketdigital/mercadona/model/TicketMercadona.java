@@ -39,7 +39,7 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
      */
     public BigDecimal precioTotalEnEuros() {
         return items.stream()
-                .map(PurchasedItem::precioTotal) // Obtenemos el precio de cada artículo.
+                .map(PurchasedItem::precioCalculado) // Obtenemos el precio de cada artículo.
                 .reduce(BigDecimal.ZERO, BigDecimal::add)  // Sumamos todos los precios de los artículos comprados
                 .setScale(2, RoundingMode.UNNECESSARY);
     }
@@ -157,7 +157,7 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
         String data = items.stream().map( i ->  {
             return DateTimeFormatter.ofPattern("dd/MM/yyyy").format(header.fechaCompra())+ ";"
                     + i.id() + ";"
-                    + i.precioTotal().toString();
+                    + i.precioCalculado().toString();
         }).collect(Collectors.joining("\n")) ;
         return data;
     }
