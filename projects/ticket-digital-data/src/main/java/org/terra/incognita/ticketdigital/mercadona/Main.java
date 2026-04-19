@@ -13,8 +13,6 @@ import java.util.concurrent.Callable;
          description = "Interfaz de línea de comandos para procesar tickets digitales de Mercadona.")
 public class Main implements Callable<Integer> {
 
-    @Option(names = {"--data-dir"}, description = "Directorio donde están los ficheros pdf con los tickets a analizar.", required = true, paramLabel = "<directorio-datos>")
-    private File dataDir;
 
     @Override
     public Integer call() throws Exception {
@@ -26,7 +24,8 @@ public class Main implements Callable<Integer> {
              mixinStandardHelpOptions = true,
              description = "Genera un fichero csv con la información de todos los items comprados.")
     public Integer writeItemsCsv(
-            @Option(names = {"--csv-file"}, description = "Nombre del fichero donde se escribe la información en csv.", required = true, paramLabel = "<fichero-csv>") File csvFile) {
+            @Option(names = {"--csv-file"}, description = "Nombre del fichero donde se escribe la información en csv.", required = true, paramLabel = "<fichero-csv>") File csvFile ,
+            @Option(names = {"--data-dir"}, description = "Directorio donde están los ficheros pdf con los tickets a analizar.", required = true, paramLabel = "<directorio-datos>") File dataDir) {
         // De momento solo el interfaz de linea de comandos, no enganchar con la lógica
         System.out.println("Ejecutando operación write-items-csv...");
         System.out.println("Directorio de datos: " + dataDir);
