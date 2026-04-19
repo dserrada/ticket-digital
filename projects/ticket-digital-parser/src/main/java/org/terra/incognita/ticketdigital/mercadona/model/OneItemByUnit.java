@@ -78,22 +78,10 @@ public record OneItemByUnit(String id, int cantidad, BigDecimal precioPorUnidad,
 
         int cantidad = 1; // Fijo
         String id = matcher.group("id").trim();
+        BigDecimal precio = PurchasedItem.parseUnitPrice(matcher.group("precio"));
+        logger.debug("cantidad {}, id {}, precioPorUnidad {}, precio {}", cantidad, id, precio, precio);
 
-        BigDecimal precioPorUnidad = null;
-        BigDecimal precio = null;
-        if ( cantidad > 1 ) {
-            String precioPorUnidadStr = matcher.group("precioUnidad").trim();
-            if (!precioPorUnidadStr.isEmpty()) {
-                precioPorUnidad = PurchasedItem.parseUnitPrice(precioPorUnidadStr);
-            } else {
-                throw new ParseException("Missing unit price in line: " + line, -1);
-            }
-        }
-
-        precio = PurchasedItem.parseUnitPrice(matcher.group("precio"));
-        logger.debug("cantidad {}, id {}, precioPorUnidad {}, precio {}", cantidad, id, precioPorUnidad, precio);
-
-        return new OneItemByUnit(id, cantidad, precioPorUnidad,precio);
+        return new OneItemByUnit(id, cantidad, precio,precio);
 
     }
 

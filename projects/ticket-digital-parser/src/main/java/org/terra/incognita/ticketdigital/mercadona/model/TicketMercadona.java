@@ -149,18 +149,5 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
                 null,null,null,null,null,null);
     }
 
-    /**
-     * Genera un string de tipo CVS con la información de todos los productos comprados
-     *
-     */
-    public String toCVSString() {
-        String data = items.stream().map( i ->  {
-            return DateTimeFormatter.ofPattern("dd/MM/yyyy").format(header.fechaCompra())+ ";"
-                    + i.id() + ";"
-                    + i.precioCalculado().toString();
-        }).collect(Collectors.joining("\n")) ;
-        return data;
-    }
-
 }
 

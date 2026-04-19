@@ -3,15 +3,13 @@ package org.terra.incognita.ticketdigital.mercadona;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terra.incognita.ticketdigital.mercadona.data.items.CSVGenerator;
 import org.terra.incognita.ticketdigital.mercadona.model.PurchasedItem;
-import org.terra.incognita.ticketdigital.mercadona.model.TicketMercadona;
-import org.terra.incognita.ticketdigital.mercadona.utils.FileUtils;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Set;
 
-import static org.terra.incognita.ticketdigital.mercadona.ItemsAggregator.extractFromPDF;
+import static org.terra.incognita.ticketdigital.mercadona.data.items.CSVGenerator.extractFromPDF;
 
 public class TicketMercadonaAllPDFTest {
 
@@ -20,7 +18,7 @@ public class TicketMercadonaAllPDFTest {
     @Test
     public void pruebaFicheroAllPDF() throws Exception {
         Path dataDir = Path.of("../../../../GMailExtractor/mails/");
-        List<PurchasedItem> items = extractFromPDF(dataDir);
+        List<PurchasedItem> items = CSVGenerator.extractFromPDF(dataDir);
         logger.info("Parsed {} items", items.size());
 
     }

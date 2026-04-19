@@ -1,9 +1,10 @@
-package org.terra.incognita.ticketdigital.mercadona;
+package org.terra.incognita.ticketdigital.mercadona.data.items;
 
 import org.terra.incognita.ticketdigital.mercadona.model.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -30,10 +31,30 @@ public record PurchasedItemRecord(String id, LocalDateTime fecha, Integer unidad
                     case NItemsByUnit n ->
                             new PurchasedItemRecord(n.id(), fecha, n.cantidad(), n.precioPorUnidad(), null, null, n.precio());
                     case ItemByWeight w ->
-                            new PurchasedItemRecord(w.id(), fecha, null, null, w.pesoKg(), w.precioPorKilogramo(), w.precio());
+                            // INFO: Lo de poner el 1 a huevo no se si es buena idea o no.
+                            new PurchasedItemRecord(w.id(), fecha, 1, null, w.pesoKg(), w.precioPorKilogramo(), w.precio());
                     case FreshItemByWeight f ->
-                            new PurchasedItemRecord(f.id(), fecha, null, null, f.pesoKg(), f.precioPorKilogramo(), f.precio());
+                            new PurchasedItemRecord(f.id(), fecha, 1, null, f.pesoKg(), f.precioPorKilogramo(), f.precio());
                 })
                 .toList();
     }
+
+    public String toCSV() {
+        // TODO: Mejorar el formato de salida a CSV
+        return String.format("%s;%s;%s;%s;%s;%s;%s", id,
+                DateTimeFormatter.ofPattern("dd/MM/yyyy").format(fecha),
+                unidades,
+                precioPorUnidad == null ? "" : precioPorUnidad.toString().replace('.', ','),
+                pesoKg == null ? "" : pesoKg.toString().replace('.', ','),
+                precioKg == null ? "" :  precioKg.toString().replace('.', ','),
+                precio == null ? "" : precio.toString().replace('.', ','));
+    }
+
+    public static String headerCSV() {
+        return String.format("%s;%s;%s;%s;%s;%s;%s", "id", "fecha", "unidades", "precioPorUnidad", "pesoKg", "precioKg", "precio");
+    }
+
+    
+    
+    
 }

@@ -1,6 +1,7 @@
 package org.terra.incognita.ticketdigital.mercadona;
 
 import org.junit.jupiter.api.Test;
+import org.terra.incognita.ticketdigital.mercadona.data.items.PurchasedItemRecord;
 import org.terra.incognita.ticketdigital.mercadona.model.*;
 
 import java.math.BigDecimal;
