@@ -7,9 +7,6 @@ import org.terra.incognita.ticketdigital.mercadona.data.items.CSVGenerator;
 import org.terra.incognita.ticketdigital.mercadona.model.PurchasedItem;
 
 import java.nio.file.Path;
-import java.util.List;
-
-import static org.terra.incognita.ticketdigital.mercadona.data.items.CSVGenerator.extractFromPDF;
 
 public class TicketMercadonaAllPDFTest {
 
@@ -18,8 +15,8 @@ public class TicketMercadonaAllPDFTest {
     @Test
     public void pruebaFicheroAllPDF() throws Exception {
         Path dataDir = Path.of("../../../../GMailExtractor/mails/");
-        List<PurchasedItem> items = CSVGenerator.extractFromPDF(dataDir);
-        logger.info("Parsed {} items", items.size());
+        CSVGenerator.writeCSVToFile(dataDir, Path.of("data-output.csv").toFile());
+        logger.info("Finished");
 
     }
 
