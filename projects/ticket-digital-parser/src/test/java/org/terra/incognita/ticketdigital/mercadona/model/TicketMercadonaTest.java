@@ -1,5 +1,7 @@
 package org.terra.incognita.ticketdigital.mercadona.model;
 
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -7,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
+import java.util.List;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -56,8 +59,78 @@ class TicketMercadonaTest {
 
     @Test
     public void pruebaFicheroPDFConProductosFrescos() throws Exception {
-        // TODO: Cuando se implemente no debe lanzar la excepción
-        assertThrows(RuntimeException.class, () -> TicketMercadona.parse(Path.of("src/test/resources/" + "20241108 Mercadona 77,71 €.pdf")));
+        TicketMercadona ticket = TicketMercadona.parse(Path.of("src/test/resources/20241108 Mercadona 77,71 €.pdf"));
+        assertNotNull(ticket);
+
+        // Verifica el total (suma de precios calculados)
+        assertEquals(new BigDecimal("77.71"), ticket.precioTotalEnEuros());
+
+        // Verifica que hay artículos frescos parseados correctamente
+        List<FreshItemByWeight> freshItems = ticket.items().stream()
+                .filter(i -> i instanceof FreshItemByWeight)
+                .map(i -> (FreshItemByWeight) i)
+                .toList();
+
+        assertEquals(2, freshItems.size());
+
+        FreshItemByWeight lubina = freshItems.get(0);
+        assertEquals("LUBINA", lubina.id());
+        assertEquals("PESCADO", lubina.freshType());
+        assertEquals(new BigDecimal("0.762"), lubina.pesoKg());
+        assertEquals(new BigDecimal("8.25"), lubina.precioPorKilogramo());
+
+        FreshItemByWeight langostino = freshItems.get(1);
+        assertEquals("LANGOSTINO COCIDO", langostino.id());
+        assertEquals("PESCADO", langostino.freshType());
+        assertEquals(new BigDecimal("0.518"), langostino.pesoKg());
+        assertEquals(new BigDecimal("10.95"), langostino.precioPorKilogramo());
+
+        assertEquals(ticket.pagadoEnEuros(),ticket.precioTotalEnEuros());
+    }
+
+    @Test
+    public void pruebaIndentacionPreservadaEnPDF() throws Exception {
+        // Verifica que IndentPreservingTextStripper produce más indentación para PESCADO
+        // que para los artículos regulares (p.ej. "1 SALSA BOLOÑESA")
+        Path pdfPath = Path.of("src/test/resources/20241108 Mercadona 77,71 €.pdf");
+        try (PDDocument doc = Loader.loadPDF(pdfPath.toFile())) {
+            String text = IndentPreservingTextStripper.extractText(doc);
+            logger.debug("Texto extraído con indentación:\n{}", text);
+
+            String[] lines = text.split("\\n");
+
+            int indentPescado = -1;
+            int indentItemFresco = -1;
+            int indentItemRegular = -1;
+
+            for (String line : lines) {
+                String trimmed = line.stripLeading();
+                int indent = line.length() - trimmed.length();
+                if (trimmed.startsWith("PESCADO") && indentPescado == -1) {
+                    indentPescado = indent;
+                } else if ((trimmed.startsWith("LUBINA") || trimmed.startsWith("LANGOSTINO")) && indentItemFresco == -1) {
+                    indentItemFresco = indent;
+                } else if (trimmed.startsWith("1 SALSA") && indentItemRegular == -1) {
+                    indentItemRegular = indent;
+                }
+            }
+
+            logger.info("Indentación PESCADO={}, item fresco={}, item regular={}",
+                    indentPescado, indentItemFresco, indentItemRegular);
+
+            assertTrue(indentPescado >= 0, "No se encontró la línea PESCADO");
+            assertTrue(indentItemFresco >= 0, "No se encontró un item fresco (LUBINA/LANGOSTINO)");
+            assertTrue(indentItemRegular >= 0, "No se encontró un item regular");
+
+            // Los ítems frescos deben estar más indentados que PESCADO
+            assertTrue(indentItemFresco > indentPescado,
+                    "Los ítems frescos deben tener más indentación que PESCADO: fresco=%d, PESCADO=%d"
+                            .formatted(indentItemFresco, indentPescado));
+            // PESCADO debe estar más indentado que los ítems regulares
+            assertTrue(indentPescado > indentItemRegular,
+                    "PESCADO debe tener más indentación que los ítems regulares: PESCADO=%d, regular=%d"
+                            .formatted(indentPescado, indentItemRegular));
+        }
     }
 
 

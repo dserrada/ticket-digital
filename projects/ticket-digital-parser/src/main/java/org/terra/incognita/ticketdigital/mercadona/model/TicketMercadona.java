@@ -2,7 +2,6 @@ package org.terra.incognita.ticketdigital.mercadona.model;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,11 +11,11 @@ import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -31,6 +30,13 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
                               Parking parking, BigDecimal pagadoEnEuros, String tarjetaBancaria, String nc, String aut, String aid, String arc) {
 
     private static final Logger logger = LoggerFactory.getLogger(TicketMercadona.class);
+
+
+    /**
+     * Expresión regular para el precio total en el ticket.
+     */
+    public static final Pattern TOTAL_PRICE_REGEX_PATTERN = Pattern.compile("[\\s]*TOTAL \\(€\\)[\\s]*(?<precioTotal>\\d*,\\d{2})");
+
 
     /**
      * Calcula el precio pagado en este ticket
@@ -79,8 +85,7 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
      */
     private static String extractTextFromPdf(Path pdfPath) throws IOException {
         try (PDDocument document = Loader.loadPDF(pdfPath.toFile())) {
-            PDFTextStripper stripper = new PDFTextStripper();
-            return stripper.getText(document);
+            return IndentPreservingTextStripper.extractText(document);
         }
     }
 
@@ -115,10 +120,13 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
         List<PurchasedItem> items = new ArrayList<>();
         // Y ahora compruebo la lista de items
         Parking parking = null;
+        BigDecimal totalInEuros = BigDecimal.ZERO;
         while (status.hasNext()) {
             String currentLine = status.next();
-            if (currentLine.trim().startsWith("TOTAL (€)")) {
+            Matcher matcher = TOTAL_PRICE_REGEX_PATTERN.matcher(currentLine);
+            if (matcher.matches()) {
                 logger.info("Total: {}", currentLine);
+                totalInEuros = PurchasedItem.parseUnitPrice(matcher.group("precioTotal"));
                 break;
             }
             status.rollback(1); // Volver atrás para que los parsers lean la línea
@@ -144,9 +152,13 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
             }
         }
 
-
-        return new TicketMercadona(shopData, header,items, parking,
-                null,null,null,null,null,null);
+        TicketMercadona ticket = new TicketMercadona(shopData, header,items, parking,
+                totalInEuros,null,null,null,null,null);
+        // Comprobamos que el precio total coincide con el precio pagado, sino ocurre esto, algo ha ido muy mal
+        if ( ticket.precioTotalEnEuros().compareTo(ticket.pagadoEnEuros) != 0 ) {
+            throw new ParseException("El precio total del ticket no coincide con el precio pagado", -1);
+        }
+        return ticket;
     }
 
 }

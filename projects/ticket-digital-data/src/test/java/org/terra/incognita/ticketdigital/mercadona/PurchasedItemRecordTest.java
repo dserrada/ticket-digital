@@ -62,7 +62,7 @@ class PurchasedItemRecordTest {
         PurchasedItemRecord record3 = records.get(2);
         assertEquals("Item 3", record3.id());
         assertEquals(fechaCompra, record3.fecha());
-        assertNull(record3.unidades());
+        assertEquals(Integer.valueOf(1), record3.unidades());
         assertNull(record3.precioPorUnidad());
         assertEquals(new BigDecimal("0.500"), record3.pesoKg());
         assertEquals(new BigDecimal("10.00"), record3.precioKg());
@@ -72,7 +72,7 @@ class PurchasedItemRecordTest {
         PurchasedItemRecord record4 = records.get(3);
         assertEquals("Item 4", record4.id());
         assertEquals(fechaCompra, record4.fecha());
-        assertNull(record4.unidades());
+        assertEquals(Integer.valueOf(1),record4.unidades());
         assertNull(record4.precioPorUnidad());
         assertEquals(new BigDecimal("1.250"), record4.pesoKg());
         assertEquals(new BigDecimal("8.00"), record4.precioKg());

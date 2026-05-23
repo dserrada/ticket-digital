@@ -18,7 +18,7 @@ public sealed interface PurchasedItem permits OneItemByUnit, ItemByWeight, NItem
     public static NumberFormat SPANISH_PRICE_FORMAT = NumberFormat.getCurrencyInstance(SPANISH_LOCALE);
 
     public static String REGEX_CANTIDAD = "\\s*(?<cantidad>\\d+)";
-    public static String REGEX_ID = "(.*?)(?<id>[0-9A-ZÑÁÉÍÓÚ`,%\\+\\/\\.\\s\\-]+)";
+    public static String REGEX_ID = "(.*?)(?<id>[0-9A-ZÑÁÉÍÓÚ`',%\\+\\/\\.\\s\\-]+)";
     public static String REGEX_PRECIO_UNIDAD = "(?<precioUnidad>\\d*,\\d{2})";
     public static String REGEX_PRECIO = "(?<precio>\\d*,\\d{2})";
     public static String REGEX_PESO = "(?<peso>[0-9]+(?:[\\.,][0-9]{1,3})?)\\s+kg";

@@ -10,8 +10,6 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// INFO: Debería externder ItemByWeight pero Java no permite la externsión de records
-// Este código SMELLS porque es una copia de ItemByWeight, pero con un constructor diferente
 public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKilogramo, BigDecimal precio, String freshType) implements PurchasedItem {
     private static final Logger logger = LoggerFactory.getLogger(FreshItemByWeight.class);
 
@@ -22,9 +20,7 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
 
     protected static final Pattern SECOND_WEIGHT_LINE = ItemByWeight.SECOND_WEIGHT_LINE;
 
-    // De momento solo es pescado
     protected static final Pattern FRESH_TYPE_PATTERN = Pattern.compile("^\\s*(?<tipo>PESCADO)\\s*$");
-
 
     public FreshItemByWeight {
         Objects.requireNonNull(id, "nombre must not be null");
@@ -48,79 +44,93 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
         return pesoKg.multiply(precioPorKilogramo).setScale(2, RoundingMode.HALF_UP);
     }
 
-
-
-
     /**
-     * Parses a text line and creates a weight-based purchase.
+     * Parsea un artículo fresco, devolviendo un item por llamada.
      *
-     * @param status Estado del parseador con el iterador de líneas
-     * @return parsed weight purchase or null if the line is not a weight purchase
+     * La primera vez que se invoca sobre una sección de frescos, lee la línea de cabecera
+     * (p.ej. "PESCADO") y la registra en {@code status}. En llamadas sucesivas, el estado
+     * almacenado en {@code status} indica que ya estamos dentro de la sección.
+     *
+     * En cada llamada se leen las dos líneas del artículo (nombre + datos de peso). La sección
+     * termina —y se devuelve null— cuando la indentación de la línea de nombre baja al nivel
+     * de la cabecera o cuando el par de líneas no cumple el formato esperado. En ese caso la
+     * línea que causó la salida se devuelve al iterador y se limpia el estado de la sección.
+     *
+     * @param status Estado del parseador; almacena la cabecera de la sección activa
+     * @return El artículo fresco parseado, o null si no hay sección activa ni cabecera válida
+     * @throws ParseException si el formato del ticket no es válido
      */
-    public static FreshItemByWeight parse(ParserStatusInfo status) throws ParseException, UnsupportedOperationException {
-        // Analizo las dos líneas que contienen toda la información
-        // PESCADO
-        //     SALMON ENTERO
-        //      0,336 kg                   1,45 €/kg        0,49
-        // El primero es el número de unidades (entero) y el segundo, optativo, el precio por unidad
-        // Pero ojo, agrupa, y puedo tener lo siguiente
-        // PESCADO
-        //    LUBINA
-        //  0,806 kg 7,95 €/kg 6,41
-        //    SALMON ENTERO
-        //  1,454 kg 9,95 €/kg 14,47
-        //    LANGOSTINO COCIDO
-        //  0,536 kg 10,95 €/kg 5,87
-
+    public static FreshItemByWeight parse(ParserStatusInfo status) throws ParseException {
         if (!status.hasNext()) return null;
-        String freshTypeLine = status.next();
-        if (!status.hasNext()) {
+
+        if (!status.isInFreshSection()) {
+            // Intentamos entrar en una nueva sección de frescos
+            String headerLine = status.next();
+            Matcher headerMatcher = FRESH_TYPE_PATTERN.matcher(headerLine);
+
+            if (!headerMatcher.matches()) {
+                status.rollback(1);
+                return null;
+            }
+
+            String freshType = headerMatcher.group("tipo");
+            int headerIndent = countLeadingSpaces(headerLine);
+            status.enterFreshSection(freshType, headerIndent);
+            logger.debug("Sección de frescos: tipo={}, indent={}", freshType, headerIndent);
+        }
+
+        // Leemos el siguiente artículo dentro de la sección activa
+        String nameLine = status.next();
+        int nameIndent = countLeadingSpaces(nameLine);
+
+        if (nameIndent <= status.getFreshHeaderIndent()) {
+            logger.debug("Fin de sección '{}' por indentación. Línea devuelta: [{}]",
+                    status.getCurrentFreshType(), nameLine);
             status.rollback(1);
+            status.exitFreshSection();
             return null;
         }
-        String firstLine = status.next();
+
+        Matcher nameMatcher = FIRST_WEIGHT_PATTERN.matcher(nameLine);
+        if (!nameMatcher.matches()) {
+            logger.debug("Fin de sección '{}': nombre [{}] no cumple el patrón",
+                    status.getCurrentFreshType(), nameLine);
+            status.rollback(1);
+            status.exitFreshSection();
+            return null;
+        }
+
         if (!status.hasNext()) {
+            status.rollback(1);
+            status.exitFreshSection();
+            return null;
+        }
+
+        String weightLine = status.next();
+        Matcher weightMatcher = SECOND_WEIGHT_LINE.matcher(weightLine);
+        if (!weightMatcher.matches()) {
+            logger.debug("Fin de sección '{}': peso [{}] no cumple el patrón",
+                    status.getCurrentFreshType(), weightLine);
             status.rollback(2);
-            return null;
-        }
-        String secondLine = status.next();
-
-        Matcher matcherType = FRESH_TYPE_PATTERN.matcher(freshTypeLine);
-        /*
-        Matcher matcher1 = FIRST_WEIGHT_PATTERN.matcher(firstLine);
-        Matcher matcher2 = SECOND_WEIGHT_LINE.matcher(secondLine);
-
-        if ( !(matcherType.matches() && matcher1.matches() && matcher2.matches()) ) {
-            logger.debug("Line [{}] no es del tipo {} , matcherType: {}, matcher1: {}, matcher2: {}", freshTypeLine, FreshItemByWeight.class.getSimpleName(), matcherType.matches(), matcher1.matches(), matcher2.matches());
-            status.rollback(3);
+            status.exitFreshSection();
             return null;
         }
 
+        String id = nameMatcher.group("id").trim();
+        String freshType = status.getCurrentFreshType();
+        BigDecimal pesoKg = PurchasedItem.parseWeight(weightMatcher.group("peso"));
+        BigDecimal precioPorKilogramo = PurchasedItem.parseUnitPrice(weightMatcher.group("precioKg"));
+        BigDecimal precio = PurchasedItem.parseUnitPrice(weightMatcher.group("precio"));
 
-        logger.debug("Parsing weight item, typeLine: {} firstLine {}, secondLine: {}", freshTypeLine,  firstLine, secondLine);
+        logger.debug("Artículo fresco parseado: id={}, tipo={}, peso={}, precioKg={}", id, freshType, pesoKg, precioPorKilogramo);
+        return new FreshItemByWeight(id, pesoKg, precioPorKilogramo, precio, freshType);
+    }
 
-        String freshType = matcherType.group("tipo");
-        // Realmente todavía no se como implementar esta información, teniendo en cuenta que solo me afecta a 9 ficheros
-        // (de 500)
-        // Los ficheros con datos erroeneos son
-        String [] pdfsWithThisData = {"20230915 Mercadona 75,51 €.pdf",
-                "20231013 Mercadona 198,28 €.pdf",
-                "20231117 Mercadona 95,51 €.pdf",
-                "20240223 Mercadona 60,99 €.pdf",
-                "20240517 Mercadona 64,85 €.pdf",
-                "20241108 Mercadona 77,71 €.pdf",
-                "20250926 Mercadona 73,32 €.pdf"};
-        // De momento damos como que no somos capaces de parsear estos datos, es tarea
-        // del que lo llama ignorar el fichero en este caso
-         */
-        if ( matcherType.matches() ) {
-            throw new UnsupportedOperationException("No se puede parsear el tipo de producto en la linea:  " +
-                    freshTypeLine);
-        } else {
-            logger.debug("Line [{}] no es del tipo {}",freshTypeLine, FreshItemByWeight.class.getSimpleName());
-            status.rollback(1);
-            return null;
+    private static int countLeadingSpaces(String line) {
+        int count = 0;
+        while (count < line.length() && line.charAt(count) == ' ') {
+            count++;
         }
-
+        return count;
     }
 }
