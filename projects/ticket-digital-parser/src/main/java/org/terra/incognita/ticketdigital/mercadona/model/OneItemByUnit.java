@@ -79,9 +79,9 @@ public record OneItemByUnit(String id, int quantity, BigDecimal unitPrice, BigDe
         int quantity = 1; // Fijo
         String id = matcher.group("id").trim();
         BigDecimal price = PurchasedItem.parseUnitPrice(matcher.group("price"));
-        logger.debug("quantity {}, id {}, unitPrice {}, price {}", quantity, id, price, price);
+        logger.debug("quantity {}, id {}, price {}", quantity, id, price);
 
-        return new OneItemByUnit(id, quantity, price, price);
+        return new OneItemByUnit(id, quantity, null, price);
 
     }
 
