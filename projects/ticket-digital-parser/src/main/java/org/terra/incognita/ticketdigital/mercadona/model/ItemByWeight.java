@@ -15,10 +15,10 @@ import org.slf4j.LoggerFactory;
  * Purchase of a product sold by weight.
  *
  * @param id product name or identifier
- * @param pesoKg product weight in kilograms, with gram precision
- * @param precioPorKilogramo price per kilogram in euros, with cent precision
+ * @param weightKg product weight in kilograms, with gram precision
+ * @param pricePerKilogram price per kilogram in euros, with cent precision
  */
-public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKilogramo, BigDecimal precio) implements PurchasedItem {
+public record ItemByWeight(String id, BigDecimal weightKg, BigDecimal pricePerKilogram, BigDecimal price) implements PurchasedItem {
 
     private static final Logger logger = LoggerFactory.getLogger(ItemByWeight.class);
 
@@ -35,32 +35,32 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
      */
     protected static final Pattern SECOND_WEIGHT_LINE = Pattern.compile(
             "^\\s*" +
-                    REGEX_PESO + "\\s+" +
-                    REGEX_PRECIO_KG + "\\s+" +
-                    REGEX_PRECIO + "\\s*$"
+                    REGEX_WEIGHT + "\\s+" +
+                    REGEX_PRICE_PER_KG + "\\s+" +
+                    REGEX_PRICE + "\\s*$"
 
     );
 
 
     public ItemByWeight {
-        Objects.requireNonNull(id, "nombre must not be null");
-        Objects.requireNonNull(pesoKg, "pesoKg must not be null");
-        Objects.requireNonNull(precioPorKilogramo, "precioPorKilogramo must not be null");
+        Objects.requireNonNull(id, "id must not be null");
+        Objects.requireNonNull(weightKg, "weightKg must not be null");
+        Objects.requireNonNull(pricePerKilogram, "pricePerKilogram must not be null");
 
         if (id.isBlank()) {
-            throw new IllegalArgumentException("nombre must not be blank");
+            throw new IllegalArgumentException("id must not be blank");
         }
-        if (pesoKg.signum() <= 0) {
-            throw new IllegalArgumentException("pesoKg must be greater than zero");
+        if (weightKg.signum() <= 0) {
+            throw new IllegalArgumentException("weightKg must be greater than zero");
         }
 
-        pesoKg = pesoKg.setScale(3, RoundingMode.UNNECESSARY);
-        precioPorKilogramo = precioPorKilogramo.setScale(2, RoundingMode.UNNECESSARY);
+        weightKg = weightKg.setScale(3, RoundingMode.UNNECESSARY);
+        pricePerKilogram = pricePerKilogram.setScale(2, RoundingMode.UNNECESSARY);
     }
 
     @Override
-    public BigDecimal precioCalculado() {
-        return pesoKg.multiply(precioPorKilogramo).setScale(2, RoundingMode.HALF_UP);
+    public BigDecimal calculatedPrice() {
+        return weightKg.multiply(pricePerKilogram).setScale(2, RoundingMode.HALF_UP);
     }
 
 
@@ -98,14 +98,14 @@ public record ItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKil
         logger.debug("Parsing weight item, firstLine {}, secondLine: {}", firstLine, secondLine);
 
         String id = matcher1.group("id").trim();
-        String sPeso = matcher2.group("peso");
-        BigDecimal pesoKg = PurchasedItem.parseWeight(sPeso);
-        String sPrecioKg = matcher2.group("precioKg");
-        BigDecimal precioPorKilogramo = PurchasedItem.parseUnitPrice(sPrecioKg);
-        String sPrecio = matcher2.group("precio");
-        BigDecimal precio = PurchasedItem.parseUnitPrice(sPrecio);
-        logger.debug("pesoKg {}, precioKg {}, precio {}, id: [{}]", pesoKg, precioPorKilogramo, precio, id);
+        String sWeight = matcher2.group("weight");
+        BigDecimal weightKg = PurchasedItem.parseWeight(sWeight);
+        String sPricePerKg = matcher2.group("pricePerKg");
+        BigDecimal pricePerKilogram = PurchasedItem.parseUnitPrice(sPricePerKg);
+        String sPrice = matcher2.group("price");
+        BigDecimal price = PurchasedItem.parseUnitPrice(sPrice);
+        logger.debug("weightKg {}, pricePerKg {}, price {}, id: [{}]", weightKg, pricePerKilogram, price, id);
 
-        return new ItemByWeight(id, pesoKg, precioPorKilogramo, precio);
+        return new ItemByWeight(id, weightKg, pricePerKilogram, price);
     }
 }

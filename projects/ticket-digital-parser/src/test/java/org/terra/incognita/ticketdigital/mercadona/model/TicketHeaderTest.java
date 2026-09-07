@@ -27,9 +27,9 @@ class TicketHeaderTest {
         TicketHeader header = TicketHeader.parse(status);
 
         assertNotNull(header);
-        assertEquals(LocalDateTime.of(2023, 1, 1, 9, 0), header.fechaCompra());
-        assertEquals("257136", header.OP());
-        assertEquals("4567-891-113122", header.codigoFacturaSimplificada());
+        assertEquals(LocalDateTime.of(2023, 1, 1, 9, 0), header.purchaseDate());
+        assertEquals("257136", header.operationCode());
+        assertEquals("4567-891-113122", header.simplifiedInvoiceNumber());
     }
 
     @Test

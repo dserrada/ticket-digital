@@ -17,12 +17,12 @@ public sealed interface PurchasedItem permits OneItemByUnit, ItemByWeight, NItem
     public static Locale SPANISH_LOCALE = Locale.of("es", "ES");
     public static NumberFormat SPANISH_PRICE_FORMAT = NumberFormat.getCurrencyInstance(SPANISH_LOCALE);
 
-    public static String REGEX_CANTIDAD = "\\s*(?<cantidad>\\d+)";
+    public static String REGEX_QUANTITY = "\\s*(?<quantity>\\d+)";
     public static String REGEX_ID = "(.*?)(?<id>[0-9A-ZÑÁÉÍÓÚ`',%\\+\\/\\.\\s\\-]+)";
-    public static String REGEX_PRECIO_UNIDAD = "(?<precioUnidad>\\d*,\\d{2})";
-    public static String REGEX_PRECIO = "(?<precio>\\d*,\\d{2})";
-    public static String REGEX_PESO = "(?<peso>[0-9]+(?:[\\.,][0-9]{1,3})?)\\s+kg";
-    public static String REGEX_PRECIO_KG = "(?<precioKg>[0-9]+(?:[\\.,][0-9]{1,2})?)\\s*€\\/kg";
+    public static String REGEX_UNIT_PRICE = "(?<unitPrice>\\d*,\\d{2})";
+    public static String REGEX_PRICE = "(?<price>\\d*,\\d{2})";
+    public static String REGEX_WEIGHT = "(?<weight>[0-9]+(?:[\\.,][0-9]{1,3})?)\\s+kg";
+    public static String REGEX_PRICE_PER_KG = "(?<pricePerKg>[0-9]+(?:[\\.,][0-9]{1,2})?)\\s*€\\/kg";
 
 
     /**
@@ -35,23 +35,23 @@ public sealed interface PurchasedItem permits OneItemByUnit, ItemByWeight, NItem
     /**
      * El precio total del producto comprado. Este campo es extraido del ticket
      *
-     * Debe existir en todos las clases (records) que lo implementen un dato precio que corresponda con este
+     * Debe existir en todos las clases (records) que lo implementen un dato price que corresponda con este
      */
-    BigDecimal precio();
+    BigDecimal price();
 
     /**
      * Precio total del producto comparado, en euros y con precisión de centimos.
      * Se cálcula a partir del precio unitario o por kg y la cantidad de producto comprado.
-     * Debe ser igual al precio que aparece en el ticket (campo precio)
+     * Debe ser igual al precio que aparece en el ticket (campo price)
      */
-    BigDecimal precioCalculado();
+    BigDecimal calculatedPrice();
 
-    static BigDecimal parseUnitPrice(String precio) {
-        return new BigDecimal(precio.replace(',', '.')).setScale(2, RoundingMode.UNNECESSARY);
+    static BigDecimal parseUnitPrice(String price) {
+        return new BigDecimal(price.replace(',', '.')).setScale(2, RoundingMode.UNNECESSARY);
     }
 
-    static BigDecimal parseWeight(String precio) {
-        return new BigDecimal(precio.replace(',', '.')).setScale(3, RoundingMode.UNNECESSARY);
+    static BigDecimal parseWeight(String weight) {
+        return new BigDecimal(weight.replace(',', '.')).setScale(3, RoundingMode.UNNECESSARY);
     }
 
     static String printSpanishPrice(BigDecimal price) {

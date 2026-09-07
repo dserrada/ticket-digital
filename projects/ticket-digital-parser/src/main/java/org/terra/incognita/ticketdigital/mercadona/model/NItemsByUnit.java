@@ -15,21 +15,21 @@ import java.util.regex.Pattern;
  * Purchase of a product sold by units.
  *
  * @param id product name or identifier
- * @param cantidad integer quantity, at least 1
- * @param precioPorUnidad unit price in euros, with cent precision
- * @param precio el precio de las unidades compradas en euros, con centimos
+ * @param quantity integer quantity, at least 1
+ * @param unitPrice unit price in euros, with cent precision
+ * @param price total price of the purchased units in euros, with cent precision
  */
-public record NItemsByUnit(String id, int cantidad, BigDecimal precioPorUnidad, BigDecimal precio) implements PurchasedItem {
+public record NItemsByUnit(String id, int quantity, BigDecimal unitPrice, BigDecimal price) implements PurchasedItem {
 
     private static final Logger logger = LoggerFactory.getLogger(NItemsByUnit.class);
 
 //    4 TORTILLA PAT C/CEB 1,5L 2,60 10,40
     private static final Pattern LINE_PATTERN = Pattern.compile(
             "^\\s*" +
-                    REGEX_CANTIDAD + "\\s+" +
+                    REGEX_QUANTITY + "\\s+" +
                     REGEX_ID + "\\s+" +
-                    REGEX_PRECIO_UNIDAD + "\\s+" +
-                    REGEX_PRECIO + "\\s*" +
+                    REGEX_UNIT_PRICE + "\\s+" +
+                    REGEX_PRICE + "\\s*" +
                     "$");
 
     public NItemsByUnit {
@@ -38,17 +38,17 @@ public record NItemsByUnit(String id, int cantidad, BigDecimal precioPorUnidad, 
         if (id.isBlank()) {
             throw new IllegalArgumentException("id must not be blank");
         }
-        if (cantidad < 1) {
-            throw new IllegalArgumentException("cantidad must be at least 1");
+        if (quantity < 1) {
+            throw new IllegalArgumentException("quantity must be at least 1");
         }
     }
 
     @Override
-    public BigDecimal precioCalculado() {
-        if ( precioPorUnidad == null ) {
-            return precio.setScale(2, RoundingMode.UNNECESSARY);
+    public BigDecimal calculatedPrice() {
+        if ( unitPrice == null ) {
+            return price.setScale(2, RoundingMode.UNNECESSARY);
         } else {
-            return precioPorUnidad.multiply(BigDecimal.valueOf(cantidad)).setScale(2, RoundingMode.UNNECESSARY);
+            return unitPrice.multiply(BigDecimal.valueOf(quantity)).setScale(2, RoundingMode.UNNECESSARY);
         }
     }
 
@@ -77,24 +77,24 @@ public record NItemsByUnit(String id, int cantidad, BigDecimal precioPorUnidad, 
 
         logger.debug("Parsing unitLine item, line {}", line);
 
-        int cantidad = Integer.parseInt(matcher.group("cantidad"));
+        int quantity = Integer.parseInt(matcher.group("quantity"));
         String id = matcher.group("id").trim();
 
-        BigDecimal precioPorUnidad = null;
-        BigDecimal precio = null;
-        if ( cantidad > 1 ) {
-            String precioPorUnidadStr = matcher.group("precioUnidad").trim();
-            if (!precioPorUnidadStr.isEmpty()) {
-                precioPorUnidad = PurchasedItem.parseUnitPrice(precioPorUnidadStr);
+        BigDecimal unitPrice = null;
+        BigDecimal price = null;
+        if ( quantity > 1 ) {
+            String unitPriceStr = matcher.group("unitPrice").trim();
+            if (!unitPriceStr.isEmpty()) {
+                unitPrice = PurchasedItem.parseUnitPrice(unitPriceStr);
             } else {
                 throw new ParseException("Missing unit price in line: " + line, -1);
             }
         }
 
-        precio = PurchasedItem.parseUnitPrice(matcher.group("precio"));
-        logger.debug("cantidad {}, id [{}], precioPorUnidad {}, precio {}", cantidad, id, precioPorUnidad, precio);
+        price = PurchasedItem.parseUnitPrice(matcher.group("price"));
+        logger.debug("quantity {}, id [{}], unitPrice {}, price {}", quantity, id, unitPrice, price);
 
-        return new NItemsByUnit(id, cantidad, precioPorUnidad,precio);
+        return new NItemsByUnit(id, quantity, unitPrice, price);
 
     }
 

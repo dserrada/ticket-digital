@@ -23,10 +23,10 @@ class NItemsByUnitTest {
 
         assertNotNull(item, "El item no debería ser null");
         assertEquals("FRANKFURT VIENA QUES", item.id());
-        assertEquals(2, item.cantidad());
-        assertEquals(new BigDecimal("2.80"), item.precioPorUnidad());
-        assertEquals(new BigDecimal("5.60"), item.precio());
-        assertEquals(new BigDecimal("5.60"), item.precioCalculado());
+        assertEquals(2, item.quantity());
+        assertEquals(new BigDecimal("2.80"), item.unitPrice());
+        assertEquals(new BigDecimal("5.60"), item.price());
+        assertEquals(new BigDecimal("5.60"), item.calculatedPrice());
     }
 
     @Test
@@ -39,9 +39,9 @@ class NItemsByUnitTest {
 
         assertNotNull(item);
         assertEquals("TORTILLA PAT C/CEB 1,5L", item.id());
-        assertEquals(4, item.cantidad());
-        assertEquals(new BigDecimal("2.60"), item.precioPorUnidad());
-        assertEquals(new BigDecimal("10.40"), item.precio());
+        assertEquals(4, item.quantity());
+        assertEquals(new BigDecimal("2.60"), item.unitPrice());
+        assertEquals(new BigDecimal("10.40"), item.price());
     }
 
     @Test
@@ -55,9 +55,9 @@ class NItemsByUnitTest {
 
         assertNotNull(item);
         assertEquals("PRODUCTO EXPLICITO", item.id());
-        assertEquals(1, item.cantidad());
-        assertNull(item.precioPorUnidad());
-        assertEquals(new BigDecimal("1.50"), item.precio());
+        assertEquals(1, item.quantity());
+        assertNull(item.unitPrice());
+        assertEquals(new BigDecimal("1.50"), item.price());
     }
 
     @Test
@@ -69,8 +69,8 @@ class NItemsByUnitTest {
 
         assertNotNull(item);
         assertEquals("CHORIZO 4PACK/EXTRA", item.id());
-        assertEquals(new BigDecimal("2.00"), item.precioPorUnidad());
-        assertEquals(new BigDecimal("6.00"), item.precio());
+        assertEquals(new BigDecimal("2.00"), item.unitPrice());
+        assertEquals(new BigDecimal("6.00"), item.price());
 
         line = "2 QUESO 50% DTO. 1,50 3,00";
         status = new ParserStatusInfo(line);
@@ -88,8 +88,8 @@ class NItemsByUnitTest {
 
         assertNotNull(item);
         assertEquals("PAN BLANCO", item.id());
-        assertEquals(new BigDecimal("0.50"), item.precioPorUnidad());
-        assertEquals(new BigDecimal("1.00"), item.precio());
+        assertEquals(new BigDecimal("0.50"), item.unitPrice());
+        assertEquals(new BigDecimal("1.00"), item.price());
     }
 
     @Test
@@ -101,7 +101,7 @@ class NItemsByUnitTest {
                 "PRODUCTO 1,50 3,00",     // Falta la cantidad
                 "2 PRODUCTO 1.50 3.00",   // Precio con punto en vez de coma
                 "2 PRODUCTO 1,5 3,0",     // Precio con un solo decimal
-                "2 PRODUCTO 1,500 3,000", // Precio con tres decimales (REGEX_PRECIO permite 2)
+                "2 PRODUCTO 1,500 3,000", // Precio con tres decimales (REGEX_PRICE permite 2)
                 "2 producto 1,50 3,00",   // ID en minúsculas (REGEX_ID no las permite)
                 "",                       // Línea vacía
                 "2  1,50 3,00"            // Falta la descripción

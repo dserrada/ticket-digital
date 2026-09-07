@@ -27,7 +27,8 @@ import java.util.regex.Pattern;
  * Esta clase es un registro inmutable que facilita la gestión de los datos del ticket generado.
  */
 public record TicketMercadona(ShopData shopData, TicketHeader header, List<PurchasedItem> items,
-                              Parking parking, BigDecimal pagadoEnEuros, String tarjetaBancaria, String nc, String aut, String aid, String arc) {
+                              Parking parking, BigDecimal total, BigDecimal amountPaidByCard,
+                              VatBreakdown vatBreakdown, CardPayment cardPayment) {
 
     private static final Logger logger = LoggerFactory.getLogger(TicketMercadona.class);
 
@@ -35,17 +36,33 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
     /**
      * Expresión regular para el precio total en el ticket.
      */
-    public static final Pattern TOTAL_PRICE_REGEX_PATTERN = Pattern.compile("[\\s]*TOTAL \\(€\\)[\\s]*(?<precioTotal>\\d*,\\d{2})");
+    public static final Pattern TOTAL_PRICE_REGEX_PATTERN = Pattern.compile("[\\s]*TOTAL \\(€\\)[\\s]*(?<total>\\d*,\\d{2})");
+
+    /**
+     * Expresión regular para el importe pagado con tarjeta bancaria.
+     */
+    public static final Pattern TARJETA_BANCARIA_REGEX_PATTERN = Pattern.compile("[\\s]*TARJETA BANCARIA[\\s]+(?<amount>\\d*,\\d{2})\\s*");
+
+    /**
+     * Expresión regular para el texto legal final del ticket (no se almacena).
+     */
+    public static final Pattern DISCLAIMER_REGEX_PATTERN = Pattern.compile("\\s*SE ADMITEN DEVOLUCIONES CON TICKET\\s*");
+
+    /**
+     * Expresiones regulares para el aviso opcional de donación al banco de alimentos (no se almacena).
+     */
+    public static final Pattern DONATION_NOTICE_FIRST_LINE_PATTERN = Pattern.compile("^\\s*DONACIÓN A BANCO DE\\s*$");
+    public static final Pattern DONATION_NOTICE_SECOND_LINE_PATTERN = Pattern.compile("^\\s*ALIMENTOS NO REEMBOLSABLE\\s+\\d*,\\d{2}\\s*$");
 
 
     /**
-     * Calcula el precio pagado en este ticket
+     * Calcula el precio pagado en este ticket a partir de los artículos comprados.
      *
      * @return Total en euros de los precios de los artículos.
      */
-    public BigDecimal precioTotalEnEuros() {
+    public BigDecimal itemsTotal() {
         return items.stream()
-                .map(PurchasedItem::precioCalculado) // Obtenemos el precio de cada artículo.
+                .map(PurchasedItem::calculatedPrice) // Obtenemos el precio de cada artículo.
                 .reduce(BigDecimal.ZERO, BigDecimal::add)  // Sumamos todos los precios de los artículos comprados
                 .setScale(2, RoundingMode.UNNECESSARY);
     }
@@ -120,13 +137,13 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
         List<PurchasedItem> items = new ArrayList<>();
         // Y ahora compruebo la lista de items
         Parking parking = null;
-        BigDecimal totalInEuros = BigDecimal.ZERO;
+        BigDecimal total = BigDecimal.ZERO;
         while (status.hasNext()) {
             String currentLine = status.next();
             Matcher matcher = TOTAL_PRICE_REGEX_PATTERN.matcher(currentLine);
             if (matcher.matches()) {
                 logger.info("Total: {}", currentLine);
-                totalInEuros = PurchasedItem.parseUnitPrice(matcher.group("precioTotal"));
+                total = PurchasedItem.parseUnitPrice(matcher.group("total"));
                 break;
             }
             status.rollback(1); // Volver atrás para que los parsers lean la línea
@@ -152,14 +169,105 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
             }
         }
 
-        TicketMercadona ticket = new TicketMercadona(shopData, header,items, parking,
-                totalInEuros,null,null,null,null,null);
+        // --- Importe pagado con tarjeta (línea "TARJETA BANCARIA") ---
+        if (!status.hasNext()) {
+            throw new ParseException("Expected TARJETA BANCARIA line, got EOF", -1);
+        }
+        String tarjetaLine = status.next();
+        Matcher tarjetaMatcher = TARJETA_BANCARIA_REGEX_PATTERN.matcher(tarjetaLine);
+        if (!tarjetaMatcher.matches()) {
+            throw new ParseException("Expected TARJETA BANCARIA line, found: " + tarjetaLine, status.previousIndex());
+        }
+        BigDecimal amountPaidByCard = PurchasedItem.parseUnitPrice(tarjetaMatcher.group("amount"));
+        logger.info("Importe pagado con tarjeta: {}", amountPaidByCard);
+
+        // --- Desglose de IVA ---
+        skipBlankLines(status);
+        VatBreakdown vatBreakdown = VatBreakdown.parse(status);
+        logger.info("Desglose de IVA parseado: {}", vatBreakdown);
+
+        // --- Pago con tarjeta (tarjeta enmascarada, N.C/AUT, AID/ARC, Importe) ---
+        // Algunos tickets incluyen aquí un aviso de donación (p.ej. "DONACIÓN A BANCO DE
+        // ALIMENTOS NO REEMBOLSABLE  5,00"); la donación en sí ya aparece como un artículo
+        // normal en la lista de items, así que este aviso se descarta sin almacenarlo.
+        skipBlankLines(status);
+        skipDonationNotice(status);
+        skipBlankLines(status);
+        CardPayment cardPayment = CardPayment.parse(status);
+        if (cardPayment == null) {
+            throw new ParseException("Expected card payment block (TARJ. BANCARIA / N.C / AID)", status.nextIndex());
+        }
+        logger.info("Pago con tarjeta parseado: {}", cardPayment);
+
+        // --- Disclaimer final (se consume pero no se almacena) ---
+        skipBlankLines(status);
+        if (!status.hasNext()) {
+            throw new ParseException("Expected disclaimer line, got EOF", -1);
+        }
+        String disclaimerLine = status.next();
+        if (!DISCLAIMER_REGEX_PATTERN.matcher(disclaimerLine).matches()) {
+            throw new ParseException("Expected disclaimer line, found: " + disclaimerLine, status.previousIndex());
+        }
+
+        // No exigimos que el resto del fichero esté vacío: algunos tickets añaden texto
+        // adicional tras el disclaimer (p.ej. avisos de parking como "DISPONE DE 20 MINUTOS")
+        // que no forma parte de los datos del ticket y no necesitamos validar ni almacenar.
+
+        TicketMercadona ticket = new TicketMercadona(shopData, header, items, parking,
+                total, amountPaidByCard, vatBreakdown, cardPayment);
         // Comprobamos que el precio total coincide con el precio pagado, sino ocurre esto, algo ha ido muy mal
-        if ( ticket.precioTotalEnEuros().compareTo(ticket.pagadoEnEuros) != 0 ) {
+        if (ticket.itemsTotal().compareTo(ticket.total()) != 0) {
             throw new ParseException("El precio total del ticket no coincide con el precio pagado", -1);
+        }
+        // Comprobamos que el total, el importe pagado con tarjeta y el importe verificado son
+        // consistentes entre sí. No comparamos con base+cuota de IVA: algunos tickets incluyen
+        // artículos no sujetos a IVA (p.ej. una donación) que forman parte del total pero no
+        // del desglose de IVA.
+        if (ticket.total().compareTo(ticket.amountPaidByCard()) != 0
+                || ticket.total().compareTo(ticket.cardPayment().amount()) != 0) {
+            throw new ParseException(
+                    "El total del ticket no coincide con el importe pagado con tarjeta o el importe verificado", -1);
         }
         return ticket;
     }
 
-}
+    /**
+     * Salta líneas en blanco hasta encontrar una línea con contenido, dejando el
+     * iterador posicionado justo antes de esa línea.
+     *
+     * @param status Estado del parseador con el iterador de líneas
+     */
+    private static void skipBlankLines(ParserStatusInfo status) {
+        while (status.hasNext()) {
+            String line = status.next();
+            if (!line.isBlank()) {
+                status.rollback(1);
+                return;
+            }
+        }
+    }
 
+    /**
+     * Salta el aviso opcional de donación al banco de alimentos (dos líneas), si está
+     * presente. La donación en sí ya se ha parseado como un artículo normal de la lista
+     * de items, así que este aviso se descarta sin almacenarlo.
+     *
+     * @param status Estado del parseador con el iterador de líneas
+     */
+    private static void skipDonationNotice(ParserStatusInfo status) throws ParseException {
+        if (!status.hasNext()) return;
+        String firstLine = status.next();
+        if (!DONATION_NOTICE_FIRST_LINE_PATTERN.matcher(firstLine).matches()) {
+            status.rollback(1);
+            return;
+        }
+        if (!status.hasNext()) {
+            throw new ParseException("Expected donation notice second line, got EOF", -1);
+        }
+        String secondLine = status.next();
+        if (!DONATION_NOTICE_SECOND_LINE_PATTERN.matcher(secondLine).matches()) {
+            throw new ParseException("Expected donation notice second line, found: " + secondLine, status.previousIndex());
+        }
+    }
+
+}

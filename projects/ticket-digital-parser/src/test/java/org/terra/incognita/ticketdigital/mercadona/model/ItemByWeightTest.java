@@ -27,11 +27,11 @@ class ItemByWeightTest {
 
         assertNotNull(item, "El item no debería ser null");
         assertEquals("BANANA", item.id(), "El ID debería ser BANANA");
-        assertEquals(new BigDecimal("0.336"), item.pesoKg());
-        assertEquals(new BigDecimal("1.45"), item.precioPorKilogramo());
-        // El precioTotal() calculado por el record es pesoKg * precioPorKilogramo
+        assertEquals(new BigDecimal("0.336"), item.weightKg());
+        assertEquals(new BigDecimal("1.45"), item.pricePerKilogram());
+        // El calculatedPrice() calculado por el record es weightKg * pricePerKilogram
         // 0.336 * 1.45 = 0.4872, que redondeado HALF_UP a 2 decimales es 0.49
-        assertEquals(new BigDecimal("0.49"), item.precioCalculado());
+        assertEquals(new BigDecimal("0.49"), item.calculatedPrice());
     }
 
     @Test
@@ -46,9 +46,9 @@ class ItemByWeightTest {
 
         assertNotNull(item);
         assertEquals("PLÁTANO DE CANARIAS / EXTRA", item.id());
-        assertEquals(new BigDecimal("1.200"), item.pesoKg());
-        assertEquals(new BigDecimal("5.50"), item.precioPorKilogramo());
-        assertEquals(new BigDecimal("6.60"), item.precioCalculado());
+        assertEquals(new BigDecimal("1.200"), item.weightKg());
+        assertEquals(new BigDecimal("5.50"), item.pricePerKilogram());
+        assertEquals(new BigDecimal("6.60"), item.calculatedPrice());
     }
 
     @Test
@@ -130,12 +130,12 @@ class ItemByWeightTest {
 
     @Test
     @DisplayName("Debería calcular correctamente el precio total")
-    void testPrecioCalculadoCalculation() {
+    void testCalculatedPriceCalculation() {
         ItemByWeight item = new ItemByWeight("TEST", new BigDecimal("0.500"), new BigDecimal("2.00"),new BigDecimal("1.00"));
-        assertEquals(new BigDecimal("1.00"), item.precioCalculado());
+        assertEquals(new BigDecimal("1.00"), item.calculatedPrice());
 
         // Caso con redondeo (0.336 * 1.45 = 0.4872 -> 0.49)
         item = new ItemByWeight("TEST", new BigDecimal("0.336"), new BigDecimal("1.45"),new BigDecimal("0.49"));
-        assertEquals(new BigDecimal("0.49"), item.precioCalculado());
+        assertEquals(new BigDecimal("0.49"), item.calculatedPrice());
     }
 }

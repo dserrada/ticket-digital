@@ -9,13 +9,13 @@ import java.util.List;
 /**
  * Cabecer del tickek con información general de la compra
  *
- * @param fechaCompra       La fecha de compra del ticket
- * @param OP                ¿código de coperaciones?
- * @param codigoFacturaSimplificada   El número de factura simplificada
+ * @param purchaseDate       La fecha de compra del ticket
+ * @param operationCode      ¿código de coperaciones?
+ * @param simplifiedInvoiceNumber   El número de factura simplificada
  */
-public record TicketHeader(LocalDateTime fechaCompra,
-                           String OP,
-                           String codigoFacturaSimplificada)  {
+public record TicketHeader(LocalDateTime purchaseDate,
+                           String operationCode,
+                           String simplifiedInvoiceNumber)  {
 
 
     public static final DateTimeFormatter MERCADONA_DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -39,30 +39,30 @@ public record TicketHeader(LocalDateTime fechaCompra,
         }
 
         String line = lines.get(0).trim();
-        String[] fechaHoraParts = line.split("\\s+");
-        if (fechaHoraParts.length < 4) {
-            throw new ParseException("Expected at least fechaCompra, horaCompra, 'OP:' and OP value in line: '" + line + "'",-1);
+        String[] dateTimeParts = line.split("\\s+");
+        if (dateTimeParts.length < 4) {
+            throw new ParseException("Expected at least purchaseDate, purchaseTime, 'OP:' and OP value in line: '" + line + "'",-1);
         }
 
-        String fechaCompraStr = fechaHoraParts[0];
-        String horaCompraStr = fechaHoraParts[1];
+        String purchaseDateStr = dateTimeParts[0];
+        String purchaseTimeStr = dateTimeParts[1];
 
-        if (!fechaHoraParts[2].equals("OP:")) {
+        if (!dateTimeParts[2].equals("OP:")) {
             throw new ParseException("Expected 'OP:' at index 2 in line: '" + line + "'",-1);
         }
 
-        String OP = fechaHoraParts[3];
+        String operationCode = dateTimeParts[3];
 
-        LocalDateTime fechaCompra = LocalDateTime.parse(fechaCompraStr + " " + horaCompraStr, MERCADONA_DATE_TIME_FORMAT);
+        LocalDateTime purchaseDate = LocalDateTime.parse(purchaseDateStr + " " + purchaseTimeStr, MERCADONA_DATE_TIME_FORMAT);
 
         line = lines.get(1);
-        String[] facturaParts = line.split(":");
-        if (facturaParts.length < 2) {
+        String[] invoiceParts = line.split(":");
+        if (invoiceParts.length < 2) {
             throw new ParseException("Expected ':' in factura simplificada line: '" + line + "'",-1);
         }
-        String codigoFacturaSimplificada = facturaParts[1].trim();
+        String simplifiedInvoiceNumber = invoiceParts[1].trim();
 
-        return new TicketHeader(fechaCompra, OP, codigoFacturaSimplificada);
+        return new TicketHeader(purchaseDate, operationCode, simplifiedInvoiceNumber);
     }
 
 }

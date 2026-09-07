@@ -32,7 +32,7 @@ class TicketMercadonaTest {
         TicketMercadona ticket = TicketMercadona.parse(Path.of("src/test/resources/20230101090000 Ticket Digital Mercadona.txt"));
         assertNotNull(ticket);
         logger.debug("Ticket parseado: {}", ticket);
-        logger.debug("Importe final: {}", ticket.precioTotalEnEuros());
+        logger.debug("Importe final: {}", ticket.itemsTotal());
         // TODO: Comprobar que lo que ha leido sea correcto
     }
 
@@ -43,18 +43,42 @@ class TicketMercadonaTest {
         TicketMercadona ticket = TicketMercadona.parse(Path.of("src/test/resources/20230907 Mercadona 33,50 €.pdf"));
         assertNotNull(ticket);
         logger.debug("Ticket parseado: {}", ticket);
-        logger.debug("Importe final: {}", ticket.precioTotalEnEuros());
+        logger.debug("Importe final: {}", ticket.itemsTotal());
         // TODO: Comprobar que lo que ha leido sea correcto
     }
 
     @Test
     public void pruebaFicheroPDFExterno() throws Exception {
-        // Simplemente verificamos que no explota
         TicketMercadona ticket = TicketMercadona.parse(Path.of("src/test/resources/20250809 Mercadona 122,05 €.pdf"));
         assertNotNull(ticket);
         logger.debug("Ticket parseado: {}", ticket);
-        logger.debug("Importe final: {}", ticket.precioTotalEnEuros());
-        // TODO: Comprobar que lo que ha leido sea correcto
+        logger.debug("Importe final: {}", ticket.itemsTotal());
+
+        assertEquals(new BigDecimal("122.05"), ticket.total());
+        assertEquals(new BigDecimal("122.05"), ticket.amountPaidByCard());
+
+        VatBreakdown vat = ticket.vatBreakdown();
+        assertEquals(3, vat.rates().size());
+        assertEquals(new BigDecimal("4"), vat.rates().get(0).rate());
+        assertEquals(new BigDecimal("34.83"), vat.rates().get(0).taxableBase());
+        assertEquals(new BigDecimal("1.39"), vat.rates().get(0).vatAmount());
+        assertEquals(new BigDecimal("10"), vat.rates().get(1).rate());
+        assertEquals(new BigDecimal("53.25"), vat.rates().get(1).taxableBase());
+        assertEquals(new BigDecimal("5.33"), vat.rates().get(1).vatAmount());
+        assertEquals(new BigDecimal("21"), vat.rates().get(2).rate());
+        assertEquals(new BigDecimal("22.52"), vat.rates().get(2).taxableBase());
+        assertEquals(new BigDecimal("4.73"), vat.rates().get(2).vatAmount());
+        assertEquals(new BigDecimal("110.60"), vat.totalTaxableBase());
+        assertEquals(new BigDecimal("11.45"), vat.totalVatAmount());
+
+        CardPayment cardPayment = ticket.cardPayment();
+        assertEquals("1293", cardPayment.lastFourDigits());
+        assertEquals("032849226", cardPayment.nc());
+        assertEquals("724541", cardPayment.aut());
+        assertEquals("A0000000031010", cardPayment.aid());
+        assertEquals("00", cardPayment.arc());
+        assertEquals("Visa Debit", cardPayment.brand());
+        assertEquals(new BigDecimal("122.05"), cardPayment.amount());
     }
 
     @Test
@@ -63,7 +87,7 @@ class TicketMercadonaTest {
         assertNotNull(ticket);
 
         // Verifica el total (suma de precios calculados)
-        assertEquals(new BigDecimal("77.71"), ticket.precioTotalEnEuros());
+        assertEquals(new BigDecimal("77.71"), ticket.itemsTotal());
 
         // Verifica que hay artículos frescos parseados correctamente
         List<FreshItemByWeight> freshItems = ticket.items().stream()
@@ -76,16 +100,37 @@ class TicketMercadonaTest {
         FreshItemByWeight lubina = freshItems.get(0);
         assertEquals("LUBINA", lubina.id());
         assertEquals("PESCADO", lubina.freshType());
-        assertEquals(new BigDecimal("0.762"), lubina.pesoKg());
-        assertEquals(new BigDecimal("8.25"), lubina.precioPorKilogramo());
+        assertEquals(new BigDecimal("0.762"), lubina.weightKg());
+        assertEquals(new BigDecimal("8.25"), lubina.pricePerKilogram());
 
         FreshItemByWeight langostino = freshItems.get(1);
         assertEquals("LANGOSTINO COCIDO", langostino.id());
         assertEquals("PESCADO", langostino.freshType());
-        assertEquals(new BigDecimal("0.518"), langostino.pesoKg());
-        assertEquals(new BigDecimal("10.95"), langostino.precioPorKilogramo());
+        assertEquals(new BigDecimal("0.518"), langostino.weightKg());
+        assertEquals(new BigDecimal("10.95"), langostino.pricePerKilogram());
 
-        assertEquals(ticket.pagadoEnEuros(),ticket.precioTotalEnEuros());
+        assertEquals(ticket.total(), ticket.itemsTotal());
+        assertEquals(new BigDecimal("77.71"), ticket.amountPaidByCard());
+
+        VatBreakdown vat = ticket.vatBreakdown();
+        assertEquals(2, vat.rates().size());
+        assertEquals(new BigDecimal("2"), vat.rates().get(0).rate());
+        assertEquals(new BigDecimal("6.81"), vat.rates().get(0).taxableBase());
+        assertEquals(new BigDecimal("0.14"), vat.rates().get(0).vatAmount());
+        assertEquals(new BigDecimal("10"), vat.rates().get(1).rate());
+        assertEquals(new BigDecimal("64.33"), vat.rates().get(1).taxableBase());
+        assertEquals(new BigDecimal("6.43"), vat.rates().get(1).vatAmount());
+        assertEquals(new BigDecimal("71.14"), vat.totalTaxableBase());
+        assertEquals(new BigDecimal("6.57"), vat.totalVatAmount());
+
+        CardPayment cardPayment = ticket.cardPayment();
+        assertEquals("3851", cardPayment.lastFourDigits());
+        assertEquals("003812591", cardPayment.nc());
+        assertEquals("R65107", cardPayment.aut());
+        assertEquals("A0000000041010", cardPayment.aid());
+        assertEquals("00", cardPayment.arc());
+        assertEquals("MASTERCARD", cardPayment.brand());
+        assertEquals(new BigDecimal("77.71"), cardPayment.amount());
     }
 
     @Test
@@ -162,9 +207,9 @@ class TicketMercadonaTest {
                                                 TARJETA BANCARIA           9,64
                 
                             IVA           BASE IMPONIBLE (€)     CUOTA (€)
-                            10%                   8,54             0,85
+                            10%                   7,76             0,78
                              0%                   1,10             0,00
-                           TOTAL                 11,65             0,85
+                           TOTAL                  8,86             0,78
                 
                        TARJ. BANCARIA: **** **** **** 1234
                        N.C: 1234567                                  AUT: Z12345
@@ -172,7 +217,7 @@ class TicketMercadonaTest {
                 
                 
                        MASTERCARD
-                       Importe: 12,48 €                         MASTERCARD
+                       Importe: 9,64 €                          MASTERCARD
                        
                        
                        
@@ -192,10 +237,10 @@ class TicketMercadonaTest {
         assertEquals("MONCADA", ticket.shopData().state());
         assertEquals("961309467", ticket.shopData().phoneNumber());
 
-        assertEquals(LocalDateTime.parse("01/01/2023 09:00", MERCADONA_DATE_TIME_FORMAT), ticket.header().fechaCompra());
-        assertEquals("01/01/2023 09:00", ticket.header().fechaCompra().format(MERCADONA_DATE_TIME_FORMAT));
-        assertEquals("257136", ticket.header().OP());
-        assertEquals("4567-891-113122", ticket.header().codigoFacturaSimplificada());
+        assertEquals(LocalDateTime.parse("01/01/2023 09:00", MERCADONA_DATE_TIME_FORMAT), ticket.header().purchaseDate());
+        assertEquals("01/01/2023 09:00", ticket.header().purchaseDate().format(MERCADONA_DATE_TIME_FORMAT));
+        assertEquals("257136", ticket.header().operationCode());
+        assertEquals("4567-891-113122", ticket.header().simplifiedInvoiceNumber());
 
         assertNotNull(ticket.items());
         assertEquals(5,ticket.items().size());
@@ -203,28 +248,53 @@ class TicketMercadonaTest {
         // First item: BARRA DE PAN
         assertNotNull(ticket.items().get(0));
         assertEquals("BARRA DE PAN", ticket.items().get(0).id());
-        assertEquals(new BigDecimal("0.48"), ticket.items().get(0).precioCalculado());
+        assertEquals(new BigDecimal("0.48"), ticket.items().get(0).calculatedPrice());
 
         // Second item: PANECILLO 11UDS
         assertNotNull(ticket.items().get(1));
         assertEquals("PANECILLO 11UDS", ticket.items().get(1).id());
-        assertEquals(new BigDecimal("1.10"), ticket.items().get(1).precioCalculado());
+        assertEquals(new BigDecimal("1.10"), ticket.items().get(1).calculatedPrice());
 
         // Third item: FRANKFURT VIENA QUES
         assertNotNull(ticket.items().get(2));
         assertEquals("FRANKFURT VIENA QUES", ticket.items().get(2).id());
-        assertEquals(2, ((NItemsByUnit)ticket.items().get(2)).cantidad());
-        assertEquals(new BigDecimal("5.60"), ticket.items().get(2).precioCalculado());
+        assertEquals(2, ((NItemsByUnit)ticket.items().get(2)).quantity());
+        assertEquals(new BigDecimal("5.60"), ticket.items().get(2).calculatedPrice());
 
         // Fourth item: CHORIZO 4PACK
         assertNotNull(ticket.items().get(3));
         assertEquals("CHORIZO 4PACK", ticket.items().get(3).id());
-        assertEquals(new BigDecimal("1.97"), ticket.items().get(3).precioCalculado());
+        assertEquals(new BigDecimal("1.97"), ticket.items().get(3).calculatedPrice());
 
         // Fifth item: BANANA
         assertNotNull(ticket.items().get(4));
         assertEquals("BANANA", ticket.items().get(4).id());
-        assertEquals(new BigDecimal("0.49"), ticket.items().get(4).precioCalculado());
+        assertEquals(new BigDecimal("0.49"), ticket.items().get(4).calculatedPrice());
+
+        assertEquals(new BigDecimal("9.64"), ticket.total());
+        assertEquals(new BigDecimal("9.64"), ticket.amountPaidByCard());
+
+        VatBreakdown vat = ticket.vatBreakdown();
+        assertNotNull(vat);
+        assertEquals(2, vat.rates().size());
+        assertEquals(new BigDecimal("10"), vat.rates().get(0).rate());
+        assertEquals(new BigDecimal("7.76"), vat.rates().get(0).taxableBase());
+        assertEquals(new BigDecimal("0.78"), vat.rates().get(0).vatAmount());
+        assertEquals(new BigDecimal("0"), vat.rates().get(1).rate());
+        assertEquals(new BigDecimal("1.10"), vat.rates().get(1).taxableBase());
+        assertEquals(new BigDecimal("0.00"), vat.rates().get(1).vatAmount());
+        assertEquals(new BigDecimal("8.86"), vat.totalTaxableBase());
+        assertEquals(new BigDecimal("0.78"), vat.totalVatAmount());
+
+        CardPayment cardPayment = ticket.cardPayment();
+        assertNotNull(cardPayment);
+        assertEquals("1234", cardPayment.lastFourDigits());
+        assertEquals("1234567", cardPayment.nc());
+        assertEquals("Z12345", cardPayment.aut());
+        assertEquals("A0000000041010", cardPayment.aid());
+        assertEquals("46113", cardPayment.arc());
+        assertEquals("MASTERCARD", cardPayment.brand());
+        assertEquals(new BigDecimal("9.64"), cardPayment.amount());
     }
 
 }

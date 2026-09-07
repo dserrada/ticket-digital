@@ -22,10 +22,10 @@ class OneItemByUnitTest {
 
         assertNotNull(item, "El item no debería ser null");
         assertEquals("PRODUCTO", item.id());
-        assertEquals(1, item.cantidad());
-        assertNull(item.precioPorUnidad());
-        assertEquals(new BigDecimal("1.50"), item.precio());
-        assertEquals(new BigDecimal("1.50"), item.precioCalculado());
+        assertEquals(1, item.quantity());
+        assertNull(item.unitPrice());
+        assertEquals(new BigDecimal("1.50"), item.price());
+        assertEquals(new BigDecimal("1.50"), item.calculatedPrice());
     }
 
     @Test
@@ -38,7 +38,7 @@ class OneItemByUnitTest {
 
         assertNotNull(item);
         assertEquals("BARRA DE PAN", item.id());
-        assertEquals(new BigDecimal("0.48"), item.precio());
+        assertEquals(new BigDecimal("0.48"), item.price());
     }
 
     @Test
@@ -50,7 +50,7 @@ class OneItemByUnitTest {
 
         assertNotNull(item);
         assertEquals("CHORIZO 4PACK/EXTRA", item.id());
-        assertEquals(new BigDecimal("1.97"), item.precio());
+        assertEquals(new BigDecimal("1.97"), item.price());
 
         line = "1 QUESO 50% DTO. 2,00";
         status = new ParserStatusInfo(line);
@@ -68,7 +68,7 @@ class OneItemByUnitTest {
 
         assertNotNull(item);
         assertEquals("PAN BLANCO", item.id());
-        assertEquals(new BigDecimal("0.50"), item.precio());
+        assertEquals(new BigDecimal("0.50"), item.price());
     }
 
     @Test
@@ -80,7 +80,7 @@ class OneItemByUnitTest {
                 "1 PRODUCTO",           // Falta el precio
                 "1 PRODUCTO 1.50",      // Precio con punto en vez de coma
                 "1 PRODUCTO 1,5",       // Precio con un solo decimal
-                "1 PRODUCTO 1,500",     // Precio con tres decimales (REGEX_PRECIO solo permite 2)
+                "1 PRODUCTO 1,500",     // Precio con tres decimales (REGEX_PRICE solo permite 2)
                 "1 producto 1,50",      // ID en minúsculas (REGEX_ID solo permite A-Z mayúsculas y otros)
                 "",                     // Línea vacía
                 "1  1,50"               // Falta la descripción

@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioPorKilogramo, BigDecimal precio, String freshType) implements PurchasedItem {
+public record FreshItemByWeight(String id, BigDecimal weightKg, BigDecimal pricePerKilogram, BigDecimal price, String freshType) implements PurchasedItem {
     private static final Logger logger = LoggerFactory.getLogger(FreshItemByWeight.class);
 
     protected static final Pattern FIRST_WEIGHT_PATTERN = Pattern.compile(
@@ -20,28 +20,28 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
 
     protected static final Pattern SECOND_WEIGHT_LINE = ItemByWeight.SECOND_WEIGHT_LINE;
 
-    protected static final Pattern FRESH_TYPE_PATTERN = Pattern.compile("^\\s*(?<tipo>PESCADO)\\s*$");
+    protected static final Pattern FRESH_TYPE_PATTERN = Pattern.compile("^\\s*(?<type>PESCADO)\\s*$");
 
     public FreshItemByWeight {
-        Objects.requireNonNull(id, "nombre must not be null");
-        Objects.requireNonNull(pesoKg, "pesoKg must not be null");
-        Objects.requireNonNull(precioPorKilogramo, "precioPorKilogramo must not be null");
+        Objects.requireNonNull(id, "id must not be null");
+        Objects.requireNonNull(weightKg, "weightKg must not be null");
+        Objects.requireNonNull(pricePerKilogram, "pricePerKilogram must not be null");
         Objects.requireNonNull(freshType, "freshType must not be null");
 
         if (id.isBlank()) {
-            throw new IllegalArgumentException("nombre must not be blank");
+            throw new IllegalArgumentException("id must not be blank");
         }
-        if (pesoKg.signum() <= 0) {
-            throw new IllegalArgumentException("pesoKg must be greater than zero");
+        if (weightKg.signum() <= 0) {
+            throw new IllegalArgumentException("weightKg must be greater than zero");
         }
 
-        pesoKg = pesoKg.setScale(3, RoundingMode.UNNECESSARY);
-        precioPorKilogramo = precioPorKilogramo.setScale(2, RoundingMode.UNNECESSARY);
+        weightKg = weightKg.setScale(3, RoundingMode.UNNECESSARY);
+        pricePerKilogram = pricePerKilogram.setScale(2, RoundingMode.UNNECESSARY);
     }
 
     @Override
-    public BigDecimal precioCalculado() {
-        return pesoKg.multiply(precioPorKilogramo).setScale(2, RoundingMode.HALF_UP);
+    public BigDecimal calculatedPrice() {
+        return weightKg.multiply(pricePerKilogram).setScale(2, RoundingMode.HALF_UP);
     }
 
     /**
@@ -73,10 +73,10 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
                 return null;
             }
 
-            String freshType = headerMatcher.group("tipo");
+            String freshType = headerMatcher.group("type");
             int headerIndent = countLeadingSpaces(headerLine);
             status.enterFreshSection(freshType, headerIndent);
-            logger.debug("Sección de frescos: tipo={}, indent={}", freshType, headerIndent);
+            logger.debug("Sección de frescos: type={}, indent={}", freshType, headerIndent);
         }
 
         // Leemos el siguiente artículo dentro de la sección activa
@@ -118,12 +118,12 @@ public record FreshItemByWeight(String id, BigDecimal pesoKg, BigDecimal precioP
 
         String id = nameMatcher.group("id").trim();
         String freshType = status.getCurrentFreshType();
-        BigDecimal pesoKg = PurchasedItem.parseWeight(weightMatcher.group("peso"));
-        BigDecimal precioPorKilogramo = PurchasedItem.parseUnitPrice(weightMatcher.group("precioKg"));
-        BigDecimal precio = PurchasedItem.parseUnitPrice(weightMatcher.group("precio"));
+        BigDecimal weightKg = PurchasedItem.parseWeight(weightMatcher.group("weight"));
+        BigDecimal pricePerKilogram = PurchasedItem.parseUnitPrice(weightMatcher.group("pricePerKg"));
+        BigDecimal price = PurchasedItem.parseUnitPrice(weightMatcher.group("price"));
 
-        logger.debug("Artículo fresco parseado: id={}, tipo={}, peso={}, precioKg={}", id, freshType, pesoKg, precioPorKilogramo);
-        return new FreshItemByWeight(id, pesoKg, precioPorKilogramo, precio, freshType);
+        logger.debug("Artículo fresco parseado: id={}, type={}, weight={}, pricePerKg={}", id, freshType, weightKg, pricePerKilogram);
+        return new FreshItemByWeight(id, weightKg, pricePerKilogram, price, freshType);
     }
 
     private static int countLeadingSpaces(String line) {
