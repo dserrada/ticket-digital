@@ -1,0 +1,136 @@
+flowchart TD
+    INPUT(["`**Input**
+    Path (.pdf / .txt)`"]) --> DETECT{Extensión?}
+
+    DETECT -->|.pdf| PDF["**IndentPreservingTextStripper**
+    Pass 1: calcula margen izquierdo mínimo
+    Pass 2: prefija espacios por indentación
+    → preserva sangría de secciones frescas"]
+
+    DETECT -->|.txt| TXT["Files.readString()"]
+
+    PDF --> LINES["Texto → List&lt;String&gt; lines
+    ParserStatusInfo (iterador + estado)"]
+    TXT --> LINES
+
+    LINES --> P1
+
+    subgraph P1 ["**Fase 1 — ShopData** (4 líneas fijas)"]
+        S1["Línea 1: shopName + cif"]
+        S2["Línea 2: address"]
+        S3["Línea 3: postalCode + state"]
+        S4["Línea 4: phoneNumber"]
+    end
+
+    P1 --> P2
+
+    subgraph P2 ["**Fase 2 — TicketHeader** (2 líneas fijas)"]
+        H1["Línea 1: purchaseDate + operationCode"]
+        H2["Línea 2: simplifiedInvoiceNumber"]
+    end
+
+    P2 --> P3["**Fase 3 — Skip header**
+    Salta líneas hasta encontrar:
+    'Descripción … P. Unit … Importe'"]
+
+    P3 --> LOOP
+
+    subgraph LOOP ["**Fase 4 — Bucle de items** (hasta 'TOTAL (€)')"]
+        direction TB
+        NEXT["Leer siguiente línea"] --> TRY1
+
+        TRY1{"Parking?
+        (2 líneas)"}
+        TRY1 -->|Sí| R_PARK["→ Parking
+        start / end"]
+        TRY1 -->|No| TRY2
+
+        TRY2{"OneItemByUnit?
+        quantity = 1"}
+        TRY2 -->|Sí| R_ONE["→ OneItemByUnit
+        id · price"]
+        TRY2 -->|No| TRY3
+
+        TRY3{"NItemsByUnit?
+        quantity ≥ 2"}
+        TRY3 -->|Sí| R_N["→ NItemsByUnit
+        id · quantity · unitPrice · price"]
+        TRY3 -->|No| TRY4
+
+        TRY4{"ItemByWeight?
+        (2 líneas, no fresco)"}
+        TRY4 -->|Sí| R_W["→ ItemByWeight
+        id · weightKg · €/kg · price"]
+        TRY4 -->|No rollback 2| TRY5
+
+        TRY5{"FreshItemByWeight?"}
+        TRY5 -->|"Header fresco
+        (ej. PESCADO)"| FS_ENTER["enterFreshSection()
+        guarda freshType + indentación"]
+        TRY5 -->|"isInFreshSection
+        + indentación > header"| R_FRESH["→ FreshItemByWeight
+        id · weightKg · €/kg · price · freshType"]
+        TRY5 -->|"indentación ≤ header"| FS_EXIT["exitFreshSection()
+        rollback línea"]
+        TRY5 -->|No| ERR["ParseException"]
+
+        R_PARK & R_ONE & R_N & R_W & R_FRESH & FS_ENTER & FS_EXIT --> NEXT
+    end
+
+    LOOP -->|"TOTAL (€) → total"| P6
+
+    P6["**Fase 6 — Importe pagado con tarjeta**
+    Línea 'TARJETA BANCARIA &lt;importe&gt;'
+    → amountPaidByCard"] --> P7
+
+    subgraph P7 ["**Fase 7 — VatBreakdown** (desglose de IVA)"]
+        V1["Cabecera: 'IVA BASE IMPONIBLE (€) CUOTA (€)'"]
+        V2["1..N × VatRate: rate · taxableBase · vatAmount"]
+        V3["Fila TOTAL: totalTaxableBase · totalVatAmount
+        (debe coincidir con la suma de los VatRate)"]
+    end
+
+    P7 --> P8
+
+    subgraph P8 ["**Fase 8 — CardPayment** (pago con tarjeta)"]
+        direction TB
+        DON["¿Aviso de donación?
+        'DONACIÓN A BANCO DE / ALIMENTOS NO REEMBOLSABLE'
+        (opcional, se descarta — el importe ya
+        apareció como item normal en la Fase 4)"] --> MASK
+
+        MASK["Tarjeta enmascarada:
+        'TARJ.[.] BANCARIA: **** **** **** NNNN'
+        → lastFourDigits"] --> NCFMT
+
+        NCFMT{"Formato N.C/AUT/AID/ARC"}
+        NCFMT -->|"Clásico: 'N.C: … AUT: …'
+        + 'AID: … ARC: …'"| R_CLASSIC["nc · aut · aid · arc"]
+        NCFMT -->|"Alternativo (sin N.C):
+        'AUT: … ARC: … AID: '
+        + valor de AID en línea siguiente"| R_ALT["nc = null · aut · aid · arc"]
+
+        R_CLASSIC & R_ALT --> FILL["Salta relleno tolerante:
+        líneas en blanco, 'Verificado por
+        dispositivo', marca suelta (MAYÚSCULAS)"]
+
+        FILL --> AMT["'Importe: X,XX € &lt;brand&gt;'
+        → brand · amount"]
+    end
+
+    P8 --> P9["**Fase 9 — Disclaimer**
+    Consume 'SE ADMITEN DEVOLUCIONES CON TICKET'
+    (no se almacena; el resto del fichero,
+    si lo hay, se ignora)"]
+
+    P9 --> P5["**Verificación final**
+    itemsTotal() == total
+    total == amountPaidByCard == cardPayment.amount()
+    (NO se compara con VatBreakdown: puede haber
+    artículos no sujetos a IVA, p.ej. una donación)"]
+
+    P5 -->|OK| RESULT(["**TicketMercadona**
+    shopData · header · items · parking · total
+    amountPaidByCard · vatBreakdown · cardPayment"])
+    P5 -->|Mismatch| ERR2["ParseException
+    totales no cuadran"]
