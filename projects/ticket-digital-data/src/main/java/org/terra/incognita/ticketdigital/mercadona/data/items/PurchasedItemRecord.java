@@ -27,9 +27,9 @@ public record PurchasedItemRecord(String id, LocalDateTime date, Integer units, 
         return ticket.items().stream()
                 .map(item -> switch (item) {
                     case OneItemByUnit u ->
-                            new PurchasedItemRecord(u.id(), date, u.quantity(), u.unitPrice(), null, null, u.price());
+                            new PurchasedItemRecord(u.id(), date, u.quantity(), unitPriceOrFallback(u.quantity(), u.unitPrice(), u.price()), null, null, u.price());
                     case NItemsByUnit n ->
-                            new PurchasedItemRecord(n.id(), date, n.quantity(), n.unitPrice(), null, null, n.price());
+                            new PurchasedItemRecord(n.id(), date, n.quantity(), unitPriceOrFallback(n.quantity(), n.unitPrice(), n.price()), null, null, n.price());
                     case ItemByWeight w ->
                             // INFO: Lo de poner el 1 a huevo no se si es buena idea o no.
                             new PurchasedItemRecord(w.id(), date, 1, null, w.weightKg(), w.pricePerKilogram(), w.price());
@@ -37,6 +37,12 @@ public record PurchasedItemRecord(String id, LocalDateTime date, Integer units, 
                             new PurchasedItemRecord(f.id(), date, 1, null, f.weightKg(), f.pricePerKilogram(), f.price());
                 })
                 .toList();
+    }
+
+    // Si solo se ha comprado una unidad el precio por unidad coincide con el precio total,
+    // pero el parseador lo deja a null porque el ticket no lo indica explícitamente.
+    private static BigDecimal unitPriceOrFallback(int quantity, BigDecimal unitPrice, BigDecimal price) {
+        return quantity == 1 && unitPrice == null ? price : unitPrice;
     }
 
     public String toCSV() {

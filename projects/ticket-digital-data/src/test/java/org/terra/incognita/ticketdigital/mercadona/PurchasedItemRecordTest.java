@@ -80,4 +80,40 @@ class PurchasedItemRecordTest {
         assertEquals(new BigDecimal("8.00"), record4.pricePerKg());
         assertEquals(new BigDecimal("0.00"), record4.price());
     }
+
+    @Test
+    void testFromTicketFillsUnitPriceWhenOnlyOneUnitPurchased() {
+        // Arrange
+        LocalDateTime purchaseDate = LocalDateTime.of(2024, 4, 18, 10, 30);
+        TicketHeader header = new TicketHeader(purchaseDate, "123", "456");
+
+        // Cuando solo se compra una unidad el ticket no trae el precio por unidad explícito
+        PurchasedItem item1 = new OneItemByUnit("Item 1", 1, null, new BigDecimal("1.50"));
+        PurchasedItem item2 = new NItemsByUnit("Item 2", 1, null, new BigDecimal("3.20"));
+
+        TicketMercadona ticket = new TicketMercadona(
+                null,
+                header,
+                List.of(item1, item2),
+                null,
+                new BigDecimal("4.70"),
+                new BigDecimal("4.70"),
+                null,
+                null
+        );
+
+        // Act
+        List<PurchasedItemRecord> records = PurchasedItemRecord.fromTicket(ticket);
+
+        // Assert
+        assertEquals(2, records.size());
+
+        PurchasedItemRecord record1 = records.get(0);
+        assertEquals(new BigDecimal("1.50"), record1.unitPrice());
+        assertEquals(new BigDecimal("1.50"), record1.price());
+
+        PurchasedItemRecord record2 = records.get(1);
+        assertEquals(new BigDecimal("3.20"), record2.unitPrice());
+        assertEquals(new BigDecimal("3.20"), record2.price());
+    }
 }
