@@ -147,11 +147,16 @@ gradle-app.setting
 # Excepto los tests especificamente puestos en el directorio de testing
 !projects/ticket-digital-parser/src/test/resources/*.pdf
 
+# Ni ningún CSV/XLSX generado a partir de ellos (write-items-csv/xlsx), venga
+# de donde venga dentro del repo, no solo de la ruta por defecto de antes:
+# son datos personales derivados de mis tickets reales.
+*.csv
+*.xlsx
+# Excepto la plantilla vacía que usa write-items-xlsx (sin datos de tickets).
+!projects/ticket-digital-data/src/main/resources/Mercadona-base.xlsx
+
 
 .junie/memory/
-
-projects/ticket-digital-data/data-output.csv
-projects/ticket-digital-data/data-output.xlsx
 
 .claude/
 
