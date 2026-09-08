@@ -6,3 +6,6 @@ project(':ticket-digital-parser').projectDir = file('projects/ticket-digital-par
 include 'ticket-digital-data'
 project(':ticket-digital-data').projectDir = file('projects/ticket-digital-data')
 
+include 'ticket-digital-tickets-downloader'
+project(':ticket-digital-tickets-downloader').projectDir = file('projects/ticket-digital-tickets-downloader')
+

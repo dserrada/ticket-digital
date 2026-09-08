@@ -154,3 +154,10 @@ projects/ticket-digital-data/data-output.csv
 projects/ticket-digital-data/data-output.xlsx
 
 .claude/
+
+# Secretos de ticket-digital-tickets-downloader: nunca deben comitearse.
+# (Por defecto viven fuera del repo, en ~/.ticket-digital/, pero esto es un
+# refuerzo por si alguien los coloca dentro por error.)
+credentials.json
+**/credentials.json
+.ticket-digital/
