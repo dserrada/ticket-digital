@@ -116,4 +116,34 @@ class PurchasedItemRecordTest {
         assertEquals(new BigDecimal("3.20"), record2.unitPrice());
         assertEquals(new BigDecimal("3.20"), record2.price());
     }
+
+    @Test
+    void byDateDescendingOrdenaDeLaCompraMasRecienteALaMasAntigua() {
+        PurchasedItemRecord oldest = itemAt(LocalDateTime.of(2024, 1, 1, 10, 0));
+        PurchasedItemRecord middle = itemAt(LocalDateTime.of(2024, 6, 15, 10, 0));
+        PurchasedItemRecord newest = itemAt(LocalDateTime.of(2024, 12, 31, 10, 0));
+
+        List<PurchasedItemRecord> sorted = List.of(middle, oldest, newest).stream()
+                .sorted(PurchasedItemRecord.BY_DATE_DESCENDING)
+                .toList();
+
+        assertEquals(List.of(newest, middle, oldest), sorted);
+    }
+
+    @Test
+    void byDateDescendingMantieneElOrdenOriginalEntreItemsDeLaMismaFecha() {
+        LocalDateTime sameDate = LocalDateTime.of(2024, 6, 15, 10, 0);
+        PurchasedItemRecord first = new PurchasedItemRecord("PAN", sameDate, 1, null, null, null, BigDecimal.ONE);
+        PurchasedItemRecord second = new PurchasedItemRecord("LECHE", sameDate, 1, null, null, null, BigDecimal.ONE);
+
+        List<PurchasedItemRecord> sorted = List.of(first, second).stream()
+                .sorted(PurchasedItemRecord.BY_DATE_DESCENDING)
+                .toList();
+
+        assertEquals(List.of(first, second), sorted, "sorted() es estable: el orden entre iguales no debe cambiar");
+    }
+
+    private static PurchasedItemRecord itemAt(LocalDateTime date) {
+        return new PurchasedItemRecord("ITEM", date, 1, null, null, null, BigDecimal.ONE);
+    }
 }

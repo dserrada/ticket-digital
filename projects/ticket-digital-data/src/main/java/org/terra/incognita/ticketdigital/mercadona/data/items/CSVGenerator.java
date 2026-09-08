@@ -39,6 +39,7 @@ public class CSVGenerator {
                 .filter(Objects::nonNull)
                 .map(PurchasedItemRecord::fromTicket)
                 .flatMap(List::stream)
+                .sorted(PurchasedItemRecord.BY_DATE_DESCENDING)
                 .map(PurchasedItemRecord::toCSV);
             for (Iterator<String> it = lines.iterator(); it.hasNext(); ) {
                 bos.write(it.next());

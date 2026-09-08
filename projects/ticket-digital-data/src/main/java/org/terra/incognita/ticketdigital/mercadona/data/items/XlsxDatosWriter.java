@@ -74,6 +74,7 @@ public class XlsxDatosWriter {
                 .filter(Objects::nonNull)
                 .map(PurchasedItemRecord::fromTicket)
                 .flatMap(List::stream)
+                .sorted(PurchasedItemRecord.BY_DATE_DESCENDING)
                 .toList();
 
         try (InputStream templateIn = XlsxDatosWriter.class.getResourceAsStream(TEMPLATE_RESOURCE)) {

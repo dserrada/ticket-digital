@@ -5,6 +5,7 @@ import org.terra.incognita.ticketdigital.mercadona.model.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -21,6 +22,10 @@ import java.util.List;
  */
 public record PurchasedItemRecord(String id, LocalDateTime date, Integer units, BigDecimal unitPrice,
                                   BigDecimal weightKg, BigDecimal pricePerKg, BigDecimal price) {
+
+    // El listado de compras se muestra de la más reciente a la más antigua.
+    public static final Comparator<PurchasedItemRecord> BY_DATE_DESCENDING =
+            Comparator.comparing(PurchasedItemRecord::date).reversed();
 
     public static  List<PurchasedItemRecord> fromTicket(TicketMercadona ticket) {
         LocalDateTime date = ticket.header().purchaseDate();
