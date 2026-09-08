@@ -151,5 +151,6 @@ gradle-app.setting
 .junie/memory/
 
 projects/ticket-digital-data/data-output.csv
+projects/ticket-digital-data/data-output.xlsx
 
 .claude/

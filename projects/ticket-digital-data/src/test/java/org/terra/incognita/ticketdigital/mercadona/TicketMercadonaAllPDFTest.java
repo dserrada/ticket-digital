@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terra.incognita.ticketdigital.mercadona.data.items.CSVGenerator;
+import org.terra.incognita.ticketdigital.mercadona.data.items.XlsxDatosWriter;
 import org.terra.incognita.ticketdigital.mercadona.model.PurchasedItem;
 
 import java.nio.file.Path;
@@ -16,6 +17,7 @@ public class TicketMercadonaAllPDFTest {
     public void pruebaFicheroAllPDF() throws Exception {
         Path dataDir = Path.of("../../../../GMailExtractor/mails/");
         CSVGenerator.writeCSVToFile(dataDir, Path.of("data-output.csv").toFile());
+        XlsxDatosWriter.writeXlsxToFile(dataDir, Path.of("data-output.xlsx").toFile());
         logger.info("Finished");
 
     }
