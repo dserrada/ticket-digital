@@ -9,5 +9,5 @@ application {
 dependencies {
     implementation 'info.picocli:picocli:4.7.6'
     implementation project(':ticket-digital-parser')
-    testImplementation 'ch.qos.logback:logback-classic:1.5.+', { transitive = true}
+    implementation 'ch.qos.logback:logback-classic:1.5.+', { transitive = true}
 }
