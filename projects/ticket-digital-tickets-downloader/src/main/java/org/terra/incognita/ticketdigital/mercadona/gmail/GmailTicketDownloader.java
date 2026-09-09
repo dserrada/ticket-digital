@@ -77,6 +77,15 @@ public class GmailTicketDownloader {
         Credential credential = authorize(httpTransport, request.credentialsFile(), request.tokenDirectory());
         logger.debug("Autenticación completada.");
 
+        Long expiresInSeconds = credential.getExpiresInSeconds();
+        if (expiresInSeconds == null || expiresInSeconds <= 60) {
+            logger.debug("Token de acceso caducado o a punto de caducar: refrescando...");
+            if (!credential.refreshToken()) {
+                throw new IOException("No se pudo refrescar el token OAuth. Borra " + request.tokenDirectory()
+                        + " y vuelve a autenticarte.");
+            }
+        }
+
         logger.debug("Verificando que el token OAuth es de solo lectura...");
         String grantedScope = scopeChecker.fetchGrantedScope(credential.getAccessToken());
         GmailScopeValidator.assertReadOnly(grantedScope);
