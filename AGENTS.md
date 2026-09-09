@@ -67,6 +67,7 @@ CLI y generación de CSV.
 | `Main` | CLI picocli. Subcomando `write-items-csv`. |
 | `CSVGenerator` | Orquesta el proceso: busca PDFs → parsea → escribe CSV. |
 | `PurchasedItemRecord` | Representación tabular de una compra. Método `fromTicket()` para convertir, `toCSV()` para serializar. |
+| `ProductNameNormalizer` | Corrige erratas de nombre de producto (acentos, puntuación) según `nombres-normalizacion.csv`. Se aplica dentro de `PurchasedItemRecord.fromTicket()`; el CSV se carga una única vez en un mapa estático. |
 | `FileUtils` | Búsqueda recursiva de ficheros PDF en un directorio. |
 
 ---
@@ -82,6 +83,7 @@ CLI (Main) → CSVGenerator → FileUtils.searchInDir()
                          (ver docs/parser-phases.mmd)
                                     ↓
                          PurchasedItemRecord.fromTicket()
+                         [normaliza el id vía ProductNameNormalizer.normalize()]
                                     ↓
                          PurchasedItemRecord.toCSV()
                                     ↓
@@ -89,6 +91,14 @@ CLI (Main) → CSVGenerator → FileUtils.searchInDir()
 ```
 
 El CSV de salida usa **separador `;`** y **decimales con coma** (locale español).
+
+Los nombres de producto ya salen **normalizados** (`ProductNameNormalizer`, tabla en
+`nombres-normalizacion.csv`): corrige erratas de tipografía/acentos/puntuación que
+Mercadona imprime de forma inconsistente para el mismo producto (p.ej.
+`ACEITE OLIVA 0'4` / `ACEITE OLIVA 0`4` → `ACEITE OLIVA 0.4`). Cualquier comprobación
+posterior sobre nombres de producto (agrupaciones, totales por producto, etc.) puede
+asumir que esta corrección **ya se ha aplicado** y no necesita repetirla ni tenerla en
+cuenta como fuente de inconsistencias.
 
 ---
 

@@ -32,14 +32,14 @@ public record PurchasedItemRecord(String id, LocalDateTime date, Integer units, 
         return ticket.items().stream()
                 .map(item -> switch (item) {
                     case OneItemByUnit u ->
-                            new PurchasedItemRecord(u.id(), date, u.quantity(), unitPriceOrFallback(u.quantity(), u.unitPrice(), u.price()), null, null, u.price());
+                            new PurchasedItemRecord(ProductNameNormalizer.normalize(u.id()), date, u.quantity(), unitPriceOrFallback(u.quantity(), u.unitPrice(), u.price()), null, null, u.price());
                     case NItemsByUnit n ->
-                            new PurchasedItemRecord(n.id(), date, n.quantity(), unitPriceOrFallback(n.quantity(), n.unitPrice(), n.price()), null, null, n.price());
+                            new PurchasedItemRecord(ProductNameNormalizer.normalize(n.id()), date, n.quantity(), unitPriceOrFallback(n.quantity(), n.unitPrice(), n.price()), null, null, n.price());
                     case ItemByWeight w ->
                             // INFO: Lo de poner el 1 a huevo no se si es buena idea o no.
-                            new PurchasedItemRecord(w.id(), date, 1, null, w.weightKg(), w.pricePerKilogram(), w.price());
+                            new PurchasedItemRecord(ProductNameNormalizer.normalize(w.id()), date, 1, null, w.weightKg(), w.pricePerKilogram(), w.price());
                     case FreshItemByWeight f ->
-                            new PurchasedItemRecord(f.id(), date, 1, null, f.weightKg(), f.pricePerKilogram(), f.price());
+                            new PurchasedItemRecord(ProductNameNormalizer.normalize(f.id()), date, 1, null, f.weightKg(), f.pricePerKilogram(), f.price());
                 })
                 .toList();
     }
