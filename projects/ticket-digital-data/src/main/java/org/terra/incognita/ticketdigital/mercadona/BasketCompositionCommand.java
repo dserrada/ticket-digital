@@ -28,7 +28,10 @@ public class BasketCompositionCommand implements Callable<Integer> {
 
     private static final Logger logger = LoggerFactory.getLogger(BasketCompositionCommand.class);
 
-    @Option(names = {"--data-dir"}, description = "Directorio donde están los ficheros pdf con los tickets a analizar.", required = true, paramLabel = "<directorio-datos>")
+    @Option(names = {"--data-dir"},
+            description = "Directorio donde están los ficheros pdf con los tickets a analizar "
+                    + "(por defecto: ~/.ticket-digital/data).",
+            paramLabel = "<directorio-datos>")
     private String dataDir;
 
     @Option(names = {"-v", "--verbose"}, description = "Activa logs de nivel DEBUG.")
@@ -38,7 +41,7 @@ public class BasketCompositionCommand implements Callable<Integer> {
     public Integer call() throws IOException {
         Verbosity.apply(verbose);
         logger.debug("Ejecutando operación basket-composition...");
-        Path resolvedDataDir = UserPaths.resolve(dataDir);
+        Path resolvedDataDir = dataDir != null ? UserPaths.resolve(dataDir) : TicketDataDefaults.dataDir();
         List<PurchasedItemRecord> records = TicketRecordsReader.readAll(resolvedDataDir);
         if (records == null) return 1;
 

@@ -41,7 +41,7 @@ no necesita para nada).
 
 | Opción | Descripción |
 |---|---|
-| `--data-dir` | Directorio donde están los PDF de tickets a analizar. |
+| `--data-dir` | Directorio donde están los PDF de tickets a analizar (por defecto: `~/.ticket-digital/data`). |
 | `--csv-file` | Fichero donde se escribe el CSV generado. |
 | `-v`, `--verbose` | Activa logs de nivel DEBUG. |
 
@@ -49,7 +49,7 @@ no necesita para nada).
 
 | Opción | Descripción |
 |---|---|
-| `--data-dir` | Directorio donde están los PDF de tickets a analizar. |
+| `--data-dir` | Directorio donde están los PDF de tickets a analizar (por defecto: `~/.ticket-digital/data`). |
 | `--output-dir` | Directorio donde se escribe el XLSX generado (`Mercadona-yyyyMMdd.xlsx`). |
 | `-v`, `--verbose` | Activa logs de nivel DEBUG. |
 
@@ -57,7 +57,7 @@ no necesita para nada).
 
 | Opción | Descripción |
 |---|---|
-| `--data-dir` | Directorio donde están los PDF de tickets a analizar. |
+| `--data-dir` | Directorio donde están los PDF de tickets a analizar (por defecto: `~/.ticket-digital/data`). |
 | `-v`, `--verbose` | Activa logs de nivel DEBUG y lista los productos de la cesta calculada. |
 
 El programa calcula automáticamente el año base y la cesta de la compra a partir del
@@ -74,7 +74,7 @@ razonamiento en [`docs/inflation-index.md`](../../docs/inflation-index.md).
 
 | Opción | Descripción |
 |---|---|
-| `--data-dir` | Directorio donde están los PDF de tickets a analizar. |
+| `--data-dir` | Directorio donde están los PDF de tickets a analizar (por defecto: `~/.ticket-digital/data`). |
 | `-v`, `--verbose` | Activa logs de nivel DEBUG. |
 
 Muestra la misma cesta que calcula `inflation-index`, con el gasto en el año base y el

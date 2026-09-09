@@ -26,7 +26,10 @@ public class WriteItemsXlsxCommand implements Callable<Integer> {
 
     private static final Logger logger = LoggerFactory.getLogger(WriteItemsXlsxCommand.class);
 
-    @Option(names = {"--data-dir"}, description = "Directorio donde están los ficheros pdf con los tickets a analizar.", required = true, paramLabel = "<directorio-datos>")
+    @Option(names = {"--data-dir"},
+            description = "Directorio donde están los ficheros pdf con los tickets a analizar "
+                    + "(por defecto: ~/.ticket-digital/data).",
+            paramLabel = "<directorio-datos>")
     private String dataDir;
 
     @Option(names = {"--output-dir"}, description = "Directorio donde se escribe el fichero xlsx generado (Mercadona-yyyyMMdd.xlsx).", required = true, paramLabel = "<directorio-salida>")
@@ -39,7 +42,7 @@ public class WriteItemsXlsxCommand implements Callable<Integer> {
     public Integer call() throws IOException {
         Verbosity.apply(verbose);
         logger.debug("Ejecutando operación write-items-xlsx...");
-        Path resolvedDataDir = UserPaths.resolve(dataDir);
+        Path resolvedDataDir = dataDir != null ? UserPaths.resolve(dataDir) : TicketDataDefaults.dataDir();
         File resolvedOutputDir = UserPaths.resolve(outputDir).toFile();
         String fileName = "Mercadona-" + DateTimeFormatter.ofPattern("yyyyMMdd").format(LocalDate.now()) + ".xlsx";
         XlsxDatosWriter.writeXlsxToFile(resolvedDataDir, new File(resolvedOutputDir, fileName));

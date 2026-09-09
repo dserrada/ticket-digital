@@ -24,7 +24,10 @@ public class WriteItemsCsvCommand implements Callable<Integer> {
 
     private static final Logger logger = LoggerFactory.getLogger(WriteItemsCsvCommand.class);
 
-    @Option(names = {"--data-dir"}, description = "Directorio donde están los ficheros pdf con los tickets a analizar.", required = true, paramLabel = "<directorio-datos>")
+    @Option(names = {"--data-dir"},
+            description = "Directorio donde están los ficheros pdf con los tickets a analizar "
+                    + "(por defecto: ~/.ticket-digital/data).",
+            paramLabel = "<directorio-datos>")
     private String dataDir;
 
     @Option(names = {"--csv-file"}, description = "Nombre del fichero donde se escribe la información en csv.", required = true, paramLabel = "<fichero-csv>")
@@ -37,7 +40,7 @@ public class WriteItemsCsvCommand implements Callable<Integer> {
     public Integer call() throws IOException {
         Verbosity.apply(verbose);
         logger.debug("Ejecutando operación write-items-csv...");
-        Path resolvedDataDir = UserPaths.resolve(dataDir);
+        Path resolvedDataDir = dataDir != null ? UserPaths.resolve(dataDir) : TicketDataDefaults.dataDir();
         File resolvedCsvFile = UserPaths.resolve(csvFile).toFile();
         CSVGenerator.writeCSVToFile(resolvedDataDir, resolvedCsvFile);
         return 0;
