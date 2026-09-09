@@ -71,6 +71,17 @@ class TicketMercadonaTest {
     }
 
     @Test
+    public void pruebaFicheroPDFConCabeceraCantidad() throws Exception {
+        // Desde septiembre de 2026 Mercadona antepone una columna "Cnt." (cantidad) a la
+        // cabecera de la lista de items ("Cnt. Descripción   P. Unit   Importe" en vez de
+        // "Descripción   P. Unit   Importe"). Debe seguir parseando sin explotar.
+        TicketMercadona ticket = TicketMercadona.parse(Path.of("src/test/resources/20260909 Mercadona 4,65 €.pdf"));
+        assertNotNull(ticket);
+        assertEquals(new BigDecimal("4.65"), ticket.total());
+        assertEquals(3, ticket.items().size());
+    }
+
+    @Test
     public void pruebaFicheroPDFConProductosFrescos() throws Exception {
         TicketMercadona ticket = TicketMercadona.parse(Path.of("src/test/resources/20241108 Mercadona 77,71 €.pdf"));
         assertNotNull(ticket);

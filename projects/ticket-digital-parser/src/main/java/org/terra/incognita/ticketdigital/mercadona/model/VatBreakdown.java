@@ -22,11 +22,13 @@ public record VatBreakdown(List<VatRate> rates, BigDecimal totalTaxableBase, Big
 
     private static final Logger logger = LoggerFactory.getLogger(VatBreakdown.class);
 
+    // Algunos tickets abrevian "BASE IMPONIBLE" a "BASE IMP." y añaden una tercera
+    // columna redundante "TOTAL (€)" (base + cuota); ambas variantes se aceptan.
     private static final Pattern HEADER_PATTERN = Pattern.compile(
-            "^\\s*IVA\\s+BASE IMPONIBLE \\(€\\)\\s+CUOTA \\(€\\)\\s*$");
+            "^\\s*IVA\\s+BASE IMP(?:ONIBLE|\\.) \\(€\\)\\s+CUOTA \\(€\\)(?:\\s+TOTAL \\(€\\))?\\s*$");
 
     private static final Pattern TOTAL_LINE_PATTERN = Pattern.compile(
-            "^\\s*TOTAL\\s+(?<base>\\d*,\\d{2})\\s+(?<vatAmount>\\d*,\\d{2})\\s*$");
+            "^\\s*TOTAL\\s+(?<base>\\d*,\\d{2})\\s+(?<vatAmount>\\d*,\\d{2})(?:\\s+\\d*,\\d{2})?\\s*$");
 
     public VatBreakdown {
         rates = List.copyOf(rates);

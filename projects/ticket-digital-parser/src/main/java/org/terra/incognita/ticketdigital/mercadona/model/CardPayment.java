@@ -43,6 +43,11 @@ public record CardPayment(String lastFourDigits, String nc, String aut, String a
     private static final Pattern AUT_ARC_AID_PATTERN = Pattern.compile(
             "^\\s*AUT:\\s*(?<aut>\\S+)\\s+ARC:\\s*(?<arc>\\S+)\\s+AID:\\s*$");
 
+    // Otro formato alternativo: sin N.C, con AUT/ARC/AID los tres en la misma línea
+    // (en vez de AID en la línea siguiente).
+    private static final Pattern AUT_ARC_AID_INLINE_PATTERN = Pattern.compile(
+            "^\\s*AUT:\\s*(?<aut>\\S+)\\s+ARC:\\s*(?<arc>\\S+)\\s+AID:\\s*(?<aid>\\S+)\\s*$");
+
     private static final Pattern BARE_VALUE_PATTERN = Pattern.compile("^\\s*(?<value>\\S+)\\s*$");
 
     private static final Pattern DEVICE_VERIFIED_PATTERN = Pattern.compile(
@@ -112,25 +117,35 @@ public record CardPayment(String lastFourDigits, String nc, String aut, String a
         } else {
             // Formato alternativo: sin N.C, "AUT: ... ARC: ... AID: " seguido del valor de AID solo
             Matcher autArcAidMatcher = AUT_ARC_AID_PATTERN.matcher(secondLine);
-            if (!autArcAidMatcher.matches()) {
-                status.rollback(2);
-                return null;
-            }
-            nc = null;
-            aut = autArcAidMatcher.group("aut");
-            arc = autArcAidMatcher.group("arc");
+            if (autArcAidMatcher.matches()) {
+                nc = null;
+                aut = autArcAidMatcher.group("aut");
+                arc = autArcAidMatcher.group("arc");
 
-            if (!status.hasNext()) {
-                status.rollback(2);
-                return null;
+                if (!status.hasNext()) {
+                    status.rollback(2);
+                    return null;
+                }
+                String thirdLine = status.next();
+                Matcher bareValueMatcher = BARE_VALUE_PATTERN.matcher(thirdLine);
+                if (!bareValueMatcher.matches()) {
+                    status.rollback(3);
+                    return null;
+                }
+                aid = bareValueMatcher.group("value");
+            } else {
+                // Formato más reciente: sin N.C, "AUT: ... ARC: ... AID: ..." los tres en
+                // una sola línea.
+                Matcher autArcAidInlineMatcher = AUT_ARC_AID_INLINE_PATTERN.matcher(secondLine);
+                if (!autArcAidInlineMatcher.matches()) {
+                    status.rollback(2);
+                    return null;
+                }
+                nc = null;
+                aut = autArcAidInlineMatcher.group("aut");
+                arc = autArcAidInlineMatcher.group("arc");
+                aid = autArcAidInlineMatcher.group("aid");
             }
-            String thirdLine = status.next();
-            Matcher bareValueMatcher = BARE_VALUE_PATTERN.matcher(thirdLine);
-            if (!bareValueMatcher.matches()) {
-                status.rollback(3);
-                return null;
-            }
-            aid = bareValueMatcher.group("value");
         }
 
         // A partir de aquí el bloque es inequívocamente un CardPayment: cualquier

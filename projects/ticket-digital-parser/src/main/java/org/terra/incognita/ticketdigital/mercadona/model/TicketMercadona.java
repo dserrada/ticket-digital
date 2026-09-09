@@ -126,8 +126,9 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
             if (l.isBlank()) {
                 continue;
             }
-            // Linea de cabecera de los items
-            if (!l.trim().matches("Descripción\\s*P. Unit\\s*Importe")) {
+            // Linea de cabecera de los items. Algunos tickets anteponen una columna "Cnt."
+            // (cantidad) opcional antes de "Descripción".
+            if (!l.trim().matches("(Cnt\\.\\s*)?Descripción\\s*P. Unit\\s*Importe")) {
                 throw new ParseException("Invalid ticket format: expected 'Descripción                       P. Unit    Importe' header", status.previousIndex());
             }
             logger.info("Cabecera de los items parseada: {}", l);

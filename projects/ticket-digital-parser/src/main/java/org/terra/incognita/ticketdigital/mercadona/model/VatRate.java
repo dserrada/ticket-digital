@@ -20,8 +20,11 @@ public record VatRate(BigDecimal rate, BigDecimal taxableBase, BigDecimal vatAmo
 
     private static final Logger logger = LoggerFactory.getLogger(VatRate.class);
 
+    // El tramo original solo trae base y cuota; algunos tickets añaden una tercera
+    // columna redundante con el total (base + cuota) del tramo, que se ignora.
     private static final Pattern LINE_PATTERN = Pattern.compile(
-            "^\\s*(?<rate>\\d{1,2}(?:,\\d{1,2})?)%\\s+(?<base>\\d*,\\d{2})\\s+(?<vatAmount>\\d*,\\d{2})\\s*$");
+            "^\\s*(?<rate>\\d{1,2}(?:,\\d{1,2})?)%\\s+(?<base>\\d*,\\d{2})\\s+(?<vatAmount>\\d*,\\d{2})"
+                    + "(?:\\s+\\d*,\\d{2})?\\s*$");
 
     public VatRate {
         if (rate.compareTo(BigDecimal.ZERO) < 0 || rate.compareTo(new BigDecimal(100)) > 0) {
