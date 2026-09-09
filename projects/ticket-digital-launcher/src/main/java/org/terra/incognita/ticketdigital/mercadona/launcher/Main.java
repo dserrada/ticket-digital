@@ -26,6 +26,8 @@ import java.util.concurrent.Callable;
          subcommands = {
                  org.terra.incognita.ticketdigital.mercadona.WriteItemsCsvCommand.class,
                  org.terra.incognita.ticketdigital.mercadona.WriteItemsXlsxCommand.class,
+                 org.terra.incognita.ticketdigital.mercadona.InflationIndexCommand.class,
+                 org.terra.incognita.ticketdigital.mercadona.BasketCompositionCommand.class,
                  org.terra.incognita.ticketdigital.mercadona.gmail.Main.class
          })
 public class Main implements Callable<Integer> {

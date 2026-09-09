@@ -64,11 +64,15 @@ CLI y generación de CSV.
 
 | Clase | Descripción |
 |---|---|
-| `Main` | CLI picocli. Subcomando `write-items-csv`. |
-| `CSVGenerator` | Orquesta el proceso: busca PDFs → parsea → escribe CSV. |
+| `Main` | CLI picocli. Subcomandos `write-items-csv`, `write-items-xlsx`, `inflation-index`, `basket-composition`. |
+| `CSVGenerator` | Orquesta el proceso: `TicketRecordsReader.readAll()` → escribe CSV. |
+| `XlsxDatosWriter` | Igual que `CSVGenerator` pero generando el XLSX a partir de `Mercadona-base.xlsx`. |
+| `TicketRecordsReader` | Punto único de lectura: busca PDFs (`FileUtils`) → `TicketMercadona.parse()` → `PurchasedItemRecord.fromTicket()`. Lo usan `CSVGenerator`, `XlsxDatosWriter` e `InflationIndexCommand`. |
 | `PurchasedItemRecord` | Representación tabular de una compra. Método `fromTicket()` para convertir, `toCSV()` para serializar. |
 | `ProductNameNormalizer` | Corrige erratas de nombre de producto (acentos, puntuación) según `nombres-normalizacion.csv`. Se aplica dentro de `PurchasedItemRecord.fromTicket()`; el CSV se carga una única vez en un mapa estático. |
 | `FileUtils` | Búsqueda recursiva de ficheros PDF en un directorio. |
+| `InflationIndexCommand` + paquete `data.inflation` | Subcomando `inflation-index`: calcula y muestra por consola los índices de Laspeyres y Paasche de la cesta de la compra. Ver detalle abajo y `docs/inflation-index.md`. |
+| `BasketCompositionCommand` | Subcomando `basket-composition`: muestra la misma cesta que `inflation-index`, listando cada producto con su peso relativo (%) sobre el gasto del año base. |
 
 ---
 
@@ -102,6 +106,32 @@ cuenta como fuente de inconsistencias.
 
 ---
 
+## Índice de inflación (`inflation-index`, `basket-composition`)
+
+Calcula, a partir de los `PurchasedItemRecord` (mismo pipeline que CSV/XLSX), un índice
+de inflación anual de la cesta de la compra con **Laspeyres** (cesta y precios del año
+base) y **Paasche** (cesta y precios de cada año), impreso por consola (como % de
+variación frente al año base). Diseño completo, con el porqué de cada criterio
+metodológico (año base, umbral de la cesta, tratamiento de precios faltantes, etc.), en
+**`docs/inflation-index.md`** — léelo antes de tocar cualquier umbral o fórmula. Clases
+en `data/inflation/` (sin I/O):
+
+| Clase | Rol |
+|---|---|
+| `ProductKey` | `(id normalizado, ProductType)` — UNIDAD o PESO; mismo nombre comprado de las dos formas cuenta como dos productos distintos. |
+| `YearBasketDataBuilder` | Agrupa las compras por año y por `ProductKey`: cantidad/gasto total (`ProductYearStats`) y meses distintos con compra. |
+| `BasketSelector` | Año base = primer año **completo** (≥`DEFAULT_MIN_COMPLETE_MONTHS` meses distintos con compra, evita tomar como base un año a medias si la serie empieza a mitad de año). Cesta = productos del año completo con más variedad, filtrando los comprados menos de `DEFAULT_MIN_TOTAL_PURCHASE_COUNT` veces en toda la serie. |
+| `InflationIndexCalculator` | Laspeyres/Paasche por año, método *matched-model*: un producto de la cesta sin precio en el año base o en el año en curso se excluye de ambas sumas ese año (no se imputa precio). |
+| `InflationAnalyzer` | Fachada; `analyze(records)` (índices) y `analyzeBasketComposition(records)` (pesos), ambos con los umbrales por defecto y comparten la selección de año base/cesta. |
+| `InflationReportFormatter` | Tabla de `inflation-index`; año base marcado `BASE`, años con menos meses de los exigidos marcados `incompleto` (se muestran igualmente, no se ocultan); índices mostrados como % de variación, no en base 100. |
+| `BasketCompositionFormatter` | Tabla de `basket-composition`; cada producto con su gasto en el año base y su peso (%) sobre el total de la cesta, ordenados de mayor a menor peso. |
+
+Umbrales por defecto (`InflationAnalyzer`): 10 de 12 meses para año "completo", mínimo 3
+compras históricas para entrar en la cesta — decididos con el usuario, no cambiar sin
+confirmarlo.
+
+---
+
 ## Comandos de uso
 
 ```bash
@@ -113,6 +143,8 @@ cuenta como fuente de inconsistencias.
 
 # Ejecutar CLI
 ./gradlew :ticket-digital-data:run --args="write-items-csv --data-dir /ruta/pdfs --csv-file salida.csv"
+./gradlew :ticket-digital-data:run --args="inflation-index --data-dir /ruta/pdfs"
+./gradlew :ticket-digital-data:run --args="basket-composition --data-dir /ruta/pdfs"
 ```
 
 ---
@@ -128,7 +160,9 @@ cuenta como fuente de inconsistencias.
 | Parsing datos de pago con tarjeta (tarjeta enmascarada, N.C/AUT/AID/ARC, marca, importe) | Completo |
 | Extracción de PDF (PDFBox) y TXT | Completo |
 | CLI picocli | Completo |
-| Generación CSV | Completo |
+| Generación CSV/XLSX | Completo |
+| Índice de inflación (Laspeyres/Paasche, `inflation-index`) | Completo (salida solo por consola, sin fichero) |
+| Composición de la cesta con pesos relativos (`basket-composition`) | Completo (salida solo por consola, sin fichero) |
 
 ---
 

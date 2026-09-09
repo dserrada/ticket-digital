@@ -2,8 +2,6 @@ package org.terra.incognita.ticketdigital.mercadona.data.items;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terra.incognita.ticketdigital.mercadona.model.TicketMercadona;
-import org.terra.incognita.ticketdigital.mercadona.utils.FileUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -32,7 +30,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -56,26 +53,8 @@ public class XlsxDatosWriter {
 
     public static void writeXlsxToFile(Path ticketsDir, File outputFile) throws IOException {
         logger.debug("Iniciando la escritura del fichero xlsx, ticketsDir: {}, outputFile: {}", ticketsDir, outputFile.getAbsolutePath());
-        List<Path> files = FileUtils.searchInDir(ticketsDir);
-        if (files == null) return;
-
-        List<PurchasedItemRecord> records = files.stream()
-                .map(file -> {
-                    try {
-                        return TicketMercadona.parse(file);
-                    } catch (UnsupportedOperationException e) {
-                        logger.error("Todavía no podemos procesar el archivo " + file);
-                        return null;
-                    } catch (Exception e) {
-                        logger.error("Error parsing " + file, e);
-                        throw new RuntimeException("Error al procesar el archivo: " + file);
-                    }
-                })
-                .filter(Objects::nonNull)
-                .map(PurchasedItemRecord::fromTicket)
-                .flatMap(List::stream)
-                .sorted(PurchasedItemRecord.BY_DATE_DESCENDING)
-                .toList();
+        List<PurchasedItemRecord> records = TicketRecordsReader.readAll(ticketsDir);
+        if (records == null) return;
 
         try (InputStream templateIn = XlsxDatosWriter.class.getResourceAsStream(TEMPLATE_RESOURCE)) {
             if (templateIn == null) {

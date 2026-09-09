@@ -11,7 +11,7 @@ import java.util.concurrent.Callable;
          description = "Interfaz de línea de comandos para procesar tickets digitales de Mercadona ya descargados. "
                  + "Para descargarlos desde Gmail, usa ticket-digital-tickets-downloader "
                  + "(o ticket-digital-launcher, que incluye ambos).",
-         subcommands = {WriteItemsCsvCommand.class, WriteItemsXlsxCommand.class})
+         subcommands = {WriteItemsCsvCommand.class, WriteItemsXlsxCommand.class, InflationIndexCommand.class, BasketCompositionCommand.class})
 public class Main implements Callable<Integer> {
 
     @Override
