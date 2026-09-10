@@ -38,6 +38,10 @@ sirve como banco de pruebas para programar con ayuda de IA — en concreto, con
 parte importante del código (sobre todo la más antigua) no se escribió así; el proyecto
 convive con ambos orígenes.
 
+**Estado del proyecto**: son fases muy iniciales (de ahí la versión `0.1-SNAPSHOT`, sin
+API ni CLI estables todavía), pero ya en un punto sólido: el parser ha procesado
+correctamente más de 500 tickets reales.
+
 ## Cómo funciona
 
 El proceso completo tiene tres pasos, cada uno a cargo de un módulo distinto:
