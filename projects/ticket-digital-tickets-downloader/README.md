@@ -93,26 +93,38 @@ En resumen: declara el scope de solo lectura en la consola (buena práctica, dej
 de qué pide la app), pero confía en la validación en tiempo de ejecución del propio
 programa como mecanismo de seguridad real.
 
-## 2. Uso en línea de comandos
+## 2. Construcción y uso en línea de comandos
 
-Ejecutado como módulo standalone (sin `ticket-digital-data`):
+Gradle se usa aquí solo para construir el artefacto, no para ejecutarlo:
 
 ```bash
-./gradlew :ticket-digital-tickets-downloader:run --args="--data-dir ~/.ticket-digital/data --query 'label:mercadona from: ticket_digital@mail.mercadona.com' --filename-regex '.*\.pdf$'"
+./gradlew :ticket-digital-tickets-downloader:installDist
+```
+
+Esto genera en
+`projects/ticket-digital-tickets-downloader/build/install/ticket-digital-tickets-downloader/bin/`
+un script ejecutable con todas las dependencias incluidas, que no necesita Gradle para
+funcionar. Ejecutado como módulo standalone (sin `ticket-digital-data`), sin Gradle:
+
+```bash
+DOWNLOADER=./projects/ticket-digital-tickets-downloader/build/install/ticket-digital-tickets-downloader/bin/ticket-digital-tickets-downloader
+
+$DOWNLOADER --data-dir ~/.ticket-digital/data --query 'label:mercadona from: ticket_digital@mail.mercadona.com' --filename-regex '.*\.pdf$'
 ```
 
 Todas las opciones tienen valores por defecto pensados para el caso de uso actual, así
 que en el día a día basta con:
 
 ```bash
-./gradlew :ticket-digital-tickets-downloader:run
+$DOWNLOADER
 ```
 
 O, integrado en el CLI "todo en uno" (módulo `ticket-digital-launcher`, que también
-incluye `write-items-csv`/`write-items-xlsx` de `ticket-digital-data`):
+incluye `write-items-csv`/`write-items-xlsx` de `ticket-digital-data`; ver su
+[README](../ticket-digital-launcher/README.md) para construirlo y ejecutarlo):
 
 ```bash
-./gradlew :ticket-digital-launcher:run --args="download-tickets"
+./projects/ticket-digital-launcher/build/install/ticket-digital-launcher/bin/ticket-digital-launcher download-tickets
 ```
 
 ### Opciones disponibles
@@ -149,7 +161,7 @@ java -jar GmailAttachmentsExtractor.jar \
 Su equivalente con este módulo (con los valores por defecto, no hace falta escribirlos):
 
 ```bash
-./gradlew :ticket-digital-tickets-downloader:run --args="--data-dir .\mails\ --query \"label:mercadona from: ticket_digital@mail.mercadona.com\" --filename-regex '.*\.pdf$'"
+$DOWNLOADER --data-dir .\mails\ --query "label:mercadona from: ticket_digital@mail.mercadona.com" --filename-regex '.*\.pdf$'
 ```
 
 La diferencia principal es que aquí `--no-modify-gmail` no es una opción: el permiso de

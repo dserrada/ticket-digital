@@ -18,24 +18,40 @@ Es un módulo standalone: se puede compilar y ejecutar sin depender de
 `ticket-digital-tickets-downloader` (ni cargar las librerías de Google, que este módulo
 no necesita para nada).
 
-## Uso en línea de comandos
+## Construcción y uso en línea de comandos
+
+Gradle se usa aquí solo para construir el artefacto, no para ejecutarlo:
 
 ```bash
+./gradlew :ticket-digital-data:installDist
+```
+
+Esto genera en `projects/ticket-digital-data/build/install/ticket-digital-data/bin/` un
+script ejecutable (`ticket-digital-data` / `ticket-digital-data.bat`) con todas las
+dependencias incluidas, que no necesita Gradle para funcionar. A partir de aquí, sin
+Gradle:
+
+```bash
+DATA=./projects/ticket-digital-data/build/install/ticket-digital-data/bin/ticket-digital-data
+
 # Ver los subcomandos disponibles
-./gradlew :ticket-digital-data:run --args="--help"
+$DATA --help
 
 # Generar el CSV
-./gradlew :ticket-digital-data:run --args="write-items-csv --data-dir ~/.ticket-digital/data --csv-file ~/tickets.csv"
+$DATA write-items-csv --data-dir ~/.ticket-digital/data --csv-file ~/tickets.csv
 
 # Generar el XLSX (a partir de la plantilla Mercadona-base.xlsx)
-./gradlew :ticket-digital-data:run --args="write-items-xlsx --data-dir ~/.ticket-digital/data --output-dir ~/"
+$DATA write-items-xlsx --data-dir ~/.ticket-digital/data --output-dir ~/
 
 # Calcular el índice de inflación de la cesta de la compra (Laspeyres y Paasche)
-./gradlew :ticket-digital-data:run --args="inflation-index --data-dir ~/.ticket-digital/data"
+$DATA inflation-index --data-dir ~/.ticket-digital/data
 
 # Ver la cesta de la compra calculada, con el peso relativo de cada producto
-./gradlew :ticket-digital-data:run --args="basket-composition --data-dir ~/.ticket-digital/data"
+$DATA basket-composition --data-dir ~/.ticket-digital/data
 ```
+
+Añadir el directorio `bin/` de la distribución al `PATH` permite invocar directamente
+`ticket-digital-data` sin la ruta completa.
 
 ### Opciones de `write-items-csv`
 

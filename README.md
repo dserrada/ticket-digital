@@ -1,103 +1,168 @@
 # ticket-digital
 
-Procesa los tickets digitales de Mercadona (PDF recibidos por email): los descarga
-desde Gmail y genera un CSV o un XLSX con el detalle de todo lo comprado.
+Descarga tus tickets digitales de Mercadona desde Gmail y genera un CSV o un XLSX con
+el detalle de todo lo comprado, para analizar tu gasto y cómo han evolucionado los
+precios de los productos que compras.
 
-Proyecto Gradle multi-módulo. Cada módulo se puede compilar y ejecutar por separado
-(cargando solo sus propias dependencias), y hay un módulo agregador con todo junto:
+> **Este proyecto no tiene ninguna relación con Mercadona** ni está afiliado a la
+> empresa de ninguna forma. No intenta obtener más información que la que ya está
+> impresa en tus propios tickets: se limita a leer ese texto y a analizarlo. Está
+> pensado para usarlo con **tus propios** tickets, no como agregador o base de datos de
+> tickets de otras personas — ver [Limitaciones](#limitaciones-del-ticket-digital) sobre
+> por qué un ticket ajeno no se puede dar por válido.
+
+## Índice
+
+- [Objetivo del proyecto](#objetivo-del-proyecto)
+- [Cómo funciona](#cómo-funciona)
+- [Módulos](#módulos)
+- [Funcionalidades](#funcionalidades)
+- [Instalación y uso](#instalación-y-uso)
+- [Calidad y seguridad](#calidad-y-seguridad)
+- [Limitaciones del ticket digital](#limitaciones-del-ticket-digital)
+- [Alternativas libres similares](#alternativas-libres-similares)
+- [Licencia](#licencia)
+
+## Objetivo del proyecto
+
+Es un proyecto personal: quería poder analizar mi propio histórico de compra en
+Mercadona (cuánto gasto, en qué, y cómo suben los precios de los productos que compro
+habitualmente) a partir de los tickets digitales que la propia Mercadona envía por
+email. Se ha intentado escribir de forma algo más genérica que mi caso particular, para
+que le pueda servir a cualquiera que reciba ese mismo tipo de correo — pero sigue siendo
+una herramienta de uso personal, no un producto ni un servicio.
+
+Un segundo objetivo, que no estaba en la idea inicial, es que este proyecto también me
+sirve como banco de pruebas para programar con ayuda de IA — en concreto, con
+[Claude Code](https://claude.com/claude-code). Al no ser el propósito original, una
+parte importante del código (sobre todo la más antigua) no se escribió así; el proyecto
+convive con ambos orígenes.
+
+## Cómo funciona
+
+El proceso completo tiene tres pasos, cada uno a cargo de un módulo distinto:
+
+1. **Descargar** los PDF de los tickets nuevos desde Gmail
+   (`ticket-digital-tickets-downloader`).
+2. **Leer** cada PDF y convertirlo en un objeto Java con la información estructurada
+   (`ticket-digital-parser`).
+3. **Analizar** ese histórico y generar un CSV, un XLSX o un índice de inflación
+   (`ticket-digital-data`, que usa el paso 2 internamente).
+
+Los tres pasos se invocan con un único comando a través de `ticket-digital-launcher`,
+la CLI recomendada para el uso normal.
+
+## Módulos
+
+Proyecto Gradle multi-módulo: cada uno se puede compilar y ejecutar por separado
+(cargando solo sus propias dependencias), y hay un módulo agregador con todo junto.
 
 | Módulo | Qué hace | README |
 |---|---|---|
 | [`ticket-digital-launcher`](projects/ticket-digital-launcher/README.md) | **CLI recomendada para uso normal**: un único comando `ticket-digital` con todos los subcomandos de los dos módulos siguientes. | [README](projects/ticket-digital-launcher/README.md) |
-| [`ticket-digital-tickets-downloader`](projects/ticket-digital-tickets-downloader/README.md) | Descarga desde Gmail los PDF de tickets nuevos a un directorio local (`download-tickets`). Cómo obtener las credenciales de Google está aquí. | [README](projects/ticket-digital-tickets-downloader/README.md) |
-| [`ticket-digital-data`](projects/ticket-digital-data/README.md) | Genera CSV/XLSX a partir de los PDF ya descargados (`write-items-csv`, `write-items-xlsx`). | [README](projects/ticket-digital-data/README.md) |
-| `ticket-digital-parser` | Librería de parseo de los PDF de Mercadona. Sin CLI propia; la usa `ticket-digital-data` internamente. | — |
+| [`ticket-digital-tickets-downloader`](projects/ticket-digital-tickets-downloader/README.md) | Descarga desde Gmail los PDF de tickets nuevos a un directorio local. | [README](projects/ticket-digital-tickets-downloader/README.md) |
+| [`ticket-digital-data`](projects/ticket-digital-data/README.md) | Genera CSV/XLSX y calcula índices de gasto a partir de los PDF ya descargados. | [README](projects/ticket-digital-data/README.md) |
+| [`ticket-digital-parser`](projects/ticket-digital-parser/README.md) | Librería de parseo: lee un PDF de ticket de Mercadona y lo convierte en un objeto Java estructurado. Sin CLI propia; la usa `ticket-digital-data` internamente. | [README](projects/ticket-digital-parser/README.md) |
 
-## Inicio rápido
+Dos de ellos solo funcionan bajo ciertas condiciones, que conviene tener claras antes de
+empezar:
 
-Para el uso normal (descargar + generar CSV/XLSX), usa el módulo agregador
-`ticket-digital-launcher`:
+- **`ticket-digital-tickets-downloader`** necesita que (a) estés suscrito al ticket
+  digital de Mercadona (lo emite la propia tienda al pagar, al email que le indiques),
+  (b) esos correos lleguen a una cuenta de Gmail, y (c) tengas alguna forma de
+  localizarlos entre el resto de tu correo — por defecto se buscan por remitente
+  (`ticket_digital@mail.mercadona.com`) y por una etiqueta de Gmail que debes crear tú
+  mismo (`label:mercadona`); el [README del módulo](projects/ticket-digital-tickets-downloader/README.md)
+  explica cómo configurarlo y cómo obtener las credenciales de Google necesarias.
+- **`ticket-digital-data`** genera, además del CSV, un XLSX a partir de una plantilla
+  que ya trae varias tablas dinámicas de ejemplo en la hoja **"Datos"** (y un análisis de
+  inflación en la hoja "MiInflación"): el programa solo sustituye los datos en bruto,
+  Excel se encarga de refrescar las tablas dinámicas al abrir el fichero.
+
+## Funcionalidades
+
+Subcomandos disponibles (los mismos en los tres módulos con CLI — ver cada README para
+el detalle de sus opciones):
+
+| Subcomando | Qué hace |
+|---|---|
+| `download-tickets` | Descarga desde Gmail los PDF de tickets que aún no tengas. |
+| `write-items-csv` | Genera un CSV con todas las líneas de producto compradas. |
+| `write-items-xlsx` | Genera un XLSX con esas mismas líneas y varias tablas dinámicas de ejemplo ya preparadas. |
+| `inflation-index` | Calcula cómo ha subido el precio de tu cesta habitual, año a año (índices de Laspeyres y Paasche). |
+| `basket-composition` | Muestra de qué se compone esa cesta y qué peso tiene cada producto en el gasto. |
+
+## Instalación y uso
+
+**Requisitos**: Java 25 (el propio `./gradlew` se encarga de todo lo demás, no hace
+falta instalar Gradle). El `sourceCompatibility`/`targetCompatibility` de todos los
+módulos está fijado a esa versión en el `build.gradle` raíz.
+
+Gradle aquí es únicamente la **herramienta de construcción**: se usa para compilar y
+generar el artefacto, pero no para ejecutarlo día a día. El flujo es siempre "construir
+una vez, ejecutar después sin Gradle" con el script ya generado.
+
+Vía el plugin `application`, Gradle genera para cada módulo con CLI un script de
+arranque con todas sus dependencias (no un único "fat jar": el `.jar` suelto en
+`build/libs/` no lleva las dependencias y **no** es ejecutable directamente con
+`java -jar`). El entregable pensado para el uso normal es la **distribución de
+`ticket-digital-launcher`**, que trae empaquetados los otros dos módulos ejecutables:
 
 ```bash
-./gradlew :ticket-digital-launcher:run --args="--help"
+# Construir: genera el script + las dependencias en build/install/ticket-digital-launcher/
+./gradlew :ticket-digital-launcher:installDist
+```
+
+```bash
+# Ejecutar (Linux/macOS) — sin Gradle a partir de aquí
+LAUNCHER=./projects/ticket-digital-launcher/build/install/ticket-digital-launcher/bin/ticket-digital-launcher
+
+# Ver todos los subcomandos disponibles
+$LAUNCHER --help
+
+# Descargar los tickets nuevos desde Gmail
+$LAUNCHER download-tickets
+
+# Generar el CSV a partir de los PDF ya descargados
+$LAUNCHER write-items-csv --data-dir=~/.ticket-digital/data --csv-file=~/tickets.csv
+
+# Generar el XLSX
+$LAUNCHER write-items-xlsx --data-dir=~/.ticket-digital/data --output-dir=~/
+
+# Índice de inflación de la cesta y su composición
+$LAUNCHER inflation-index --data-dir=~/.ticket-digital/data
+$LAUNCHER basket-composition --data-dir=~/.ticket-digital/data
+
+# Cualquier subcomando con -v/--verbose para ver el detalle en DEBUG
+$LAUNCHER write-items-csv --data-dir=~/.ticket-digital/data --csv-file=~/tickets.csv -v
+```
+
+```bat
+:: En Windows: usa el .bat generado en la misma carpeta
+projects\ticket-digital-launcher\build\install\ticket-digital-launcher\bin\ticket-digital-launcher.bat --help
+```
+
+Ese directorio (`build/install/ticket-digital-launcher/`) es autocontenido: se puede
+copiar a otra máquina con Java (misma versión o superior) y ejecutarse ahí sin Gradle ni
+este repositorio; añadiendo su `bin/` al `PATH` se puede invocar directamente
+`ticket-digital-launcher` sin la ruta completa. Para empaquetarlo y llevarlo a otro
+sitio en un único fichero:
+
+```bash
+./gradlew :ticket-digital-launcher:distZip   # o :distTar
+# genera projects/ticket-digital-launcher/build/distributions/ticket-digital-launcher-0.1-SNAPSHOT.zip
 ```
 
 La primera vez, sigue el [README de `ticket-digital-tickets-downloader`](projects/ticket-digital-tickets-downloader/README.md#1-obtener-credentialsjson-desde-google-cloud-console)
 para obtener el fichero `credentials.json` (necesario solo para descargar; no hace falta
 si ya tienes los PDF en un directorio).
 
-Cada módulo también se puede ejecutar solo (sin cargar las dependencias de los demás):
+Cada módulo también se puede construir y ejecutar solo (sin cargar las dependencias de
+los demás), sustituyendo el nombre del módulo en los mismos comandos
+(`:ticket-digital-data:installDist`, `:ticket-digital-tickets-downloader:installDist`) —
 ver su README para el detalle de opciones de cada subcomando.
-
-## Cómo invocarlo
-
-Hay dos formas de ejecutar cualquiera de los módulos con CLI
-(`ticket-digital-launcher`, `ticket-digital-data`,
-`ticket-digital-tickets-downloader`): con Gradle (para desarrollo, no requiere
-instalar nada más) o con el artefacto ya construido (para uso normal del
-día a día, sin depender de Gradle en cada ejecución).
-
-### 1. Con Gradle: `./gradlew :<módulo>:run`
-
-```bash
-# CLI unificada (recomendado): ver todos los subcomandos
-./gradlew :ticket-digital-launcher:run --args="--help"
-
-# Descargar los tickets nuevos desde Gmail
-./gradlew :ticket-digital-launcher:run --args="download-tickets"
-
-# Generar el CSV a partir de los PDF ya descargados
-./gradlew :ticket-digital-launcher:run --args="write-items-csv --data-dir=~/.ticket-digital/data --csv-file=~/tickets.csv"
-
-# Generar el XLSX
-./gradlew :ticket-digital-launcher:run --args="write-items-xlsx --data-dir=~/.ticket-digital/data --output-dir=~/"
-
-# Cualquier subcomando con -v/--verbose para ver el detalle en DEBUG
-./gradlew :ticket-digital-launcher:run --args="write-items-csv --data-dir=~/.ticket-digital/data --csv-file=~/tickets.csv -v"
-```
-
-Los otros dos módulos se invocan igual, sustituyendo `ticket-digital-launcher`
-por el módulo que quieras ejecutar solo (sin cargar las dependencias del
-otro): `./gradlew :ticket-digital-data:run --args="write-items-csv ..."` o
-`./gradlew :ticket-digital-tickets-downloader:run --args="download-tickets"`.
-
-Nota: todo lo que va después de `--args=` es una única cadena con el
-subcomando y sus opciones tal como se pasarían en la línea de comandos.
-
-### 2. Con el artefacto ya construido (sin Gradle en cada ejecución)
-
-Gradle, vía el plugin `application`, genera para cada módulo con CLI un
-script de arranque con todas sus dependencias (no un único jar "fat jar": el
-`.jar` suelto en `build/libs/` no lleva las dependencias y **no** es
-ejecutable directamente con `java -jar`).
-
-```bash
-# Genera el script + las dependencias en build/install/<módulo>/
-./gradlew :ticket-digital-launcher:installDist
-
-# Ejecutarlo (Linux/macOS)
-./projects/ticket-digital-launcher/build/install/ticket-digital-launcher/bin/ticket-digital-launcher --help
-./projects/ticket-digital-launcher/build/install/ticket-digital-launcher/bin/ticket-digital-launcher download-tickets
-./projects/ticket-digital-launcher/build/install/ticket-digital-launcher/bin/ticket-digital-launcher write-items-csv --data-dir=~/.ticket-digital/data --csv-file=~/tickets.csv
-
-# En Windows: usa el .bat generado en la misma carpeta
-projects\ticket-digital-launcher\build\install\ticket-digital-launcher\bin\ticket-digital-launcher.bat --help
-```
-
-Ese directorio (`build/install/ticket-digital-launcher/`) es autocontenido:
-se puede copiar a otra máquina con Java (misma versión o superior) y
-ejecutarse sin Gradle. Para empaquetarlo y llevarlo a otro sitio, usa en su
-lugar:
-
-```bash
-./gradlew :ticket-digital-launcher:distZip   # o :distTar
-# genera projects/ticket-digital-launcher/build/distributions/ticket-digital-launcher-1.0-SNAPSHOT.zip
-```
-
-Igual con los otros dos módulos, sustituyendo el nombre
-(`:ticket-digital-data:installDist`,
-`:ticket-digital-tickets-downloader:installDist`, y el script correspondiente
-dentro de `build/install/<módulo>/bin/`).
+`ticket-digital-parser` no tiene distribución propia porque no tiene CLI: es una
+librería que consumen los otros módulos en tiempo de compilación.
 
 ## Calidad y seguridad
 
@@ -155,3 +220,39 @@ dentro de `build/install/<módulo>/bin/`).
   [spotbugs/spotbugs#3564](https://github.com/spotbugs/spotbugs/issues/3564)). Informe
   por módulo en `<módulo>/build/reports/spotbugs/main.html` y `test.html`. Bloquea el
   build ante cualquier hallazgo (`ignoreFailures = false`).
+
+## Limitaciones del ticket digital
+
+Dos limitaciones que vienen del propio concepto de "ticket digital" de Mercadona, no de
+este programa (desarrolladas con más detalle en el
+[README de `ticket-digital-parser`](projects/ticket-digital-parser/README.md#limitaciones-del-propio-ticket-digital-no-de-este-código)):
+
+- **No hay forma de verificar que un ticket sea real y no haya sido modificado.** El PDF
+  no lleva firma ni sello: el programa se limita a interpretar su texto y da por buena
+  su veracidad. Por eso está pensado para tus propios tickets, no para actuar como
+  agregador de tickets de terceros.
+- **La descripción de un producto no es un identificador único y estable en el tiempo.**
+  Es el único dato disponible para saber qué se compró; si Mercadona cambia el formato o
+  el tamaño de un envase sin cambiar el texto impreso, el histórico tratará ambos
+  productos como si fueran el mismo.
+
+## Alternativas libres similares
+
+No se ha encontrado ningún proyecto público que haga el conjunto completo (descarga
+desde Gmail + parseo a items + CSV/XLSX + índice de inflación personal); esa combinación
+parece bastante propia de este proyecto. Sí existen piezas sueltas comparables: varios
+parseadores de tickets de Mercadona más pequeños o incompletos (requieren subir el PDF a
+mano, sin descarga ni análisis de inflación), y un motor genérico de parseo de facturas,
+[`invoice2data`](https://github.com/invoice-x/invoice2data) (MIT, activo), al que le
+faltaría una plantilla de Mercadona y toda la parte de descarga/inflación. El análisis
+completo, con enlaces a cada proyecto, está en
+[`docs/similar-projects.md`](docs/similar-projects.md).
+
+## Licencia
+
+Este proyecto se distribuye bajo la [GNU GPL versión 3](gpl-3.0.md). En resumen: es
+software libre, y esa libertad está protegida con copyleft fuerte — puedes usarlo,
+estudiarlo, modificarlo y redistribuirlo, pero **cualquier trabajo derivado que
+distribuyas tiene que licenciarse también bajo GPL-3.0** (código abierto, con el
+código fuente disponible). No se puede tomar este código para cerrarlo en un producto
+o servicio propietario.
