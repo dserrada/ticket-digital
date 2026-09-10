@@ -64,11 +64,9 @@
              a sustituir por logging. -->
         <exclude name="SystemPrintln"/>
     </rule>
-    <rule ref="category/java/multithreading.xml">
-        <!-- Todos los HashMap flagged son variables locales usadas para construir un
-             resultado dentro de un único método de un solo hilo (agregaciones,
-             normalización de nombres, reescritura del xlsx); ninguno se comparte entre
-             hilos. Esta CLI no tiene concurrencia real en ningún sitio. -->
-        <exclude name="UseConcurrentHashMap"/>
-    </rule>
+    <!-- category/java/multithreading.xml se configura aparte, por módulo (ver
+         multithreading-relaxed.xml / multithreading-strict.xml): ticket-digital-parser
+         está pensado como base de un futuro servicio REST y debe ser thread-safe de
+         verdad, así que ahí se aplica sin exclusiones; el resto de módulos son CLIs de
+         un solo hilo sin planes de serlo. -->
 </ruleset>

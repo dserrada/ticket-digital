@@ -26,6 +26,17 @@ import java.util.regex.Pattern;
  * importe pagado, información de la tarjeta bancaria y otros identificadores relacionados con el ticket.
  *
  * Esta clase es un registro inmutable que facilita la gestión de los datos del ticket generado.
+ *
+ * <p><b>Thread-safety:</b> {@link #parse(Path)} y {@link #parse(String)} son seguros de
+ * llamar concurrentemente desde varios hilos (p.ej. varias peticiones de un servicio
+ * REST a la vez): no hay estado compartido entre llamadas. Cada invocación crea su
+ * propio {@link ParserStatusInfo} y, si aplica, su propio {@link IndentPreservingTextStripper};
+ * el resto del estado son {@code record}s inmutables. Los campos {@code static} de este
+ * paquete son o bien inmutables ({@link java.util.regex.Pattern}, {@link
+ * java.time.format.DateTimeFormatter}, constantes) o loggers de SLF4J, también
+ * thread-safe. El módulo aplica el ruleset completo de
+ * {@code category/java/multithreading.xml} de PMD (ver {@code build.gradle} raíz) para
+ * detectar regresiones futuras en este sentido.
  */
 public record TicketMercadona(ShopData shopData, TicketHeader header, List<PurchasedItem> items,
                               Parking parking, BigDecimal total, BigDecimal amountPaidByCard,

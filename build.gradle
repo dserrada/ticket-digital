@@ -89,9 +89,20 @@ subprojects {
     pmd {
         toolVersion = '7.27.0'
         ruleSets = []   // se limpia el default para no mezclarlo con el ruleset propio
-        ruleSetFiles = files("$rootDir/config/pmd/ruleset.xml")
+        // Por defecto, reglas de concurrencia "relajadas" (sin exigir ConcurrentHashMap
+        // etc.): CLI de un solo hilo. ticket-digital-parser lo sobreescribe más abajo.
+        ruleSetFiles = files("$rootDir/config/pmd/ruleset.xml", "$rootDir/config/pmd/multithreading-relaxed.xml")
         // Informe inicial revisado y limpiado (71 -> 0 avisos): a partir de ahora el
         // build falla si aparece un hallazgo nuevo.
         ignoreFailures = false
+    }
+}
+
+// ticket-digital-parser está pensado como base de un futuro servicio REST (varias
+// peticiones concurrentes reutilizando las mismas clases), así que aquí se exige el
+// ruleset de concurrencia completo, sin ninguna exclusión.
+project(':ticket-digital-parser') {
+    pmd {
+        ruleSetFiles = files("$rootDir/config/pmd/ruleset.xml", "$rootDir/config/pmd/multithreading-strict.xml")
     }
 }

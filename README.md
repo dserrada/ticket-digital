@@ -133,10 +133,18 @@ dentro de `build/install/<módulo>/bin/`).
 - **[PMD](https://pmd.github.io/)** (`toolVersion 7.27.0`, incluido en Gradle sin plugin
   externo): analiza el código en busca de bugs y malas prácticas reales (ruleset propio
   en [`config/pmd/ruleset.xml`](config/pmd/ruleset.xml), centrado en
-  `errorprone`/`bestpractices`/`multithreading`, no en estilo/formato). Informe por
-  módulo en `<módulo>/build/reports/pmd/main.html` y `test.html`. De momento no bloquea
-  el build (`ignoreFailures = true`): es la primera pasada sobre código ya existente: en
-  cuanto se revise a fondo, cambiar a `false` en el `build.gradle` raíz.
+  `errorprone`/`bestpractices`, no en estilo/formato). Informe por módulo en
+  `<módulo>/build/reports/pmd/main.html` y `test.html`. Bloquea el build ante cualquier
+  hallazgo (`ignoreFailures = false`); las exclusiones ya investigadas y justificadas
+  están documentadas con su motivo en el propio ruleset.
+
+  Las reglas de concurrencia (`category/java/multithreading.xml`) se configuran aparte,
+  por módulo, según si está pensado para ser thread-safe:
+  [`config/pmd/multithreading-strict.xml`](config/pmd/multithreading-strict.xml) (sin
+  ninguna exclusión) para `ticket-digital-parser` — pensado como base de un futuro
+  servicio REST, donde varias peticiones concurrentes reutilizarán las mismas clases — y
+  [`config/pmd/multithreading-relaxed.xml`](config/pmd/multithreading-relaxed.xml) para
+  el resto de módulos (CLIs de un solo hilo sin planes de dejar de serlo).
 
   **SpotBugs** (el otro gran clásico de este tipo de análisis en Java, con análisis de
   flujo de datos sobre el bytecode compilado, más profundo que PMD) queda pendiente de

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="ticket-digital-multithreading-relaxed"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+    <description>
+        category/java/multithreading.xml para los módulos que son CLIs de un solo hilo
+        sin planes de dejar de serlo (ticket-digital-data, ticket-digital-tickets-downloader,
+        ticket-digital-launcher). Para ticket-digital-parser, pensado como base de un
+        futuro servicio REST, ver multithreading-strict.xml (sin exclusiones).
+    </description>
+    <rule ref="category/java/multithreading.xml">
+        <!-- Todos los HashMap flagged son variables locales usadas para construir un
+             resultado dentro de un único método de un solo hilo (agregaciones,
+             normalización de nombres, reescritura del xlsx); ninguno se comparte entre
+             hilos. Estas CLIs no tienen concurrencia real en ningún sitio. -->
+        <exclude name="UseConcurrentHashMap"/>
+    </rule>
+</ruleset>
