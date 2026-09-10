@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="ticket-digital-parser-multithreading-strict-test"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+    <description>
+        Igual que multithreading-strict.xml, pero solo para el código de TEST de
+        ticket-digital-parser: se excluye DoNotUseThreads porque un test de concurrencia
+        necesita legítimamente crear sus propios hilos para simular carga concurrente.
+        La regla sigue aplicando sin excepción al código de producción (pmdMain), donde
+        sí es una señal real de alarma: ese código se embeberá en un futuro servicio REST
+        que debe gestionar sus propios hilos/pool, no el módulo parser.
+    </description>
+    <rule ref="category/java/multithreading.xml">
+        <exclude name="DoNotUseThreads"/>
+    </rule>
+</ruleset>

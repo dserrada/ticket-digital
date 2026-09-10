@@ -100,9 +100,14 @@ subprojects {
 
 // ticket-digital-parser está pensado como base de un futuro servicio REST (varias
 // peticiones concurrentes reutilizando las mismas clases), así que aquí se exige el
-// ruleset de concurrencia completo, sin ninguna exclusión.
+// ruleset de concurrencia completo, sin ninguna exclusión, en el código de producción.
 project(':ticket-digital-parser') {
     pmd {
         ruleSetFiles = files("$rootDir/config/pmd/ruleset.xml", "$rootDir/config/pmd/multithreading-strict.xml")
+    }
+    // El código de test sí puede crear hilos a propósito (p.ej. para simular carga
+    // concurrente en un test de concurrencia): DoNotUseThreads no aplica ahí.
+    tasks.named('pmdTest') {
+        ruleSetFiles = files("$rootDir/config/pmd/ruleset.xml", "$rootDir/config/pmd/multithreading-strict-test.xml")
     }
 }
