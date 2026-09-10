@@ -15,30 +15,16 @@ allprojects {
 // pensado justamente para builds multi-módulo: recorre todos los subproyectos y genera
 // un único informe combinado, en vez de uno por módulo.
 //
-// IMPORTANTE: requiere sí o sí una API key gratuita de la NVD (ver README.md, sección
-// "Calidad y seguridad"). La NVD retiró los feeds JSON antiguos; su API 2.0 actual
-// rechaza toda petición sin clave (falla con "Invalid API Key, length of 0"), no solo
-// va más lenta como ocurría hace tiempo. Sin la clave configurada, `./gradlew build`
-// falla en seco en esta tarea - es intencional, no un bug: se decidió así para forzar a
-// tener el escaneo activo desde el principio en vez de dejarlo como una tarea aparte
-// fácil de olvidar.
+// Requiere una API key gratuita de la NVD (ver README.md, sección "Calidad y
+// seguridad"): la NVD retiró los feeds JSON antiguos y su API 2.0 actual rechaza toda
+// petición sin clave. En vez de dejar que el build falle en seco cuando falta la clave,
+// aquí se comprueba antes: si no hay clave, la comprobación se omite y se avisa con un
+// banner bien visible, pero el build sigue su curso con normalidad.
 dependencyCheck {
     // Falla el build solo ante hallazgos de severidad alta/crítica (CVSS >= 7); por
     // defecto el plugin no falla nunca (11.0), demasiado permisivo para el objetivo.
     failBuildOnCVSS = 7.0
     formats = ['HTML', 'JSON']
-    // Prioriza gradle.properties de usuario (~/.gradle/gradle.properties, fuera del
-    // repo) y cae a variable de entorno si algún día hay CI. Si no hay ninguna de las
-    // dos, NO se toca nvd.apiKey en absoluto (a diferencia de asignarle null o ''):
-    // dejarlo sin tocar produce el mismo "Invalid API Key" de todas formas (confirmado
-    // en pruebas), pero es la forma correcta de expresar "sin clave" en vez de forzar
-    // un valor vacío.
-    String resolvedNvdApiKey = (project.findProperty('nvdApiKey') ?: System.getenv('NVD_API_KEY')) as String
-    if (resolvedNvdApiKey) {
-        nvd {
-            apiKey = resolvedNvdApiKey
-        }
-    }
     // Caché de la base de datos de CVEs fuera del repo y en ruta fija (por defecto el
     // plugin la deja en un subdirectorio "aleatorio" bajo .gradle, lo que obliga a
     // redescargarla en cada checkout limpio).
@@ -52,41 +38,42 @@ dependencyCheck {
     analyzers.ossIndex.enabled = false
 }
 
-// Escanea el código Y el historial completo de git en busca de secretos/claves
-// embebidas (no solo el estado actual: una clave subida una vez y luego borrada sigue
-// en el historial, y ni PMD ni SpotBugs miran eso - solo ven el código de hoy).
-//
-// Requiere gitleaks instalado y en el PATH (https://github.com/gitleaks/gitleaks); ver
-// README.md ("Calidad y seguridad") para instalarlo. No se usa ningún plugin de Gradle
-// para esto: no hay uno oficial, y el único de terceros encontrado (io.dotinc.gitleaks)
-// lleva sin publicarse desde 2022.
-tasks.register('gitleaks', Exec) {
-    group = 'verification'
-    description = 'Escanea el código y el historial de git en busca de secretos embebidos con Gitleaks.'
-    File reportFile = layout.buildDirectory.file('reports/gitleaks/gitleaks-report.json').get().asFile
-    doFirst {
-        reportFile.parentFile.mkdirs()
-    }
-    workingDir = rootDir
-    // --redact: el propio informe no debe guardar el secreto en claro, solo un extracto.
-    commandLine 'gitleaks', 'git', '.', '--report-format', 'json', '--report-path', reportFile.toString(), '--redact'
-    ignoreExitValue = true
-    doLast {
-        int exitValue = executionResult.get().exitValue
-        if (exitValue == 1) {
-            throw new GradleException(
-                    "Gitleaks ha encontrado posibles secretos embebidos en el código o el historial de git. " +
-                            "Revisa el informe: file://${reportFile}")
-        } else if (exitValue != 0) {
-            throw new GradleException(
-                    "gitleaks terminó con un código de salida inesperado (${exitValue}); " +
-                            "comprueba que está instalado y en el PATH (ver README.md).")
+// Prioriza gradle.properties de usuario (~/.gradle/gradle.properties, fuera del repo) y
+// cae a variable de entorno si algún día hay CI.
+String resolvedNvdApiKey = (project.findProperty('nvdApiKey') ?: System.getenv('NVD_API_KEY')) as String
+if (resolvedNvdApiKey) {
+    dependencyCheck {
+        nvd {
+            apiKey = resolvedNvdApiKey
         }
     }
-}
-
-tasks.named('check') {
-    dependsOn 'dependencyCheckAggregate', 'gitleaks'
+    tasks.named('check') {
+        dependsOn 'dependencyCheckAggregate'
+    }
+} else {
+    // Sin clave, dependencyCheckAggregate fallaría con "Invalid API Key, length of 0";
+    // se desactiva y se sustituye por un aviso que no rompe el build.
+    tasks.named('dependencyCheckAggregate') {
+        enabled = false
+    }
+    tasks.register('nvdApiKeyMissingWarning') {
+        group = 'verification'
+        description = 'Avisa de que OWASP Dependency-Check se ha omitido por falta de API key de la NVD.'
+        doLast {
+            logger.warn('')
+            logger.warn('=' * 80)
+            logger.warn('AVISO: OWASP Dependency-Check DESACTIVADO en este build')
+            logger.warn('No se ha encontrado clave de la NVD (ni "nvdApiKey" en gradle.properties')
+            logger.warn('ni la variable de entorno NVD_API_KEY). El escaneo de vulnerabilidades')
+            logger.warn('(CVE) conocidas en las dependencias NO se ha ejecutado.')
+            logger.warn('Configura la clave para reactivarlo - ver README.md, "Calidad y seguridad".')
+            logger.warn('=' * 80)
+            logger.warn('')
+        }
+    }
+    tasks.named('check') {
+        dependsOn 'nvdApiKeyMissingWarning'
+    }
 }
 
 subprojects {

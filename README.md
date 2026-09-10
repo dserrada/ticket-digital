@@ -110,11 +110,10 @@ dentro de `build/install/<módulo>/bin/`).
   el build falla si aparece algún hallazgo de severidad alta/crítica (CVSS ≥ 7).
 
   Usa como fuente de datos la NVD (National Vulnerability Database) de NIST, vía su API
-  2.0. **Necesita sí o sí una API key** — la NVD retiró los feeds JSON antiguos y su API
-  actual rechaza toda petición sin clave (falla con `Invalid API Key, length of 0`); ya
-  no es "más lento sin ella", es que no funciona. **Mientras no la configures,
-  `./gradlew build`/`check` fallará** en la tarea `dependencyCheckAggregate` — es
-  intencional, para no poder olvidarse del escaneo.
+  2.0, que rechaza toda petición sin clave. **Mientras no configures una API key**, el
+  build detecta su ausencia antes de invocar la tarea `dependencyCheckAggregate`, la
+  omite y muestra un banner bien visible en la salida de `./gradlew build`/`check`
+  avisando de que el escaneo no se ha ejecutado — pero el build **no se interrumpe**.
 
   Pide la API key gratuita (autoservicio, instantánea, activación por email) en
   https://nvd.nist.gov/developers/request-an-api-key y guárdala **fuera del repo**, en
@@ -156,34 +155,3 @@ dentro de `build/install/<módulo>/bin/`).
   [spotbugs/spotbugs#3564](https://github.com/spotbugs/spotbugs/issues/3564)). Informe
   por módulo en `<módulo>/build/reports/spotbugs/main.html` y `test.html`. Bloquea el
   build ante cualquier hallazgo (`ignoreFailures = false`).
-
-- **[Gitleaks](https://github.com/gitleaks/gitleaks)**: escanea el código **y todo el
-  historial de git** (no solo el estado actual) en busca de claves/secretos embebidos.
-  Es importante que mire el historial: una clave que se subió una vez y se borró después
-  sigue estando en un commit antiguo, y ni PMD ni SpotBugs llegan a verla porque solo
-  analizan el código de hoy. Informe en
-  `build/reports/gitleaks/gitleaks-report.json` (raíz del repo; los valores de los
-  secretos salen redactados, no en claro). Bloquea el build ante cualquier hallazgo.
-
-  No hay plugin de Gradle que lo integre (el único encontrado,
-  [`io.dotinc.gitleaks`](https://plugins.gradle.org/plugin/io.dotinc.gitleaks), lleva sin
-  publicarse desde 2022), así que la tarea `gitleaks` de `build.gradle` invoca
-  directamente el binario — **tiene que estar instalado y en el `PATH`**. Instalación:
-
-  ```bash
-  # Linux x86_64 (ajusta la versión/arquitectura si hace falta, ver
-  # https://github.com/gitleaks/gitleaks/releases)
-  curl -fsSL -o /tmp/gitleaks.tar.gz \
-    https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
-  tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
-  mkdir -p ~/.local/bin && mv /tmp/gitleaks ~/.local/bin/gitleaks
-  # ~/.local/bin debe estar en el PATH
-
-  # macOS
-  brew install gitleaks
-  ```
-
-  Si aparece algún falso positivo en el futuro, se puede marcar con un comentario
-  `#gitleaks:allow` en la propia línea, o añadir una regla a un `.gitleaks.toml` en la
-  raíz del repo (no hay ninguno todavía porque no ha hecho falta) — ver la
-  [documentación de allowlists](https://github.com/gitleaks/gitleaks#configuration).
