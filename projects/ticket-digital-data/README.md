@@ -53,6 +53,12 @@ no necesita para nada).
 | `--output-dir` | Directorio donde se escribe el XLSX generado (`Mercadona-yyyyMMdd.xlsx`). |
 | `-v`, `--verbose` | Activa logs de nivel DEBUG. |
 
+Además de la hoja "Datos", si hay histórico suficiente para fijar un año base (ver
+[`docs/inflation-index.md`](../../docs/inflation-index.md)) también se rellena la hoja
+"MiInflación" con el mismo índice de inflación (Laspeyres/Paasche por año) que muestra por
+consola `inflation-index`. Si no hay histórico suficiente, esa hoja se deja tal cual está en la
+plantilla.
+
 ### Opciones de `inflation-index`
 
 | Opción | Descripción |
