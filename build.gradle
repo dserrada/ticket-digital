@@ -1,5 +1,6 @@
 plugins {
     id 'org.owasp.dependencycheck' version '13.0.0'
+    id 'com.github.spotbugs' version '6.5.11' apply false
 }
 
 apply plugin: 'base'   // da una tarea `check` a nivel de raíz a la que engancharnos
@@ -51,13 +52,6 @@ dependencyCheck {
     analyzers.ossIndex.enabled = false
 }
 
-// SpotBugs (análisis de bugs vía bytecode, más profundo) queda pendiente: no soporta
-// bytecode Java 25 todavía (BCEL solo llega a Java 24; ver
-// https://github.com/spotbugs/spotbugs/issues/3564). Cuando lo publiquen: añadir aquí
-// `id 'com.github.spotbugs' version '<última>' apply false`, aplicarlo dentro de
-// `subprojects {}`, y enganchar `check` a `spotbugsMain`/`spotbugsTest` (se añade así
-// como segunda capa junto a PMD, no en su lugar).
-
 tasks.named('check') {
     dependsOn 'dependencyCheckAggregate'
 }
@@ -65,6 +59,7 @@ tasks.named('check') {
 subprojects {
     apply plugin: 'java'
     apply plugin: 'pmd'
+    apply plugin: 'com.github.spotbugs'
 
     java {
         sourceCompatibility = JavaVersion.VERSION_25
@@ -94,6 +89,15 @@ subprojects {
         ruleSetFiles = files("$rootDir/config/pmd/ruleset.xml", "$rootDir/config/pmd/multithreading-relaxed.xml")
         // Informe inicial revisado y limpiado (71 -> 0 avisos): a partir de ahora el
         // build falla si aparece un hallazgo nuevo.
+        ignoreFailures = false
+    }
+
+    // Análisis de bugs vía bytecode (dataflow), complementario a PMD: soporta Java 25
+    // desde la 4.9.7 (BCEL 6.11), ver https://github.com/spotbugs/spotbugs/issues/3564.
+    spotbugs {
+        toolVersion = '4.10.4'
+        // Informe inicial revisado y limpiado (9 hallazgos -> 0): a partir de ahora el
+        // build falla si aparece uno nuevo.
         ignoreFailures = false
     }
 }

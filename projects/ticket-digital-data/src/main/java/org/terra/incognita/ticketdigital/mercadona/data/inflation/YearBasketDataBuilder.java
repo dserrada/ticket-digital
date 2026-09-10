@@ -38,10 +38,11 @@ public final class YearBasketDataBuilder {
         }
 
         SortedMap<Integer, YearBasketData> result = new TreeMap<>();
-        for (Integer year : statsByYear.keySet()) {
+        for (Map.Entry<Integer, Map<ProductKey, ProductYearStats>> entry : statsByYear.entrySet()) {
+            Integer year = entry.getKey();
             int monthsWithPurchases = monthsByYear.get(year).size();
             boolean complete = monthsWithPurchases >= minCompleteMonths;
-            result.put(year, new YearBasketData(year, monthsWithPurchases, complete, statsByYear.get(year)));
+            result.put(year, new YearBasketData(year, monthsWithPurchases, complete, entry.getValue()));
         }
         return result;
     }

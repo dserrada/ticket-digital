@@ -8,4 +8,9 @@ import java.util.List;
  */
 public record InflationReport(int baseYear, int basketYear, List<ProductKey> basket,
                                List<YearInflationIndex> yearIndices) {
+
+    public InflationReport {
+        basket = List.copyOf(basket);
+        yearIndices = List.copyOf(yearIndices);
+    }
 }

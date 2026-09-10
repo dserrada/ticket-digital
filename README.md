@@ -146,9 +146,13 @@ dentro de `build/install/<módulo>/bin/`).
   [`config/pmd/multithreading-relaxed.xml`](config/pmd/multithreading-relaxed.xml) para
   el resto de módulos (CLIs de un solo hilo sin planes de dejar de serlo).
 
-  **SpotBugs** (el otro gran clásico de este tipo de análisis en Java, con análisis de
-  flujo de datos sobre el bytecode compilado, más profundo que PMD) queda pendiente de
-  añadir: hoy no soporta el bytecode de Java 25 que genera este proyecto
-  ([spotbugs/spotbugs#3564](https://github.com/spotbugs/spotbugs/issues/3564), sin
-  resolver). En cuanto lo publiquen se añade como segunda capa junto a PMD (no en su
-  lugar); ver el comentario correspondiente en el `build.gradle` raíz.
+- **[SpotBugs](https://spotbugs.github.io/)** (`toolVersion 4.10.4`, plugin
+  `com.github.spotbugs`): segunda capa de análisis, complementaria a PMD — en vez de
+  patrones sobre el código fuente, analiza el bytecode compilado con dataflow analysis,
+  lo que detecta cosas que PMD no ve (p.ej. un posible NullPointerException por el valor
+  de retorno de un método, o un `record` que expone una lista/mapa mutable interno sin
+  copia defensiva, rompiendo su propia inmutabilidad). Soporta Java 25 desde la 4.9.7
+  (subieron BCEL a la 6.11.0; antes de eso no se podía usar en este proyecto —
+  [spotbugs/spotbugs#3564](https://github.com/spotbugs/spotbugs/issues/3564)). Informe
+  por módulo en `<módulo>/build/reports/spotbugs/main.html` y `test.html`. Bloquea el
+  build ante cualquier hallazgo (`ignoreFailures = false`).

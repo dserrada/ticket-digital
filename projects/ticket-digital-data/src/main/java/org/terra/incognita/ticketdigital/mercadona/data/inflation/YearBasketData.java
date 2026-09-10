@@ -12,6 +12,10 @@ import java.util.Map;
 public record YearBasketData(int year, int monthsWithPurchases, boolean complete,
                               Map<ProductKey, ProductYearStats> productStats) {
 
+    public YearBasketData {
+        productStats = Map.copyOf(productStats);
+    }
+
     public int distinctProductCount() {
         return productStats.size();
     }

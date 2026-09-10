@@ -45,8 +45,9 @@ class XlsxDatosWriterTest {
         assertEquals(originalEntries.keySet(), outputEntries.keySet());
 
         String changedEntry = null;
-        for (String name : originalEntries.keySet()) {
-            if (!java.util.Arrays.equals(originalEntries.get(name), outputEntries.get(name))) {
+        for (Map.Entry<String, byte[]> entry : originalEntries.entrySet()) {
+            String name = entry.getKey();
+            if (!java.util.Arrays.equals(entry.getValue(), outputEntries.get(name))) {
                 assertNull(changedEntry, "Más de una entrada del zip cambió: " + changedEntry + " y " + name);
                 changedEntry = name;
             }
@@ -88,8 +89,9 @@ class XlsxDatosWriterTest {
         assertEquals(originalEntries.keySet(), outputEntries.keySet());
 
         List<String> changedEntries = new ArrayList<>();
-        for (String name : originalEntries.keySet()) {
-            if (!java.util.Arrays.equals(originalEntries.get(name), outputEntries.get(name))) {
+        for (Map.Entry<String, byte[]> entry : originalEntries.entrySet()) {
+            String name = entry.getKey();
+            if (!java.util.Arrays.equals(entry.getValue(), outputEntries.get(name))) {
                 changedEntries.add(name);
             }
         }

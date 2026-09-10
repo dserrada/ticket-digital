@@ -42,6 +42,13 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
                               Parking parking, BigDecimal total, BigDecimal amountPaidByCard,
                               VatBreakdown vatBreakdown, CardPayment cardPayment) {
 
+    // Copia defensiva: sin esto, un record con un campo List no es realmente inmutable
+    // (quien tenga la lista original podría seguir mutándola tras construir el ticket, o
+    // el propio accessor items() expondría una lista mutable a quien la llame).
+    public TicketMercadona {
+        items = List.copyOf(items);
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(TicketMercadona.class);
 
 
@@ -91,7 +98,14 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
     public static TicketMercadona parse(Path filePath) throws IOException, ParseException {
         Objects.requireNonNull(filePath, "filePath");
 
-        String fileName = filePath.getFileName().toString();
+        // Path.getFileName() puede devolver null para una ruta sin componente de nombre
+        // (p.ej. la raíz "/" o "C:\"); no es un caso real para un fichero de ticket, pero
+        // evita un NullPointerException si alguna vez llega uno así.
+        Path fileNamePath = filePath.getFileName();
+        if (fileNamePath == null) {
+            throw new IllegalArgumentException("filePath must have a file name component: " + filePath);
+        }
+        String fileName = fileNamePath.toString();
         String fileNameLower = fileName.toLowerCase(Locale.ROOT);
 
         String ticketData;

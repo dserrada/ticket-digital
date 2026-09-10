@@ -10,4 +10,8 @@ import java.util.List;
  * @param weights ordenados de mayor a menor peso
  */
 public record BasketComposition(int baseYear, int basketYear, BigDecimal totalBaseYearSpend, List<ProductWeight> weights) {
+
+    public BasketComposition {
+        weights = List.copyOf(weights);
+    }
 }
