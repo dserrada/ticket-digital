@@ -7,7 +7,7 @@ apply plugin: 'base'   // da una tarea `check` a nivel de raíz a la que enganch
 
 allprojects {
     group = 'org.terra.incognita'
-    version = '1.0-SNAPSHOT'
+    version = '0.1-SNAPSHOT'
 }
 
 // Escaneo de vulnerabilidades conocidas (CVE) en las dependencias de los 4 módulos.
