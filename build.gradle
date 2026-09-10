@@ -52,8 +52,41 @@ dependencyCheck {
     analyzers.ossIndex.enabled = false
 }
 
+// Escanea el código Y el historial completo de git en busca de secretos/claves
+// embebidas (no solo el estado actual: una clave subida una vez y luego borrada sigue
+// en el historial, y ni PMD ni SpotBugs miran eso - solo ven el código de hoy).
+//
+// Requiere gitleaks instalado y en el PATH (https://github.com/gitleaks/gitleaks); ver
+// README.md ("Calidad y seguridad") para instalarlo. No se usa ningún plugin de Gradle
+// para esto: no hay uno oficial, y el único de terceros encontrado (io.dotinc.gitleaks)
+// lleva sin publicarse desde 2022.
+tasks.register('gitleaks', Exec) {
+    group = 'verification'
+    description = 'Escanea el código y el historial de git en busca de secretos embebidos con Gitleaks.'
+    File reportFile = layout.buildDirectory.file('reports/gitleaks/gitleaks-report.json').get().asFile
+    doFirst {
+        reportFile.parentFile.mkdirs()
+    }
+    workingDir = rootDir
+    // --redact: el propio informe no debe guardar el secreto en claro, solo un extracto.
+    commandLine 'gitleaks', 'git', '.', '--report-format', 'json', '--report-path', reportFile.toString(), '--redact'
+    ignoreExitValue = true
+    doLast {
+        int exitValue = executionResult.get().exitValue
+        if (exitValue == 1) {
+            throw new GradleException(
+                    "Gitleaks ha encontrado posibles secretos embebidos en el código o el historial de git. " +
+                            "Revisa el informe: file://${reportFile}")
+        } else if (exitValue != 0) {
+            throw new GradleException(
+                    "gitleaks terminó con un código de salida inesperado (${exitValue}); " +
+                            "comprueba que está instalado y en el PATH (ver README.md).")
+        }
+    }
+}
+
 tasks.named('check') {
-    dependsOn 'dependencyCheckAggregate'
+    dependsOn 'dependencyCheckAggregate', 'gitleaks'
 }
 
 subprojects {

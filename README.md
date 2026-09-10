@@ -156,3 +156,34 @@ dentro de `build/install/<módulo>/bin/`).
   [spotbugs/spotbugs#3564](https://github.com/spotbugs/spotbugs/issues/3564)). Informe
   por módulo en `<módulo>/build/reports/spotbugs/main.html` y `test.html`. Bloquea el
   build ante cualquier hallazgo (`ignoreFailures = false`).
+
+- **[Gitleaks](https://github.com/gitleaks/gitleaks)**: escanea el código **y todo el
+  historial de git** (no solo el estado actual) en busca de claves/secretos embebidos.
+  Es importante que mire el historial: una clave que se subió una vez y se borró después
+  sigue estando en un commit antiguo, y ni PMD ni SpotBugs llegan a verla porque solo
+  analizan el código de hoy. Informe en
+  `build/reports/gitleaks/gitleaks-report.json` (raíz del repo; los valores de los
+  secretos salen redactados, no en claro). Bloquea el build ante cualquier hallazgo.
+
+  No hay plugin de Gradle que lo integre (el único encontrado,
+  [`io.dotinc.gitleaks`](https://plugins.gradle.org/plugin/io.dotinc.gitleaks), lleva sin
+  publicarse desde 2022), así que la tarea `gitleaks` de `build.gradle` invoca
+  directamente el binario — **tiene que estar instalado y en el `PATH`**. Instalación:
+
+  ```bash
+  # Linux x86_64 (ajusta la versión/arquitectura si hace falta, ver
+  # https://github.com/gitleaks/gitleaks/releases)
+  curl -fsSL -o /tmp/gitleaks.tar.gz \
+    https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+  tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+  mkdir -p ~/.local/bin && mv /tmp/gitleaks ~/.local/bin/gitleaks
+  # ~/.local/bin debe estar en el PATH
+
+  # macOS
+  brew install gitleaks
+  ```
+
+  Si aparece algún falso positivo en el futuro, se puede marcar con un comentario
+  `#gitleaks:allow` en la propia línea, o añadir una regla a un `.gitleaks.toml` en la
+  raíz del repo (no hay ninguno todavía porque no ha hecho falta) — ver la
+  [documentación de allowlists](https://github.com/gitleaks/gitleaks#configuration).
