@@ -76,8 +76,8 @@ subprojects {
     }
 
     dependencies {
-        testImplementation 'org.junit.jupiter:junit-jupiter-api:5.0.+'
-        testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.0.+'
+        testImplementation 'org.junit.jupiter:junit-jupiter-api:6.1.+'
+        testImplementation 'org.junit.jupiter:junit-jupiter-engine:6.1.+'
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher:6.1.+'
     }
 
@@ -90,9 +90,8 @@ subprojects {
         toolVersion = '7.27.0'
         ruleSets = []   // se limpia el default para no mezclarlo con el ruleset propio
         ruleSetFiles = files("$rootDir/config/pmd/ruleset.xml")
-        // Primera pasada sobre código ya existente: no bloquear el build todavía. Cuando
-        // se haya revisado el informe inicial y limpiado (o excluido a conciencia) los
-        // hallazgos, pasar esto a false.
-        ignoreFailures = true
+        // Informe inicial revisado y limpiado (71 -> 0 avisos): a partir de ahora el
+        // build falla si aparece un hallazgo nuevo.
+        ignoreFailures = false
     }
 }

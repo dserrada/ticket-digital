@@ -15,7 +15,7 @@ final class UserPaths {
     }
 
     static Path resolve(String raw) {
-        if (raw.equals("~")) {
+        if ("~".equals(raw)) {
             return Path.of(System.getProperty("user.home"));
         }
         if (raw.startsWith("~/") || raw.startsWith("~\\")) {

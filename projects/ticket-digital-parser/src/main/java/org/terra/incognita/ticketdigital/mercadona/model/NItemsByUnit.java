@@ -81,7 +81,7 @@ public record NItemsByUnit(String id, int quantity, BigDecimal unitPrice, BigDec
         String id = matcher.group("id").trim();
 
         BigDecimal unitPrice = null;
-        BigDecimal price = null;
+        BigDecimal price;
         if ( quantity > 1 ) {
             String unitPriceStr = matcher.group("unitPrice").trim();
             if (!unitPriceStr.isEmpty()) {

@@ -27,7 +27,7 @@ class TicketMercadonaTest {
 
 
     @Test
-    public void pruebaFicheroPDF() throws Exception {
+    void pruebaFicheroPDF() throws Exception {
         // Simplemente verificamos que no explota
         TicketMercadona ticket = TicketMercadona.parse(Path.of("src/test/resources/20230907 Mercadona 33,50 €.pdf"));
         assertNotNull(ticket);
@@ -37,7 +37,7 @@ class TicketMercadonaTest {
     }
 
     @Test
-    public void pruebaFicheroPDFExterno() throws Exception {
+    void pruebaFicheroPDFExterno() throws Exception {
         TicketMercadona ticket = TicketMercadona.parse(Path.of("src/test/resources/20250809 Mercadona 122,05 €.pdf"));
         assertNotNull(ticket);
         logger.debug("Ticket parseado: {}", ticket);
@@ -71,7 +71,7 @@ class TicketMercadonaTest {
     }
 
     @Test
-    public void pruebaFicheroPDFConCabeceraCantidad() throws Exception {
+    void pruebaFicheroPDFConCabeceraCantidad() throws Exception {
         // Desde septiembre de 2026 Mercadona antepone una columna "Cnt." (cantidad) a la
         // cabecera de la lista de items ("Cnt. Descripción   P. Unit   Importe" en vez de
         // "Descripción   P. Unit   Importe"). Debe seguir parseando sin explotar.
@@ -82,7 +82,7 @@ class TicketMercadonaTest {
     }
 
     @Test
-    public void pruebaFicheroPDFConProductosFrescos() throws Exception {
+    void pruebaFicheroPDFConProductosFrescos() throws Exception {
         TicketMercadona ticket = TicketMercadona.parse(Path.of("src/test/resources/20241108 Mercadona 77,71 €.pdf"));
         assertNotNull(ticket);
 
@@ -134,7 +134,7 @@ class TicketMercadonaTest {
     }
 
     @Test
-    public void pruebaIndentacionPreservadaEnPDF() throws Exception {
+    void pruebaIndentacionPreservadaEnPDF() throws Exception {
         // Verifica que IndentPreservingTextStripper produce más indentación para PESCADO
         // que para los artículos regulares (p.ej. "1 SALSA BOLOÑESA")
         Path pdfPath = Path.of("src/test/resources/20241108 Mercadona 77,71 €.pdf");

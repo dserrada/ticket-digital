@@ -4,11 +4,50 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
     <description>Reglas centradas en bugs/malas prácticas reales, no en estilo/formato.</description>
-    <rule ref="category/java/errorprone.xml"/>
+    <rule ref="category/java/errorprone.xml">
+        <!-- Exclusiones decididas tras revisar en detalle el informe real de este
+             proyecto (código de un solo hilo: CLIs personales, sin concurrencia). -->
+        <!-- Todas las apariciones son literales de datos de prueba repetidos a
+             propósito (p.ej. "PAN", "1.00") para que el test se lea de un vistazo;
+             extraerlos a constantes añadiría indirección sin mejorar nada. -->
+        <exclude name="AvoidDuplicateLiterals"/>
+        <!-- Todos los casos son guardas de validación con un literal autoexplicativo
+             en su contexto (p.ej. "quantity < 1", "parts.length < 2"), no números
+             mágicos de una regla de negocio oculta. -->
+        <exclude name="AvoidLiteralsInIfCondition"/>
+        <!-- Todos los casos son el idiom estándar de Java "while ((x = ...) != null)"
+             o una cadena de "probar cada parser hasta que uno encaje"
+             (if ((r = A.parse()) != null) ... else if ((r = B.parse()) != null) ...):
+             separar la asignación del condicional haría el código más largo y menos
+             claro, no más seguro. -->
+        <exclude name="AssignmentInOperand"/>
+        <!-- Todos los casos son asignaciones a null intencionadas y necesarias: un
+             campo de un record que no tiene valor en cierto formato de ticket (p.ej.
+             CardPayment.nc), o el reset explícito de una máquina de estados
+             (ParserStatusInfo.exitFreshSection). No es un descuido. -->
+        <exclude name="NullAssignment"/>
+        <!-- Getter con el mismo nombre que el campo que expone (p.ej. lastMessageDate),
+             el mismo patrón que usan los accessors de los records de Java: claro en
+             contexto, no hay ambigüedad real para quien lea el código. -->
+        <exclude name="AvoidFieldNameMatchingMethodName"/>
+        <!-- TicketRecordsReader.readAll()/FileUtils.searchInDir() devuelven null a
+             propósito para distinguir "el directorio no existe" de "existe pero está
+             vacío" (lista vacía); los 4 comandos que los llaman dependen de esa
+             distinción (`if (records == null) return 1;`). Cambiar a lista vacía aquí
+             sería un cambio de comportamiento silencioso, no una limpieza. -->
+        <exclude name="ReturnEmptyCollectionRatherThanNull"/>
+        <!-- TicketMercadona.parse(): bucle "salta líneas en blanco hasta encontrar la
+             cabecera de items, entonces sal" — el break final es la forma más clara de
+             expresarlo, no un descuido de estructura. -->
+        <exclude name="AvoidBranchingStatementAsLastInLoop"/>
+        <!-- TicketRecordsReader.readAll(): frontera deliberada por fichero — cualquier
+             fallo al parsear ESE ticket se captura, se loguea con detalle y aborta con
+             un mensaje claro, en vez de dejar pasar un fallo a medias. Capturar tipos
+             más concretos dejaría sin cubrir justo los fallos inesperados que este
+             catch existe para atrapar. -->
+        <exclude name="AvoidCatchingGenericException"/>
+    </rule>
     <rule ref="category/java/bestpractices.xml">
-        <!-- Exclusiones decididas tras revisar el informe de la primera ejecución real
-             (ver plan de implementación): reglas que aquí generan sobre todo ruido, no
-             bugs, más que corregir uno a uno cada aviso. -->
         <!-- ~77% de todos los avisos del proyecto entero; exige mensaje/máximo un
              assert por test, una preferencia de estilo de test, no un bug. -->
         <exclude name="UnitTestAssertionsShouldIncludeMessage"/>
@@ -25,5 +64,11 @@
              a sustituir por logging. -->
         <exclude name="SystemPrintln"/>
     </rule>
-    <rule ref="category/java/multithreading.xml"/>
+    <rule ref="category/java/multithreading.xml">
+        <!-- Todos los HashMap flagged son variables locales usadas para construir un
+             resultado dentro de un único método de un solo hilo (agregaciones,
+             normalización de nombres, reescritura del xlsx); ninguno se comparte entre
+             hilos. Esta CLI no tiene concurrencia real en ningún sitio. -->
+        <exclude name="UseConcurrentHashMap"/>
+    </rule>
 </ruleset>

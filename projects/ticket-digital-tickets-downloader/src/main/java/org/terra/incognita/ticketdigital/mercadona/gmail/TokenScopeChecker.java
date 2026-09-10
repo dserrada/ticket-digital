@@ -6,6 +6,7 @@ import java.io.IOException;
  * Consulta a Google el alcance (scope) realmente concedido a un access token. Aislado en
  * una interfaz para poder sustituirlo en tests sin hacer peticiones de red reales.
  */
+@FunctionalInterface
 public interface TokenScopeChecker {
 
     /**

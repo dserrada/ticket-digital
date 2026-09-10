@@ -47,7 +47,7 @@ public record TicketHeader(LocalDateTime purchaseDate,
         String purchaseDateStr = dateTimeParts[0];
         String purchaseTimeStr = dateTimeParts[1];
 
-        if (!dateTimeParts[2].equals("OP:")) {
+        if (!"OP:".equals(dateTimeParts[2])) {
             throw new ParseException("Expected 'OP:' at index 2 in line: '" + line + "'",-1);
         }
 

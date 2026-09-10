@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -80,7 +81,7 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
         Objects.requireNonNull(filePath, "filePath");
 
         String fileName = filePath.getFileName().toString();
-        String fileNameLower = fileName.toLowerCase();
+        String fileNameLower = fileName.toLowerCase(Locale.ROOT);
 
         String ticketData;
         if (fileNameLower.endsWith(".pdf")) {

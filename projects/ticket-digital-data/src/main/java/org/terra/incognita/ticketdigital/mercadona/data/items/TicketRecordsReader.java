@@ -36,7 +36,7 @@ public class TicketRecordsReader {
                         return null;
                     } catch (Exception e) {
                         logger.error("Error parsing " + file, e);
-                        throw new RuntimeException("Error al procesar el archivo: " + file);
+                        throw new RuntimeException("Error al procesar el archivo: " + file, e);
                     }
                 })
                 .filter(Objects::nonNull)

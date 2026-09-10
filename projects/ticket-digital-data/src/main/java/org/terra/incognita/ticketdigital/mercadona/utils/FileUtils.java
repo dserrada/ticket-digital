@@ -12,6 +12,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 
 
@@ -34,7 +35,7 @@ public class FileUtils {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 logger.debug("Found file: {}", file);
-                if (file.toString().toLowerCase().endsWith(".pdf")) {
+                if (file.toString().toLowerCase(Locale.ROOT).endsWith(".pdf")) {
                     pdfFiles.add(file);
                 }
                 return FileVisitResult.CONTINUE;
