@@ -98,3 +98,49 @@ Igual con los otros dos módulos, sustituyendo el nombre
 (`:ticket-digital-data:installDist`,
 `:ticket-digital-tickets-downloader:installDist`, y el script correspondiente
 dentro de `build/install/<módulo>/bin/`).
+
+## Calidad y seguridad
+
+`./gradlew build` (o `./gradlew check`) ejecuta además, en todos los módulos:
+
+- **[OWASP Dependency-Check](https://owasp.org/www-project-dependency-check/)**: escanea
+  las dependencias de los 4 módulos en busca de vulnerabilidades (CVE) conocidas.
+  Informe en `build/reports/dependency-check/dependency-check-report.html` (raíz del
+  repo). Por defecto
+  el build falla si aparece algún hallazgo de severidad alta/crítica (CVSS ≥ 7).
+
+  Usa como fuente de datos la NVD (National Vulnerability Database) de NIST, vía su API
+  2.0. **Necesita sí o sí una API key** — la NVD retiró los feeds JSON antiguos y su API
+  actual rechaza toda petición sin clave (falla con `Invalid API Key, length of 0`); ya
+  no es "más lento sin ella", es que no funciona. **Mientras no la configures,
+  `./gradlew build`/`check` fallará** en la tarea `dependencyCheckAggregate` — es
+  intencional, para no poder olvidarse del escaneo.
+
+  Pide la API key gratuita (autoservicio, instantánea, activación por email) en
+  https://nvd.nist.gov/developers/request-an-api-key y guárdala **fuera del repo**, en
+  `~/.gradle/gradle.properties` (créalo si no existe):
+
+  ```properties
+  nvdApiKey=tu-api-key-aquí
+  ```
+
+  Nunca la pongas en un fichero del proyecto ni la subas al repo.
+
+  Si algún día aparece un falso positivo, se puede suprimir con
+  [`dependencyCheck.suppressionFile`](https://dependency-check.github.io/DependencyCheck/dependency-check-gradle/configuration.html)
+  apuntando a un XML de supresiones — no hay ninguno todavía porque no ha hecho falta.
+
+- **[PMD](https://pmd.github.io/)** (`toolVersion 7.27.0`, incluido en Gradle sin plugin
+  externo): analiza el código en busca de bugs y malas prácticas reales (ruleset propio
+  en [`config/pmd/ruleset.xml`](config/pmd/ruleset.xml), centrado en
+  `errorprone`/`bestpractices`/`multithreading`, no en estilo/formato). Informe por
+  módulo en `<módulo>/build/reports/pmd/main.html` y `test.html`. De momento no bloquea
+  el build (`ignoreFailures = true`): es la primera pasada sobre código ya existente: en
+  cuanto se revise a fondo, cambiar a `false` en el `build.gradle` raíz.
+
+  **SpotBugs** (el otro gran clásico de este tipo de análisis en Java, con análisis de
+  flujo de datos sobre el bytecode compilado, más profundo que PMD) queda pendiente de
+  añadir: hoy no soporta el bytecode de Java 25 que genera este proyecto
+  ([spotbugs/spotbugs#3564](https://github.com/spotbugs/spotbugs/issues/3564), sin
+  resolver). En cuanto lo publiquen se añade como segunda capa junto a PMD (no en su
+  lugar); ver el comentario correspondiente en el `build.gradle` raíz.

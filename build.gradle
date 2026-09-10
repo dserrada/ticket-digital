@@ -1,10 +1,70 @@
+plugins {
+    id 'org.owasp.dependencycheck' version '13.0.0'
+}
+
+apply plugin: 'base'   // da una tarea `check` a nivel de raíz a la que engancharnos
+
 allprojects {
     group = 'org.terra.incognita'
     version = '1.0-SNAPSHOT'
 }
 
+// Escaneo de vulnerabilidades conocidas (CVE) en las dependencias de los 4 módulos.
+// Se aplica solo en la raíz (no en subprojects) porque dependencyCheckAggregate está
+// pensado justamente para builds multi-módulo: recorre todos los subproyectos y genera
+// un único informe combinado, en vez de uno por módulo.
+//
+// IMPORTANTE: requiere sí o sí una API key gratuita de la NVD (ver README.md, sección
+// "Calidad y seguridad"). La NVD retiró los feeds JSON antiguos; su API 2.0 actual
+// rechaza toda petición sin clave (falla con "Invalid API Key, length of 0"), no solo
+// va más lenta como ocurría hace tiempo. Sin la clave configurada, `./gradlew build`
+// falla en seco en esta tarea - es intencional, no un bug: se decidió así para forzar a
+// tener el escaneo activo desde el principio en vez de dejarlo como una tarea aparte
+// fácil de olvidar.
+dependencyCheck {
+    // Falla el build solo ante hallazgos de severidad alta/crítica (CVSS >= 7); por
+    // defecto el plugin no falla nunca (11.0), demasiado permisivo para el objetivo.
+    failBuildOnCVSS = 7.0
+    formats = ['HTML', 'JSON']
+    // Prioriza gradle.properties de usuario (~/.gradle/gradle.properties, fuera del
+    // repo) y cae a variable de entorno si algún día hay CI. Si no hay ninguna de las
+    // dos, NO se toca nvd.apiKey en absoluto (a diferencia de asignarle null o ''):
+    // dejarlo sin tocar produce el mismo "Invalid API Key" de todas formas (confirmado
+    // en pruebas), pero es la forma correcta de expresar "sin clave" en vez de forzar
+    // un valor vacío.
+    String resolvedNvdApiKey = (project.findProperty('nvdApiKey') ?: System.getenv('NVD_API_KEY')) as String
+    if (resolvedNvdApiKey) {
+        nvd {
+            apiKey = resolvedNvdApiKey
+        }
+    }
+    // Caché de la base de datos de CVEs fuera del repo y en ruta fija (por defecto el
+    // plugin la deja en un subdirectorio "aleatorio" bajo .gradle, lo que obliga a
+    // redescargarla en cada checkout limpio).
+    data {
+        directory = "${System.getProperty('user.home')}/.gradle/dependency-check-data"
+    }
+    // El analizador de Sonatype OSS Index es un servicio aparte de la NVD que ahora
+    // también exige cuenta/token propios. No aporta nada que no cubra ya la NVD para
+    // este proyecto, así que se desactiva explícitamente en vez de dejarlo emitir un
+    // aviso de credenciales que no vamos a rellenar.
+    analyzers.ossIndex.enabled = false
+}
+
+// SpotBugs (análisis de bugs vía bytecode, más profundo) queda pendiente: no soporta
+// bytecode Java 25 todavía (BCEL solo llega a Java 24; ver
+// https://github.com/spotbugs/spotbugs/issues/3564). Cuando lo publiquen: añadir aquí
+// `id 'com.github.spotbugs' version '<última>' apply false`, aplicarlo dentro de
+// `subprojects {}`, y enganchar `check` a `spotbugsMain`/`spotbugsTest` (se añade así
+// como segunda capa junto a PMD, no en su lugar).
+
+tasks.named('check') {
+    dependsOn 'dependencyCheckAggregate'
+}
+
 subprojects {
     apply plugin: 'java'
+    apply plugin: 'pmd'
 
     java {
         sourceCompatibility = JavaVersion.VERSION_25
@@ -23,5 +83,16 @@ subprojects {
 
     test {
         useJUnitPlatform()
+    }
+
+    // Análisis estático de bugs/malas prácticas (no de estilo/formato).
+    pmd {
+        toolVersion = '7.27.0'
+        ruleSets = []   // se limpia el default para no mezclarlo con el ruleset propio
+        ruleSetFiles = files("$rootDir/config/pmd/ruleset.xml")
+        // Primera pasada sobre código ya existente: no bloquear el build todavía. Cuando
+        // se haya revisado el informe inicial y limpiado (o excluido a conciencia) los
+        // hallazgos, pasar esto a false.
+        ignoreFailures = true
     }
 }

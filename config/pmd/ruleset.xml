@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="ticket-digital"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+    <description>Reglas centradas en bugs/malas prácticas reales, no en estilo/formato.</description>
+    <rule ref="category/java/errorprone.xml"/>
+    <rule ref="category/java/bestpractices.xml">
+        <!-- Exclusiones decididas tras revisar el informe de la primera ejecución real
+             (ver plan de implementación): reglas que aquí generan sobre todo ruido, no
+             bugs, más que corregir uno a uno cada aviso. -->
+        <!-- ~77% de todos los avisos del proyecto entero; exige mensaje/máximo un
+             assert por test, una preferencia de estilo de test, no un bug. -->
+        <exclude name="UnitTestAssertionsShouldIncludeMessage"/>
+        <exclude name="UnitTestContainsTooManyAsserts"/>
+        <!-- Micro-optimización de rendimiento sin impacto real en una CLI de uso
+             personal poco frecuente. -->
+        <exclude name="GuardLogStatement"/>
+        <!-- La mayoría de avisos son sobre tipos concretos del SDK de Gmail
+             (GenericUrl, GenericJson, Message...) que la propia API de Google obliga a
+             usar tal cual; no hay alternativa razonable de interfaz. -->
+        <exclude name="LooseCoupling"/>
+        <!-- Los comandos de este proyecto son CLIs cuyo resultado principal es
+             imprimirse por stdout (p.ej. InflationReportFormatter); no es un descuido
+             a sustituir por logging. -->
+        <exclude name="SystemPrintln"/>
+    </rule>
+    <rule ref="category/java/multithreading.xml"/>
+</ruleset>
