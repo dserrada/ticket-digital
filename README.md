@@ -254,7 +254,7 @@ completo, con enlaces a cada proyecto, está en
 
 ## Licencia
 
-Este proyecto se distribuye bajo la [GNU GPL versión 3](gpl-3.0.md). En resumen: es
+Este proyecto se distribuye bajo la [GNU GPL versión 3](LICENSE.md). En resumen: es
 software libre, y esa libertad está protegida con copyleft fuerte — puedes usarlo,
 estudiarlo, modificarlo y redistribuirlo, pero **cualquier trabajo derivado que
 distribuyas tiene que licenciarse también bajo GPL-3.0** (código abierto, con el
