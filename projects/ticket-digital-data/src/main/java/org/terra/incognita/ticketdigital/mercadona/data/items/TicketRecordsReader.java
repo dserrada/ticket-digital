@@ -27,7 +27,10 @@ public class TicketRecordsReader {
         List<Path> files = FileUtils.searchInDir(ticketsDir);
         if (files == null) return null;
 
-        return files.stream()
+        // Se usa parallelStream porque TicketMercadona.parse() está documentado como thread-safe
+        // para llamadas concurrentes, y con cientos de tickets el parseo de PDFs uno a uno es el
+        // cuello de botella dominante de estos comandos.
+        return files.parallelStream()
                 .map(file -> {
                     try {
                         return TicketMercadona.parse(file);
@@ -35,8 +38,11 @@ public class TicketRecordsReader {
                         logger.error("Todavía no podemos procesar el archivo " + file);
                         return null;
                     } catch (Exception e) {
-                        logger.error("Error parsing " + file, e);
-                        throw new RuntimeException("Error al procesar el archivo: " + file, e);
+                        // Un único ticket corrupto o con un formato no previsto no debe abortar la
+                        // generación de CSV/XLSX/análisis para el resto de tickets: se registra y
+                        // se omite, igual que el caso de formato no soportado de arriba.
+                        logger.error("Error al parsear " + file + ", se omite", e);
+                        return null;
                     }
                 })
                 .filter(Objects::nonNull)

@@ -11,12 +11,14 @@ Aplicación Java modular que extrae y analiza datos de **tickets digitales de Me
 ```
 ticket-digital/
 ├── projects/
-│   ├── ticket-digital-parser/   # Librería: modelos de dominio y parsers
-│   └── ticket-digital-data/     # Aplicación: CLI, generación de CSV
-└── docs/tasks.md                # Backlog de tareas pendientes
+│   ├── ticket-digital-parser/             # Librería: modelos de dominio y parsers
+│   ├── ticket-digital-data/               # Aplicación: CLI, generación de CSV/XLSX, análisis de inflación
+│   ├── ticket-digital-tickets-downloader/ # Aplicación: descarga de tickets nuevos desde Gmail
+│   └── ticket-digital-launcher/           # Aplicación: agrega los subcomandos de los tres módulos anteriores
+└── docs/tasks.md                          # Backlog de tareas pendientes
 ```
 
-Build system: **Gradle 8.x**, Java **24**, módulos multi-project.
+Build system: **Gradle 8.x**, Java **25**, módulos multi-project.
 
 ---
 
@@ -172,7 +174,7 @@ confirmarlo.
 - Los parsers devuelven **`null`** si no coinciden (nunca lanzan excepción en ese caso).
 - Las constantes regex están en `PurchasedItem` como `static final Pattern`.
 - Se usan **named groups** en regex: `(?<id>...)`, `(?<price>...)`.
-- Logging vía SLF4J; Logback solo en test scope.
+- Logging vía SLF4J en todos los módulos. `ticket-digital-parser` es una librería pura: solo depende de `slf4j-api`, y usa Logback exclusivamente en `testImplementation` para no imponer un binding concreto a quien la use. Los módulos de aplicación (`ticket-digital-data`, `ticket-digital-tickets-downloader`) sí declaran Logback como `implementation`, porque son CLIs que necesitan un binding real en tiempo de ejecución; `ticket-digital-launcher` no lo declara directamente, pero lo recibe transitivamente de esos dos.
 - Los tests de integración asumen PDFs en rutas externas al repositorio.
 
 ---
@@ -182,6 +184,4 @@ confirmarlo.
 Ver `docs/tasks.md` para el backlog general (parcialmente desactualizado/genérico). Gaps conocidos y concretos en el código actual:
 
 1. **`FreshItemByWeight.FRESH_TYPE_PATTERN`** — solo reconoce la categoría "PESCADO" como cabecera de sección fresca; otras categorías (carnicería, frutería, etc., si existen en algún ticket) no se detectarían.
-2. **`TicketMercadonaTest.pruebaFichero()`** — referencia `src/test/resources/20230101090000 Ticket Digital Mercadona.txt`, que no existe en el repo; el test falla con `NoSuchFileException` (fallo preexistente, no introducido por el parseo de total/IVA/tarjeta).
-3. **`OneItemByUnitTest.testParseValidSingleItem()`** — falla en una aserción (fallo preexistente, no relacionado con el parseo de total/IVA/tarjeta ni con el renombrado de campos).
-4. **`CardPayment`** — el bloque final del ticket (relleno entre AID/ARC y la línea `Importe:`) se parsea de forma tolerante en base a los formatos vistos hasta ahora en ~150 tickets reales; nuevas plantillas de recibo de Mercadona podrían requerir ajustes.
+2. **`CardPayment`** — el bloque final del ticket (relleno entre AID/ARC y la línea `Importe:`) se parsea de forma tolerante en base a los formatos vistos hasta ahora en ~150 tickets reales; nuevas plantillas de recibo de Mercadona podrían requerir ajustes.

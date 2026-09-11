@@ -77,11 +77,18 @@ public record TicketMercadona(ShopData shopData, TicketHeader header, List<Purch
     /**
      * Calcula el precio pagado en este ticket a partir de los artículos comprados.
      *
+     * <p>Se suma el precio impreso de cada artículo ({@link PurchasedItem#price()}), no el
+     * recalculado a partir de cantidad/peso y precio unitario ({@link
+     * PurchasedItem#calculatedPrice()}): para los productos vendidos al peso, la báscula de la
+     * tienda calcula el precio impreso a partir de un peso con más precisión que los 3 decimales
+     * que aparecen en el ticket, así que recalcularlo aquí a partir del peso truncado puede
+     * diferir en un céntimo del importe realmente impreso y cobrado.
+     *
      * @return Total en euros de los precios de los artículos.
      */
     public BigDecimal itemsTotal() {
         return items.stream()
-                .map(PurchasedItem::calculatedPrice) // Obtenemos el precio de cada artículo.
+                .map(PurchasedItem::price) // El precio tal cual aparece impreso en el ticket.
                 .reduce(BigDecimal.ZERO, BigDecimal::add)  // Sumamos todos los precios de los artículos comprados
                 .setScale(2, RoundingMode.UNNECESSARY);
     }

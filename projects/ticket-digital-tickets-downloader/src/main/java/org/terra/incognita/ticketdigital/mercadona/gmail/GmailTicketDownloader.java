@@ -52,7 +52,7 @@ public class GmailTicketDownloader {
 
     private final TokenScopeChecker scopeChecker;
 
-    public GmailTicketDownloader() {
+    public GmailTicketDownloader() throws GeneralSecurityException, IOException {
         this(new GoogleTokenScopeChecker());
     }
 
@@ -99,7 +99,7 @@ public class GmailTicketDownloader {
         String effectiveQuery = state.appendIncrementalClause(request.query());
         logger.info("Buscando mensajes en Gmail con query: {}", effectiveQuery);
 
-        Pattern filenamePattern = Pattern.compile(request.filenameRegex());
+        Pattern filenamePattern = Pattern.compile(request.filenameRegex(), Pattern.CASE_INSENSITIVE);
         int downloaded = 0;
         int messagesProcessed = 0;
         int pageNumber = 0;
@@ -128,9 +128,12 @@ public class GmailTicketDownloader {
                 }
             }
             pageToken = listResponse.getNextPageToken();
+            // Se persiste tras cada página (no solo al final) para que un fallo a mitad de una
+            // descarga larga (error de red, cuota de la API) no obligue a re-listar y re-descargar
+            // desde el principio en el siguiente intento.
+            state.withLastMessageDate(latestMessageDate).save(request.stateFile());
         } while (pageToken != null);
 
-        state.withLastMessageDate(latestMessageDate).save(request.stateFile());
         logger.info("Descarga completada: {} fichero(s) nuevo(s) de {} mensaje(s) revisados.",
                 downloaded, messagesProcessed);
         return downloaded;
@@ -144,9 +147,10 @@ public class GmailTicketDownloader {
             logger.debug("Mensaje {}: sin adjuntos que matcheen el regex.", message.getId());
         }
         for (MessagePart attachmentPart : attachments) {
-            Path target = dataDir.resolve(attachmentPart.getFilename());
-            if (Files.exists(target)) {
-                logger.debug("Ya existe, se omite: {}", target);
+            String safeFilename = sanitizeFilename(attachmentPart.getFilename());
+            Path target = uniqueTarget(dataDir, message.getId(), safeFilename);
+            if (target == null) {
+                logger.debug("Ya existe, se omite: adjunto {} del mensaje {}", safeFilename, message.getId());
                 continue;
             }
             logger.debug("Descargando adjunto {} del mensaje {}...", attachmentPart.getFilename(), message.getId());
@@ -159,6 +163,41 @@ public class GmailTicketDownloader {
             downloaded++;
         }
         return downloaded;
+    }
+
+    // El nombre de fichero de un adjunto viene tal cual del mensaje de Gmail: no confiamos en él
+    // como ruta. Nos quedamos solo con el nombre final (sin componentes de directorio, "..", ni
+    // rutas absolutas) para que un adjunto malicioso no pueda escribir fuera de dataDir.
+    private static String sanitizeFilename(String rawFilename) {
+        Path fileNamePath = Path.of(rawFilename).getFileName();
+        String fileName = fileNamePath == null ? null : fileNamePath.toString();
+        if (fileName == null || fileName.isBlank() || ".".equals(fileName) || "..".equals(fileName)) {
+            throw new IllegalArgumentException("Nombre de adjunto no válido: " + rawFilename);
+        }
+        return fileName;
+    }
+
+    // Si ya existe un fichero con ese nombre (p.ej. porque el remitente reutiliza el mismo nombre
+    // de adjunto en varios correos), se añade el id del mensaje para no pisar ni descartar
+    // silenciosamente un ticket distinto: dos adjuntos con el mismo nombre pero de mensajes
+    // distintos son, casi con toda seguridad, tickets distintos. Si el fichero ya desambiguado
+    // con este mismo id de mensaje también existe, es que este adjunto concreto ya se descargó
+    // (p.ej. un reintento tras un fallo a mitad de la página anterior) y se omite.
+    private static Path uniqueTarget(Path dataDir, String messageId, String filename) {
+        Path target = dataDir.resolve(filename);
+        if (!Files.exists(target)) {
+            return target;
+        }
+        int dot = filename.lastIndexOf('.');
+        String base = dot >= 0 ? filename.substring(0, dot) : filename;
+        String extension = dot >= 0 ? filename.substring(dot) : "";
+        Path disambiguated = dataDir.resolve(base + "-" + messageId + extension);
+        if (Files.exists(disambiguated)) {
+            return null;
+        }
+        logger.warn("Ya existe un fichero llamado {}: se guarda como {} para no perder el adjunto del mensaje {}.",
+                target, disambiguated, messageId);
+        return disambiguated;
     }
 
     private Credential authorize(NetHttpTransport httpTransport, Path credentialsFile, Path tokenDirectory)

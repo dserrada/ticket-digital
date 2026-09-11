@@ -47,6 +47,6 @@ public final class BasketCompositionFormatter {
     }
 
     private static String formatPercent(BigDecimal value) {
-        return value.toPlainString().replace('.', ',') + "%";
+        return value.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString().replace('.', ',') + "%";
     }
 }

@@ -51,18 +51,32 @@ public record PurchasedItemRecord(String id, LocalDateTime date, Integer units, 
     }
 
     public String toCSV() {
-        // TODO: Mejorar el formato de salida a CSV
-        return String.format("%s;%s;%s;%s;%s;%s;%s", id,
-                DateTimeFormatter.ofPattern("dd/MM/yyyy").format(date),
-                units,
-                unitPrice == null ? "" : unitPrice.toString().replace('.', ','),
-                weightKg == null ? "" : weightKg.toString().replace('.', ','),
-                pricePerKg == null ? "" :  pricePerKg.toString().replace('.', ','),
-                price == null ? "" : price.toString().replace('.', ','));
+        return String.join(";",
+                escapeCSV(id),
+                escapeCSV(DateTimeFormatter.ofPattern("dd/MM/yyyy").format(date)),
+                escapeCSV(String.valueOf(units)),
+                escapeCSV(unitPrice == null ? "" : unitPrice.toString().replace('.', ',')),
+                escapeCSV(weightKg == null ? "" : weightKg.toString().replace('.', ',')),
+                escapeCSV(pricePerKg == null ? "" : pricePerKg.toString().replace('.', ',')),
+                escapeCSV(price == null ? "" : price.toString().replace('.', ',')));
     }
 
     public static String headerCSV() {
-        return String.format("%s;%s;%s;%s;%s;%s;%s", "id", "fecha", "unidades", "precioPorUnidad", "pesoKg", "precioKg", "precio");
+        return String.join(";", "id", "fecha", "unidades", "precioPorUnidad", "pesoKg", "precioKg", "precio");
+    }
+
+    // RFC 4180 adaptado al delimitador ';' que usa este fichero: si el valor contiene el
+    // delimitador, comillas o un salto de línea, se envuelve entre comillas dobles y cualquier
+    // comilla interna se duplica. Sin esto, un id de producto con un ';' (el propio delimitador)
+    // desplazaría en silencio el resto de columnas de la fila.
+    private static String escapeCSV(String value) {
+        if (value == null) {
+            return "";
+        }
+        if (value.indexOf(';') >= 0 || value.indexOf('"') >= 0 || value.indexOf('\n') >= 0 || value.indexOf('\r') >= 0) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 
 

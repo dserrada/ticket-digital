@@ -8,6 +8,7 @@ import picocli.CommandLine.Option;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
@@ -41,7 +42,12 @@ public class WriteItemsCsvCommand implements Callable<Integer> {
         Verbosity.apply(verbose);
         logger.debug("Ejecutando operación write-items-csv...");
         Path resolvedDataDir = dataDir != null ? UserPaths.resolve(dataDir) : TicketDataDefaults.dataDir();
-        File resolvedCsvFile = UserPaths.resolve(csvFile).toFile();
+        Path resolvedCsvFilePath = UserPaths.resolve(csvFile);
+        Path parentDir = resolvedCsvFilePath.toAbsolutePath().getParent();
+        if (parentDir != null) {
+            Files.createDirectories(parentDir);
+        }
+        File resolvedCsvFile = resolvedCsvFilePath.toFile();
         CSVGenerator.writeCSVToFile(resolvedDataDir, resolvedCsvFile);
         return 0;
     }

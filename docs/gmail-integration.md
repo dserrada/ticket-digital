@@ -187,7 +187,7 @@ Sobre la Opción A, con estas modificaciones respecto al boceto original:
      la herramienta actual).
    - Cliente `Gmail`; pagina `users().messages().list(userId, q=<query>)`.
    - **Descarga incremental**: se guarda un fichero de estado local (p. ej.
-     `~/.ticket-digital/state/gmail-download-state.json`) con la fecha/hora
+     `~/.ticket-digital/state/gmail-download-state.properties`) con la fecha/hora
      del último mensaje procesado con éxito. En cada ejecución, la query
      efectiva añade una cláusula `after:<fecha del último estado>` (con
      margen de solape de un día para cubrir zonas horarias/mensajes tardíos),

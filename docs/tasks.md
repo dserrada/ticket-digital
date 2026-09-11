@@ -20,13 +20,14 @@ This document contains a detailed list of actionable improvement tasks for the T
 
 ## Code Quality Improvements
 
-11. [ ] Fix inconsistency between method names (calcularPrecioTotalArticulos vs precioSumaEnEuros)
+<!-- Los puntos 11, 15, 16 y 17 de esta lista mencionaban Articulo.java, un record Cantidad, y
+     los métodos calcularPrecioTotalArticulos/precioSumaEnEuros: ese modelo ya no existe (se
+     sustituyó por el sealed interface PurchasedItem y sus records OneItemByUnit/NItemsByUnit/
+     ItemByWeight/FreshItemByWeight en ticket-digital-parser, con validación en sus constructores
+     compactos y JavaDoc), así que se han retirado por no aplicar al código actual. -->
 12. [ ] Replace System.out.println statements with proper logging
 13. [ ] Add input validation to all public methods
 14. [ ] Implement proper error handling with custom exceptions
-15. [ ] Fix incomplete JavaDoc comments (e.g., in Articulo.java)
-16. [ ] Add validation to the Cantidad record to ensure valid values
-17. [ ] Simplify the switch statement in Articulo.java using enhanced switch expressions
 18. [ ] Fix inconsistency in parameter naming (precioUnitarioEnCentimos vs euros)
 19. [ ] Remove FIXME comments and implement proper solutions
 20. [ ] Add null checks to prevent NullPointerExceptions

@@ -14,7 +14,9 @@ public class CSVGenerator {
     public static void writeCSVToFile(Path basePath, File outputFile) throws IOException {
         logger.debug("Iniciando la escritura del fichero csv, basePath: {}, outputFile: {}", basePath, outputFile.getAbsolutePath());
         List<PurchasedItemRecord> records = TicketRecordsReader.readAll(basePath);
-        if ( records == null ) return;
+        if (records == null) {
+            throw new IOException("El directorio de datos no existe: " + basePath.toAbsolutePath());
+        }
         try (BufferedWriter bos = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), StandardCharsets.UTF_8))) {
             // La cabecera
             bos.write(PurchasedItemRecord.headerCSV());

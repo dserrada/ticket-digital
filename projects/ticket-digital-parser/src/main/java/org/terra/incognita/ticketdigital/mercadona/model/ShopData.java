@@ -71,7 +71,9 @@ public record ShopData(String shopName, String cif, String address, String posta
             throw new ParseException("Expected at least postalCode and localidad in line: '" + codigoLocalidadLinea + "'",-1);
         }
         String codigoPostal = parts[0];
-        String localidad = parts[1];
+        // La localidad puede tener varias palabras (p.ej. "POZUELO DE ALARCON", "SANT BOI DE
+        // LLOBREGAT"): nos quedamos con todo lo que sigue al código postal, no solo la primera palabra.
+        String localidad = String.join(" ", java.util.Arrays.asList(parts).subList(1, parts.length));
 
         // Parse Teléfono
         line = lines.get(3);

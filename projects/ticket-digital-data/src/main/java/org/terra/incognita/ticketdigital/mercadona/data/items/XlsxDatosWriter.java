@@ -70,7 +70,9 @@ public class XlsxDatosWriter {
     public static void writeXlsxToFile(Path ticketsDir, File outputFile) throws IOException {
         logger.debug("Iniciando la escritura del fichero xlsx, ticketsDir: {}, outputFile: {}", ticketsDir, outputFile.getAbsolutePath());
         List<PurchasedItemRecord> records = TicketRecordsReader.readAll(ticketsDir);
-        if (records == null) return;
+        if (records == null) {
+            throw new IOException("El directorio de datos no existe: " + ticketsDir.toAbsolutePath());
+        }
 
         try (InputStream templateIn = XlsxDatosWriter.class.getResourceAsStream(TEMPLATE_RESOURCE)) {
             if (templateIn == null) {

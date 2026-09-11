@@ -53,7 +53,10 @@ public record CardPayment(String lastFourDigits, String nc, String aut, String a
     private static final Pattern DEVICE_VERIFIED_PATTERN = Pattern.compile(
             "^\\s*Verificado por dispositivo\\s*$");
 
-    private static final Pattern BRAND_ONLY_PATTERN = Pattern.compile("^\\s*[A-Z]+\\s*$");
+    // Como mucho 2 palabras (p.ej. "VISA DEBIT"): un límite mayor arriesga a que una línea de
+    // texto en mayúsculas no relacionada (p.ej. el disclaimer final, "SE ADMITEN DEVOLUCIONES CON
+    // TICKET") se confunda con una marca de tarjeta suelta y se consuma aquí como relleno.
+    private static final Pattern BRAND_ONLY_PATTERN = Pattern.compile("^\\s*[A-Z]+(?:\\s+[A-Z]+)?\\s*$");
 
     private static final Pattern AMOUNT_PATTERN = Pattern.compile(
             "^\\s*Importe:\\s*(?<amount>\\d*,\\d{2})\\s*Â?€\\s+(?<brand>.+?)\\s*$");

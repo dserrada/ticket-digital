@@ -80,15 +80,13 @@ public record NItemsByUnit(String id, int quantity, BigDecimal unitPrice, BigDec
         int quantity = Integer.parseInt(matcher.group("quantity"));
         String id = matcher.group("id").trim();
 
+        // REGEX_UNIT_PRICE ("\d*,\d{2}") es un grupo obligatorio del patrón, así que si
+        // matcher.matches() ha tenido éxito matcher.group("unitPrice") nunca puede ser null ni
+        // vacío: no hace falta (ni es alcanzable) un caso de "falta el precio unitario" aquí.
         BigDecimal unitPrice = null;
         BigDecimal price;
         if ( quantity > 1 ) {
-            String unitPriceStr = matcher.group("unitPrice").trim();
-            if (!unitPriceStr.isEmpty()) {
-                unitPrice = PurchasedItem.parseUnitPrice(unitPriceStr);
-            } else {
-                throw new ParseException("Missing unit price in line: " + line, -1);
-            }
+            unitPrice = PurchasedItem.parseUnitPrice(matcher.group("unitPrice").trim());
         }
 
         price = PurchasedItem.parseUnitPrice(matcher.group("price"));

@@ -22,6 +22,8 @@ import java.util.SortedMap;
  */
 public final class InflationIndexCalculator {
 
+    private static final BigDecimal BASE_YEAR_INDEX = new BigDecimal("100.00");
+
     private InflationIndexCalculator() {
     }
 
@@ -63,9 +65,13 @@ public final class InflationIndexCalculator {
             paascheDen = paascheDen.add(p0.multiply(qt));
         }
 
-        BigDecimal laspeyres = index(laspeyresNum, laspeyresDen);
-        BigDecimal paasche = index(paascheNum, paascheDen);
         boolean isBaseYear = yearData.year() == baseYearData.year();
+        // El año base siempre es 100,00 por definición (se compara consigo mismo), incluso en el
+        // caso límite en que ningún producto de la cesta tenga datos ese año (matched == 0): sin
+        // este caso especial, numerador y denominador serían ambos cero y el índice se calcularía
+        // como "n/d" en vez de la garantía documentada de que el año base siempre da 100,00.
+        BigDecimal laspeyres = isBaseYear ? BASE_YEAR_INDEX : index(laspeyresNum, laspeyresDen);
+        BigDecimal paasche = isBaseYear ? BASE_YEAR_INDEX : index(paascheNum, paascheDen);
         return new YearInflationIndex(yearData.year(), yearData.complete(), isBaseYear, laspeyres, paasche, matched);
     }
 

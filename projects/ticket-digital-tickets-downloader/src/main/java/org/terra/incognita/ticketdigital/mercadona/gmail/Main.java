@@ -10,8 +10,9 @@ import java.util.concurrent.Callable;
 
 /**
  * Interfaz de línea de comandos independiente: descarga los tickets nuevos desde Gmail
- * sin depender de {@code ticket-digital-data}. Ese otro módulo expone el mismo comando
- * como subcomando {@code download-tickets}, delegando en {@link GmailTicketDownloader}.
+ * sin depender de {@code ticket-digital-data}. Es {@code ticket-digital-launcher} el que
+ * expone este mismo comando como subcomando {@code download-tickets} dentro de la CLI
+ * unificada, delegando en {@link GmailTicketDownloader}.
  */
 @Command(name = "download-tickets",
          mixinStandardHelpOptions = true,

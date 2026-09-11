@@ -85,16 +85,17 @@ empezar:
 
 ## Funcionalidades
 
-Subcomandos disponibles (los mismos en los tres módulos con CLI — ver cada README para
-el detalle de sus opciones):
+Subcomandos disponibles (`ticket-digital-launcher` los agrupa todos; los otros dos
+módulos con CLI solo exponen los suyos propios — ver cada README para el detalle de
+sus opciones):
 
-| Subcomando | Qué hace |
-|---|---|
-| `download-tickets` | Descarga desde Gmail los PDF de tickets que aún no tengas. |
-| `write-items-csv` | Genera un CSV con todas las líneas de producto compradas. |
-| `write-items-xlsx` | Genera un XLSX con esas mismas líneas y varias tablas dinámicas de ejemplo ya preparadas. |
-| `inflation-index` | Calcula cómo ha subido el precio de tu cesta habitual, año a año (índices de Laspeyres y Paasche). |
-| `basket-composition` | Muestra de qué se compone esa cesta y qué peso tiene cada producto en el gasto. |
+| Subcomando | Qué hace | `ticket-digital-data` | `ticket-digital-tickets-downloader` | `ticket-digital-launcher` |
+|---|---|:---:|:---:|:---:|
+| `download-tickets` | Descarga desde Gmail los PDF de tickets que aún no tengas. | | ✅ | ✅ |
+| `write-items-csv` | Genera un CSV con todas las líneas de producto compradas. | ✅ | | ✅ |
+| `write-items-xlsx` | Genera un XLSX con esas mismas líneas y varias tablas dinámicas de ejemplo ya preparadas. | ✅ | | ✅ |
+| `inflation-index` | Calcula cómo ha subido el precio de tu cesta habitual, año a año (índices de Laspeyres y Paasche). | ✅ | | ✅ |
+| `basket-composition` | Muestra de qué se compone esa cesta y qué peso tiene cada producto en el gasto. | ✅ | | ✅ |
 
 ## Instalación y uso
 

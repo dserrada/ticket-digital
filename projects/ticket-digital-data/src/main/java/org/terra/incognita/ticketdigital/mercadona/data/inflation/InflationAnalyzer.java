@@ -56,20 +56,75 @@ public final class InflationAnalyzer {
             }
         }
 
-        List<ProductWeight> weights = new ArrayList<>();
-        for (ProductKey key : selection.basket()) {
-            ProductYearStats stats = baseYearData.productStats().get(key);
-            boolean hasData = stats != null;
-            BigDecimal spend = hasData ? stats.totalSpent() : BigDecimal.ZERO;
-            BigDecimal weightPercent = totalSpend.signum() == 0
-                    ? BigDecimal.ZERO
-                    : spend.multiply(BigDecimal.valueOf(100), MathContext.DECIMAL64).divide(totalSpend, 2, RoundingMode.HALF_UP);
-            weights.add(new ProductWeight(key, spend, weightPercent, hasData));
-        }
+        List<ProductWeight> weights = buildWeights(selection.basket(), baseYearData, totalSpend);
         weights.sort(Comparator.comparing(ProductWeight::weightPercent).reversed()
                 .thenComparing(w -> w.key().id()));
 
         return new BasketComposition(selection.baseYear(), selection.basketYear(), totalSpend, weights);
+    }
+
+    // Reparte el 100% entre los productos de la cesta por el método del "mayor resto" (largest
+    // remainder): redondear cada peso a 2 decimales de forma independiente (como se hacía antes)
+    // puede hacer que la suma no dé exactamente 100,00 (p.ej. tres pesos de 33,33...% redondean a
+    // 33,33 cada uno, que suman 99,99). Aquí se calcula primero el peso exacto de cada producto, se
+    // trunca a 2 decimales, y los "céntimos" de porcentaje que faltan hasta 100,00 se reparten de
+    // uno en uno entre los productos con mayor resto (el que perdió más al truncar), para que la
+    // suma final sea siempre exactamente 100,00 cuando totalSpend &gt; 0.
+    private static List<ProductWeight> buildWeights(Set<ProductKey> basket, YearBasketData baseYearData, BigDecimal totalSpend) {
+        record Entry(ProductKey key, BigDecimal spend, boolean hasData, BigDecimal exactPercent) {
+        }
+
+        List<Entry> entries = new ArrayList<>();
+        for (ProductKey key : basket) {
+            ProductYearStats stats = baseYearData.productStats().get(key);
+            boolean hasData = stats != null;
+            BigDecimal spend = hasData ? stats.totalSpent() : BigDecimal.ZERO;
+            BigDecimal exactPercent = totalSpend.signum() == 0
+                    ? BigDecimal.ZERO
+                    : spend.multiply(BigDecimal.valueOf(100), MathContext.DECIMAL64).divide(totalSpend, 10, RoundingMode.HALF_UP);
+            entries.add(new Entry(key, spend, hasData, exactPercent));
+        }
+
+        if (totalSpend.signum() == 0) {
+            return entries.stream()
+                    .map(e -> new ProductWeight(e.key(), e.spend(), BigDecimal.ZERO.setScale(2), e.hasData()))
+                    .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        }
+
+        // "Céntimos" de porcentaje (2 decimales) de cada producto tras truncar a la baja, y cuántos
+        // faltan para llegar a 100,00 (10000 céntimos) sumando todos los truncamientos.
+        List<Long> flooredCents = new ArrayList<>();
+        long sumFlooredCents = 0;
+        for (Entry e : entries) {
+            BigDecimal flooredPercent = e.exactPercent().setScale(2, RoundingMode.DOWN);
+            long cents = flooredPercent.movePointRight(2).longValueExact();
+            flooredCents.add(cents);
+            sumFlooredCents += cents;
+        }
+        long deficitCents = 10000L - sumFlooredCents;
+
+        List<Integer> byRemainderDesc = new ArrayList<>();
+        for (int i = 0; i < entries.size(); i++) {
+            byRemainderDesc.add(i);
+        }
+        byRemainderDesc.sort(Comparator
+                .<Integer, BigDecimal>comparing(i -> entries.get(i).exactPercent()
+                        .subtract(entries.get(i).exactPercent().setScale(2, RoundingMode.DOWN)))
+                .reversed()
+                .thenComparing(i -> entries.get(i).key().id()));
+
+        long[] finalCents = flooredCents.stream().mapToLong(Long::longValue).toArray();
+        for (int i = 0; i < deficitCents && i < byRemainderDesc.size(); i++) {
+            finalCents[byRemainderDesc.get(i)]++;
+        }
+
+        List<ProductWeight> weights = new ArrayList<>();
+        for (int i = 0; i < entries.size(); i++) {
+            Entry e = entries.get(i);
+            BigDecimal weightPercent = BigDecimal.valueOf(finalCents[i], 2);
+            weights.add(new ProductWeight(e.key(), e.spend(), weightPercent, e.hasData()));
+        }
+        return weights;
     }
 
     private static Selection select(List<PurchasedItemRecord> records, int minCompleteMonths, int minTotalPurchaseCount) {

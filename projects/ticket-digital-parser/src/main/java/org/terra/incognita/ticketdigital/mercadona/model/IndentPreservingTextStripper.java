@@ -55,7 +55,11 @@ class IndentPreservingTextStripper extends PDFTextStripper {
                 float lineX = textPositions.get(0).getX();
                 float spaceWidth = textPositions.get(0).getWidthOfSpace();
                 if (spaceWidth <= 0) spaceWidth = textPositions.get(0).getWidth();
-                int numSpaces = Math.max(0, Math.round((lineX - leftMarginX) / spaceWidth)/2); // división por 2 para indentación de dos espacios
+                // División por 2 para indentación de dos espacios: se hace en coma flotante y se
+                // redondea el resultado, en vez de truncar con división entera, para que dos
+                // niveles de indentación distintos (p.ej. anchos en bruto de 2 y 3, tras el primer
+                // redondeo) no colapsen al mismo nivel por el truncamiento.
+                int numSpaces = Math.max(0, Math.round(Math.round((lineX - leftMarginX) / spaceWidth) / 2.0f));
                 output.write(" ".repeat(numSpaces));
             }
         }

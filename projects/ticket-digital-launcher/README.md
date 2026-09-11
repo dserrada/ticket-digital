@@ -46,6 +46,12 @@ $LAUNCHER write-items-csv --data-dir ~/.ticket-digital/data --csv-file ~/tickets
 
 # Generar el XLSX
 $LAUNCHER write-items-xlsx --data-dir ~/.ticket-digital/data --output-dir ~/
+
+# Índice de inflación de tu cesta habitual, año a año (ver README de ticket-digital-data)
+$LAUNCHER inflation-index --data-dir ~/.ticket-digital/data
+
+# Composición de esa cesta y peso de cada producto en el gasto
+$LAUNCHER basket-composition --data-dir ~/.ticket-digital/data
 ```
 
 Cada subcomando tiene su propia ayuda:
@@ -54,6 +60,8 @@ Cada subcomando tiene su propia ayuda:
 $LAUNCHER download-tickets --help
 $LAUNCHER write-items-csv --help
 $LAUNCHER write-items-xlsx --help
+$LAUNCHER inflation-index --help
+$LAUNCHER basket-composition --help
 ```
 
 Todos los subcomandos aceptan `-v`/`--verbose` para logs de nivel DEBUG con el detalle

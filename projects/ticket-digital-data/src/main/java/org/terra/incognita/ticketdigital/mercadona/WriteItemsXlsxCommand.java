@@ -8,6 +8,7 @@ import picocli.CommandLine.Option;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -43,7 +44,9 @@ public class WriteItemsXlsxCommand implements Callable<Integer> {
         Verbosity.apply(verbose);
         logger.debug("Ejecutando operación write-items-xlsx...");
         Path resolvedDataDir = dataDir != null ? UserPaths.resolve(dataDir) : TicketDataDefaults.dataDir();
-        File resolvedOutputDir = UserPaths.resolve(outputDir).toFile();
+        Path resolvedOutputDirPath = UserPaths.resolve(outputDir);
+        Files.createDirectories(resolvedOutputDirPath);
+        File resolvedOutputDir = resolvedOutputDirPath.toFile();
         String fileName = "Mercadona-" + DateTimeFormatter.ofPattern("yyyyMMdd").format(LocalDate.now()) + ".xlsx";
         XlsxDatosWriter.writeXlsxToFile(resolvedDataDir, new File(resolvedOutputDir, fileName));
         return 0;

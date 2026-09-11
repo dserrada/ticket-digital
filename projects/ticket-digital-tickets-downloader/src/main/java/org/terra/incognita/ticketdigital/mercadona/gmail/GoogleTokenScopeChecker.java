@@ -1,15 +1,16 @@
 package org.terra.incognita.ticketdigital.mercadona.gmail;
 
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.gson.GsonFactory;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 /**
  * Implementación real de {@link TokenScopeChecker}: consulta el endpoint público de
@@ -21,8 +22,10 @@ public class GoogleTokenScopeChecker implements TokenScopeChecker {
 
     private final HttpTransport transport;
 
-    public GoogleTokenScopeChecker() {
-        this(new NetHttpTransport());
+    public GoogleTokenScopeChecker() throws GeneralSecurityException, IOException {
+        // Mismo transporte "de confianza" (valida el certificado del servidor con el almacén de
+        // CAs de Google) que usa el resto del flujo para hablar con la propia API de Gmail.
+        this(GoogleNetHttpTransport.newTrustedTransport());
     }
 
     GoogleTokenScopeChecker(HttpTransport transport) {
