@@ -249,8 +249,18 @@ parece bastante propia de este proyecto. Sí existen piezas sueltas comparables:
 parseadores de tickets de Mercadona más pequeños o incompletos (requieren subir el PDF a
 mano, sin descarga ni análisis de inflación), y un motor genérico de parseo de facturas,
 [`invoice2data`](https://github.com/invoice-x/invoice2data) (MIT, activo), al que le
-faltaría una plantilla de Mercadona y toda la parte de descarga/inflación. El análisis
-completo, con enlaces a cada proyecto, está en
+faltaría una plantilla de Mercadona y toda la parte de descarga/inflación.
+
+Merece una mención aparte [`mercaapi`](https://github.com/m0wer/mercaapi): a diferencia
+de los scrapers de catálogo que hacen scraping de HTML, usa directamente la API (no
+documentada, sin garantía de que siga disponible ni de que Mercadona no la cierre) que
+emplea la propia app oficial de Mercadona, alojada en sus servidores — un enfoque más
+sólido en principio. Pero no resuelve el problema de fondo de correlacionar los nombres
+abreviados que imprime el ticket con los nombres completos del catálogo de Mercadona, así
+que tampoco serviría tal cual para el caso de uso de este proyecto. Aun así, muy buen
+proyecto.
+
+El análisis completo, con enlaces a cada proyecto, está en
 [`docs/similar-projects.md`](docs/similar-projects.md).
 
 ## Licencia

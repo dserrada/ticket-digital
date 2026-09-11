@@ -62,7 +62,16 @@ No específico de Mercadona, pero es la pieza más madura y reutilizable encontr
 No parsean *tus* tickets, sino el catálogo público de la tienda — útiles solo si algún
 día se quisiera comparar precios pagados contra el catálogo actual:
 
-- [`m0wer/mercaapi`](https://github.com/m0wer/mercaapi)
+- [`m0wer/mercaapi`](https://github.com/m0wer/mercaapi) — merece mención aparte de los
+  otros dos: en vez de hacer scraping de HTML, usa directamente la API que emplea la
+  propia app oficial de Mercadona (alojada en los servidores de Mercadona), lo que en
+  principio la hace más robusta y de más calidad que un scraper tradicional. Pero esa API
+  no está documentada públicamente ni por Mercadona ni por el propio proyecto — no hay
+  ninguna garantía de que siga disponible, de que no cambie sin aviso, ni de que
+  Mercadona permita su uso. Y, sobre todo para el caso de uso de este proyecto, sigue sin
+  resolver el problema de fondo: no hay forma sencilla de correlacionar los nombres
+  abreviados que imprime el ticket con los nombres completos del catálogo de Mercadona
+  que expone esa API. Aun con esas limitaciones, es un proyecto muy sólido.
 - [`nicolaspascual/mercadona-scrapper`](https://github.com/nicolaspascual/mercadona-scrapper)
 - [`vgvr0/supermarket-mercadona-scraper`](https://github.com/vgvr0/supermarket-mercadona-scraper)
 
