@@ -71,3 +71,27 @@ This document contains a detailed list of actionable improvement tasks for the T
 43. [ ] Add secure handling of sensitive information (e.g., payment details)
 44. [ ] Implement proper authentication and authorization if needed
 45. [ ] Add security headers for web interfaces if applicable
+
+## Ideas en estudio (no decididas)
+
+Estas son ideas que se están valorando, sin decisión tomada todavía sobre si merece la
+pena implementarlas. Se documentan aquí solo para no perderlas.
+
+46. [ ] **Evitar que cada usuario tenga que crear su propio proyecto en Google Cloud
+    Console para obtener `credentials.json`.** No es posible eliminar por completo el
+    proyecto de Google Cloud: todo flujo OAuth (incluida cualquier pantalla de "autorizar
+    esta app" en la que Google redirige al usuario) necesita un `client_id`/`client_secret`
+    registrado que identifique a la aplicación que pide acceso — no hay forma de que
+    Google muestre esa pantalla de consentimiento sin una app registrada detrás. Lo que sí
+    se podría hacer es mover ese paso de "cada usuario crea su proyecto" a "el
+    mantenedor del proyecto crea uno y distribuye su `client_id`/`client_secret` junto con
+    la aplicación" (`ticket-digital-tickets-downloader` ya usa
+    `AuthorizationCodeInstalledApp`/`LocalServerReceiver`, que ya implementan el
+    redirigir al navegador y recibir la respuesta sin que el usuario copie ningún
+    código a mano; solo haría falta dejar de exigir `--credentials-file` y empotrar esas
+    credenciales). El problema de fondo: `gmail.readonly` es un "scope restringido" de
+    Google, así que si la app la usan más de ~100 usuarios, Google exige pasar su proceso
+    de verificación de apps OAuth (incluida una revisión de seguridad) o se queda
+    limitada a 100 usuarios de prueba añadidos a mano en la consola, con una pantalla de
+    aviso de "app no verificada" para el resto — viable para uso personal o de un grupo
+    pequeño, no para distribución pública amplia sin pasar por esa verificación.
