@@ -154,6 +154,10 @@ gradle-app.setting
 *.xlsx
 # Excepto la plantilla vacía que usa write-items-xlsx (sin datos de tickets).
 !projects/ticket-digital-data/src/main/resources/Mercadona-base.xlsx
+# Excepto la tabla de correcciones de nombres de producto: es un recurso de
+# código (ProductNameNormalizer la carga en tiempo de ejecución), no datos
+# derivados de tickets reales.
+!projects/ticket-digital-data/src/main/resources/nombres-normalizacion.csv
 
 
 .junie/memory/
