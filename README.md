@@ -38,7 +38,7 @@ sirve como banco de pruebas para programar con ayuda de IA — en concreto, con
 parte importante del código (sobre todo la más antigua) no se escribió así; el proyecto
 convive con ambos orígenes.
 
-**Estado del proyecto**: son fases muy iniciales (de ahí la versión `0.1-SNAPSHOT`, sin
+**Estado del proyecto**: son fases muy iniciales (de ahí la versión `0.0.1`, sin
 API ni CLI estables todavía), pero ya en un punto sólido: el parser ha procesado
 correctamente más de 500 tickets reales.
 
@@ -155,7 +155,7 @@ sitio en un único fichero:
 
 ```bash
 ./gradlew :ticket-digital-launcher:distZip   # o :distTar
-# genera projects/ticket-digital-launcher/build/distributions/ticket-digital-launcher-0.1-SNAPSHOT.zip
+# genera projects/ticket-digital-launcher/build/distributions/ticket-digital-launcher-0.0.1.zip
 ```
 
 La primera vez, sigue el [README de `ticket-digital-tickets-downloader`](projects/ticket-digital-tickets-downloader/README.md#1-obtener-credentialsjson-desde-google-cloud-console)
