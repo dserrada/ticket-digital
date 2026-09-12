@@ -271,3 +271,4 @@ estudiarlo, modificarlo y redistribuirlo, pero **cualquier trabajo derivado que
 distribuyas tiene que licenciarse también bajo GPL-3.0** (código abierto, con el
 código fuente disponible). No se puede tomar este código para cerrarlo en un producto
 o servicio propietario.
+
