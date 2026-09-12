@@ -142,3 +142,27 @@ gradle-app.setting
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
 
+# No quiero subir nunca pdfs con tickets
+*.pdf
+# Excepto los tests especificamente puestos en el directorio de testing
+!projects/ticket-digital-parser/src/test/resources/*.pdf
+
+# Ni ningún CSV/XLSX generado a partir de ellos (write-items-csv/xlsx), venga
+# de donde venga dentro del repo, no solo de la ruta por defecto de antes:
+# son datos personales derivados de mis tickets reales.
+*.csv
+*.xlsx
+# Excepto la plantilla vacía que usa write-items-xlsx (sin datos de tickets).
+!projects/ticket-digital-data/src/main/resources/Mercadona-base.xlsx
+
+
+.junie/memory/
+
+.claude/
+
+# Secretos de ticket-digital-tickets-downloader: nunca deben comitearse.
+# (Por defecto viven fuera del repo, en ~/.ticket-digital/, pero esto es un
+# refuerzo por si alguien los coloca dentro por error.)
+credentials.json
+**/credentials.json
+.ticket-digital/

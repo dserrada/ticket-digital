@@ -1,0 +1,20 @@
+# Normaliza los finales de línea a LF para todo el texto, independientemente del
+# core.autocrlf de quien clona el repo. Sin esto, un checkout en Windows con
+# autocrlf=true (u otra herramienta que convierta a CRLF) produce un diff de
+# todo el árbol que es puro ruido de fin de línea y esconde los cambios reales.
+* text=auto eol=lf
+
+# gradlew.bat se deja completamente al margen de la normalización: el wrapper de Gradle
+# lo genera y commitea tal cual con CRLF, y forzar su paso por el filtro text (aunque el
+# checkout final siga pareciendo CRLF) cambiaría el blob almacenado sin necesidad.
+*.bat -text
+
+# Binarios: nunca se tocan los finales de línea.
+*.pdf binary
+*.xlsx binary
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary

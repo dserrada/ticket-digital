@@ -1,0 +1,13 @@
+plugins {
+    id 'application'
+}
+
+application {
+    mainClass = 'org.terra.incognita.ticketdigital.mercadona.launcher.Main'
+}
+
+dependencies {
+    implementation 'info.picocli:picocli:4.7.6'
+    implementation project(':ticket-digital-data')
+    implementation project(':ticket-digital-tickets-downloader')
+}

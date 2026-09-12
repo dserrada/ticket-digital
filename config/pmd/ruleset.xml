@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="ticket-digital"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+    <description>Reglas centradas en bugs/malas prácticas reales, no en estilo/formato.</description>
+    <rule ref="category/java/errorprone.xml">
+        <!-- Exclusiones decididas tras revisar en detalle el informe real de este
+             proyecto (código de un solo hilo: CLIs personales, sin concurrencia). -->
+        <!-- Todas las apariciones son literales de datos de prueba repetidos a
+             propósito (p.ej. "PAN", "1.00") para que el test se lea de un vistazo;
+             extraerlos a constantes añadiría indirección sin mejorar nada. -->
+        <exclude name="AvoidDuplicateLiterals"/>
+        <!-- Todos los casos son guardas de validación con un literal autoexplicativo
+             en su contexto (p.ej. "quantity < 1", "parts.length < 2"), no números
+             mágicos de una regla de negocio oculta. -->
+        <exclude name="AvoidLiteralsInIfCondition"/>
+        <!-- Todos los casos son el idiom estándar de Java "while ((x = ...) != null)"
+             o una cadena de "probar cada parser hasta que uno encaje"
+             (if ((r = A.parse()) != null) ... else if ((r = B.parse()) != null) ...):
+             separar la asignación del condicional haría el código más largo y menos
+             claro, no más seguro. -->
+        <exclude name="AssignmentInOperand"/>
+        <!-- Todos los casos son asignaciones a null intencionadas y necesarias: un
+             campo de un record que no tiene valor en cierto formato de ticket (p.ej.
+             CardPayment.nc), o el reset explícito de una máquina de estados
+             (ParserStatusInfo.exitFreshSection). No es un descuido. -->
+        <exclude name="NullAssignment"/>
+        <!-- Getter con el mismo nombre que el campo que expone (p.ej. lastMessageDate),
+             el mismo patrón que usan los accessors de los records de Java: claro en
+             contexto, no hay ambigüedad real para quien lea el código. -->
+        <exclude name="AvoidFieldNameMatchingMethodName"/>
+        <!-- TicketRecordsReader.readAll()/FileUtils.searchInDir() devuelven null a
+             propósito para distinguir "el directorio no existe" de "existe pero está
+             vacío" (lista vacía); los 4 comandos que los llaman dependen de esa
+             distinción (`if (records == null) return 1;`). Cambiar a lista vacía aquí
+             sería un cambio de comportamiento silencioso, no una limpieza. -->
+        <exclude name="ReturnEmptyCollectionRatherThanNull"/>
+        <!-- TicketMercadona.parse(): bucle "salta líneas en blanco hasta encontrar la
+             cabecera de items, entonces sal" — el break final es la forma más clara de
+             expresarlo, no un descuido de estructura. -->
+        <exclude name="AvoidBranchingStatementAsLastInLoop"/>
+        <!-- TicketRecordsReader.readAll(): frontera deliberada por fichero — cualquier
+             fallo al parsear ESE ticket se captura, se loguea con detalle y aborta con
+             un mensaje claro, en vez de dejar pasar un fallo a medias. Capturar tipos
+             más concretos dejaría sin cubrir justo los fallos inesperados que este
+             catch existe para atrapar. -->
+        <exclude name="AvoidCatchingGenericException"/>
+    </rule>
+    <rule ref="category/java/bestpractices.xml">
+        <!-- ~77% de todos los avisos del proyecto entero; exige mensaje/máximo un
+             assert por test, una preferencia de estilo de test, no un bug. -->
+        <exclude name="UnitTestAssertionsShouldIncludeMessage"/>
+        <exclude name="UnitTestContainsTooManyAsserts"/>
+        <!-- Micro-optimización de rendimiento sin impacto real en una CLI de uso
+             personal poco frecuente. -->
+        <exclude name="GuardLogStatement"/>
+        <!-- La mayoría de avisos son sobre tipos concretos del SDK de Gmail
+             (GenericUrl, GenericJson, Message...) que la propia API de Google obliga a
+             usar tal cual; no hay alternativa razonable de interfaz. -->
+        <exclude name="LooseCoupling"/>
+        <!-- Los comandos de este proyecto son CLIs cuyo resultado principal es
+             imprimirse por stdout (p.ej. InflationReportFormatter); no es un descuido
+             a sustituir por logging. -->
+        <exclude name="SystemPrintln"/>
+    </rule>
+    <!-- category/java/multithreading.xml se configura aparte, por módulo (ver
+         multithreading-relaxed.xml / multithreading-strict.xml): ticket-digital-parser
+         está pensado como base de un futuro servicio REST y debe ser thread-safe de
+         verdad, así que ahí se aplica sin exclusiones; el resto de módulos son CLIs de
+         un solo hilo sin planes de serlo. -->
+</ruleset>

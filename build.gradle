@@ -1,19 +1,137 @@
 plugins {
-    id 'java'
+    id 'org.owasp.dependencycheck' version '13.0.0'
+    id 'com.github.spotbugs' version '6.5.11' apply false
 }
 
-group = 'org.terra.incognita'
-version = '1.0-SNAPSHOT'
+apply plugin: 'base'   // da una tarea `check` a nivel de raíz a la que engancharnos
 
-repositories {
-    mavenCentral()
+allprojects {
+    group = 'org.terra.incognita'
+    version = '0.0.1'
 }
 
-dependencies {
-    testImplementation platform('org.junit:junit-bom:5.9.1')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+// Escaneo de vulnerabilidades conocidas (CVE) en las dependencias de los 4 módulos.
+// Se aplica solo en la raíz (no en subprojects) porque dependencyCheckAggregate está
+// pensado justamente para builds multi-módulo: recorre todos los subproyectos y genera
+// un único informe combinado, en vez de uno por módulo.
+//
+// Requiere una API key gratuita de la NVD (ver README.md, sección "Calidad y
+// seguridad"): la NVD retiró los feeds JSON antiguos y su API 2.0 actual rechaza toda
+// petición sin clave. En vez de dejar que el build falle en seco cuando falta la clave,
+// aquí se comprueba antes: si no hay clave, la comprobación se omite y se avisa con un
+// banner bien visible, pero el build sigue su curso con normalidad.
+dependencyCheck {
+    // Falla el build solo ante hallazgos de severidad alta/crítica (CVSS >= 7); por
+    // defecto el plugin no falla nunca (11.0), demasiado permisivo para el objetivo.
+    failBuildOnCVSS = 7.0
+    formats = ['HTML', 'JSON']
+    // Caché de la base de datos de CVEs fuera del repo y en ruta fija (por defecto el
+    // plugin la deja en un subdirectorio "aleatorio" bajo .gradle, lo que obliga a
+    // redescargarla en cada checkout limpio).
+    data {
+        directory = "${System.getProperty('user.home')}/.gradle/dependency-check-data"
+    }
+    // El analizador de Sonatype OSS Index es un servicio aparte de la NVD que ahora
+    // también exige cuenta/token propios. No aporta nada que no cubra ya la NVD para
+    // este proyecto, así que se desactiva explícitamente en vez de dejarlo emitir un
+    // aviso de credenciales que no vamos a rellenar.
+    analyzers.ossIndex.enabled = false
 }
 
-test {
-    useJUnitPlatform()
+// Prioriza gradle.properties de usuario (~/.gradle/gradle.properties, fuera del repo) y
+// cae a variable de entorno si algún día hay CI.
+String resolvedNvdApiKey = (project.findProperty('nvdApiKey') ?: System.getenv('NVD_API_KEY')) as String
+if (resolvedNvdApiKey) {
+    dependencyCheck {
+        nvd {
+            apiKey = resolvedNvdApiKey
+        }
+    }
+    tasks.named('check') {
+        dependsOn 'dependencyCheckAggregate'
+    }
+} else {
+    // Sin clave, dependencyCheckAggregate fallaría con "Invalid API Key, length of 0";
+    // se desactiva y se sustituye por un aviso que no rompe el build.
+    tasks.named('dependencyCheckAggregate') {
+        enabled = false
+    }
+    tasks.register('nvdApiKeyMissingWarning') {
+        group = 'verification'
+        description = 'Avisa de que OWASP Dependency-Check se ha omitido por falta de API key de la NVD.'
+        doLast {
+            logger.warn('')
+            logger.warn('=' * 80)
+            logger.warn('AVISO: OWASP Dependency-Check DESACTIVADO en este build')
+            logger.warn('No se ha encontrado clave de la NVD (ni "nvdApiKey" en gradle.properties')
+            logger.warn('ni la variable de entorno NVD_API_KEY). El escaneo de vulnerabilidades')
+            logger.warn('(CVE) conocidas en las dependencias NO se ha ejecutado.')
+            logger.warn('Configura la clave para reactivarlo - ver README.md, "Calidad y seguridad".')
+            logger.warn('=' * 80)
+            logger.warn('')
+        }
+    }
+    tasks.named('check') {
+        dependsOn 'nvdApiKeyMissingWarning'
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'pmd'
+    apply plugin: 'com.github.spotbugs'
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        testImplementation 'org.junit.jupiter:junit-jupiter-api:6.1.+'
+        testImplementation 'org.junit.jupiter:junit-jupiter-engine:6.1.+'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher:6.1.+'
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+
+    // Análisis estático de bugs/malas prácticas (no de estilo/formato).
+    pmd {
+        toolVersion = '7.27.0'
+        ruleSets = []   // se limpia el default para no mezclarlo con el ruleset propio
+        // Por defecto, reglas de concurrencia "relajadas" (sin exigir ConcurrentHashMap
+        // etc.): CLI de un solo hilo. ticket-digital-parser lo sobreescribe más abajo.
+        ruleSetFiles = files("$rootDir/config/pmd/ruleset.xml", "$rootDir/config/pmd/multithreading-relaxed.xml")
+        // Informe inicial revisado y limpiado (71 -> 0 avisos): a partir de ahora el
+        // build falla si aparece un hallazgo nuevo.
+        ignoreFailures = false
+    }
+
+    // Análisis de bugs vía bytecode (dataflow), complementario a PMD: soporta Java 25
+    // desde la 4.9.7 (BCEL 6.11), ver https://github.com/spotbugs/spotbugs/issues/3564.
+    spotbugs {
+        toolVersion = '4.10.4'
+        // Informe inicial revisado y limpiado (9 hallazgos -> 0): a partir de ahora el
+        // build falla si aparece uno nuevo.
+        ignoreFailures = false
+    }
+}
+
+// ticket-digital-parser está pensado como base de un futuro servicio REST (varias
+// peticiones concurrentes reutilizando las mismas clases), así que aquí se exige el
+// ruleset de concurrencia completo, sin ninguna exclusión, en el código de producción.
+project(':ticket-digital-parser') {
+    pmd {
+        ruleSetFiles = files("$rootDir/config/pmd/ruleset.xml", "$rootDir/config/pmd/multithreading-strict.xml")
+    }
+    // El código de test sí puede crear hilos a propósito (p.ej. para simular carga
+    // concurrente en un test de concurrencia): DoNotUseThreads no aplica ahí.
+    tasks.named('pmdTest') {
+        ruleSetFiles = files("$rootDir/config/pmd/ruleset.xml", "$rootDir/config/pmd/multithreading-strict-test.xml")
+    }
 }
