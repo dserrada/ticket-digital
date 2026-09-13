@@ -38,6 +38,35 @@ Todas son `record` inmutables. El único identificador de un producto es el text
 de su descripción (`id`) — no hay categoría, código de barras ni ningún otro dato
 adicional, porque el propio ticket tampoco los trae.
 
+## PDFs de test (`src/test/resources`)
+
+Los 4 PDF de `src/test/resources` son tickets reales (del autor del proyecto), necesarios
+para probar el parser contra variaciones de formato reales (productos frescos, la columna
+"Cnt." que Mercadona añadió en 2026, etc.) que no merece la pena reproducir a mano. Antes
+de subirlos al repositorio se les aplica `TicketPdfAnonymizer`
+([código](src/main/java/org/terra/incognita/ticketdigital/mercadona/anonymizer/TicketPdfAnonymizer.java)),
+que reescribe el propio contenido del PDF (no un tapado visual) para:
+
+- Sustituir los datos personales/identificativos: últimos 4 dígitos de tarjeta, dirección,
+  localidad y teléfono de la tienda, fecha y hora de compra, código de operación y número
+  de factura simplificada.
+- Eliminar todas las imágenes incrustadas (logo, icono de atención al cliente y código de
+  barras) — el logo es una marca registrada de Mercadona que no aporta nada al parser (que
+  solo lee texto), y el código de barras, al ser una imagen, seguiría codificando en sus
+  píxeles el número de factura original aunque el texto ya estuviera anonimizado.
+
+Se conservan sin modificar los productos comprados, sus precios, el IVA y el resto de datos
+del pago con tarjeta (N.C./AUT/AID/ARC): no identifican al comprador y son necesarios para
+que estos PDF sigan sirviendo como fixtures reales del parser.
+
+Las condiciones de uso del servicio Ticket Digital de Mercadona restringen la distribución
+pública del contenido del servicio sin autorización previa. Como usuario individual no hay
+forma práctica de obtener esa autorización por escrito; el criterio seguido aquí ha sido
+reducir la reproducción a lo estrictamente necesario para las pruebas (sin marca, sin datos
+personales, sin ánimo comercial) — ver también el disclaimer de no afiliación en el
+[README principal](../../README.md). Si Mercadona solicitara la retirada de estos ficheros,
+se atenderá esa solicitud.
+
 ## Limitaciones del propio ticket digital (no de este código)
 
 - **No se puede verificar que un ticket sea real y no haya sido modificado.** El PDF no
