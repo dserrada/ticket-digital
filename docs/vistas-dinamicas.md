@@ -34,7 +34,7 @@ Basta con añadir tablas dinámicas a la plantilla, sin tocar Java.
    el 80 % del gasto. Es la vista más útil para decidir dónde ahorrar: en la clase A, cambiar
    de marca o de formato se nota; en la clase C, no.
 
-2. **Mismo mes, distintos años.** Meses en filas, años en columnas, suma de precio y
+2. **[Hecho: hoja `Interanual`] Mismo mes, distintos años.** Meses en filas, años en columnas, suma de precio y
    "% de diferencia" frente al año anterior. Separa la estacionalidad (diciembre siempre es más
    caro) de la tendencia real. Los agrupamientos Años/Meses ya existen en la caché.
 
@@ -162,3 +162,17 @@ Añadida a `Mercadona-base.xlsx`, justo después de "Productos":
   ("Total general"/"Total Result" según idioma).
 - `workbook.xml` lleva `fullCalcOnLoad="1"` para que las fórmulas se recalculen tras el
   refresco de la caché al abrir.
+
+### A.2 — Hoja `Interanual` (2026-09-25)
+
+Añadida a `Mercadona-base.xlsx`, justo antes de "T_Precio":
+
+- Tabla dinámica `TablaDinámicaInteranual` sobre la caché común: meses (agrupación de `fecha`) en
+  filas, Años en columnas, suma de precio; "(en blanco)" oculto.
+- Debajo, el % de variación de cada mes frente al mismo mes del año anterior como **fórmulas**
+  que leen la tabla por posición (misma fila = mismo mes, columna del año frente a la anterior),
+  con rojo/verde por formato condicional. No se usa `showDataAs="percentDiff"` con
+  `baseItem` "(anterior)" en una segunda tabla dinámica porque LibreOffice no lo calcula sobre un
+  campo agrupado (`#VALUE!`) y no se podía verificar fuera de Excel.
+- En lugar de comparar totales anuales (engañoso con el primer/último año incompletos), la fila
+  "Total (meses comparables)" solo suma los meses con gasto en los dos años.
