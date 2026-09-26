@@ -18,10 +18,17 @@ tickets. Fecha del análisis: 2026-09-25.
 | Evolucion-N | Unidades de un producto por año (línea) |
 | MiInflación | Índices de Laspeyres y Paasche (calculados en Java) |
 
-Todas las tablas dinámicas salen de las 7 columnas de `Datos`: `id`, `fecha`, `unidades`,
-`precioPorUnidad`, `pesoKg`, `precioKg`, `precio`. El parser saca bastante más información de
-la que llega al Excel (hora de compra, tienda, total, desglose de IVA, tarjeta, parking, tipo
-de ítem), y ahí están las vistas con más recorrido.
+Todas las tablas dinámicas salen de las 8 columnas de `Datos`: `id`, `fecha` (con hora y
+minuto), `unidades`, `precioPorUnidad`, `pesoKg`, `precioKg`, `precio` y `factura` (número de
+factura simplificada, identifica el ticket). El origen de la caché es el nombre definido
+`DatosTablaDinamica` = `OFFSET(Datos!$A$1,0,0,1048576,COUNTA(Datos!$1:$1))`: abarca tantas
+columnas como cabeceras haya en la fila 1, así que una columna nueva escrita por el programa
+entra en las tablas dinámicas sin ampliar el rango (no se puede usar un rango fijo con
+columnas de sobra porque Excel rechaza campos sin cabecera). LibreOffice no evalúa este
+nombre como origen y no carga las tablas dinámicas; para verificarlas con LibreOffice hay que
+sustituirlo temporalmente por un rango fijo. El parser saca bastante más información de la
+que llega al Excel (tienda, total, desglose de IVA, tarjeta, parking, tipo de ítem), y ahí
+están las vistas con más recorrido.
 
 ---
 
@@ -76,10 +83,8 @@ Hay que ampliar `PurchasedItemRecord` y `XlsxDatosWriter`, pero son cambios pequ
    `PurchasedItemRecord.fromTicket()` por el tipo de ítem. Da el peso del gasto en frescos
    frente a envasados y los kg comprados al mes.
 
-8. **Identificador de ticket, hora y día de la semana.** Hoy la columna `fecha` pierde la hora:
-   sale como `dd/MM/yyyy` aunque `purchaseDate` es un `LocalDateTime`. Así, dos compras del
-   mismo día no se pueden distinguir. Con un identificador de ticket (el número de factura
-   simplificada), más una columna auxiliar "primera línea del ticket" a 1/0 para contar tickets
+8. **Identificador de ticket, hora y día de la semana.** Hecho en parte: `fecha` ya lleva la
+   hora y el minuto, y la columna `factura` identifica cada ticket. Falta una columna auxiliar "primera línea del ticket" a 1/0 para contar tickets
    con una suma, salen:
    - Número de visitas al supermercado por mes y días medios entre compras.
    - **Ticket medio** y artículos por ticket.

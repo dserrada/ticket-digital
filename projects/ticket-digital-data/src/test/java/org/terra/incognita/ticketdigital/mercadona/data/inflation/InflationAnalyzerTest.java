@@ -16,7 +16,7 @@ class InflationAnalyzerTest {
     private static final int MIN_TOTAL_PURCHASE_COUNT = 3;
 
     private static PurchasedItemRecord unitRecord(String id, LocalDateTime date) {
-        return new PurchasedItemRecord(id, date, 1, BigDecimal.ONE, null, null, BigDecimal.ONE);
+        return new PurchasedItemRecord(id, date, 1, BigDecimal.ONE, null, null, BigDecimal.ONE, null);
     }
 
     @Test

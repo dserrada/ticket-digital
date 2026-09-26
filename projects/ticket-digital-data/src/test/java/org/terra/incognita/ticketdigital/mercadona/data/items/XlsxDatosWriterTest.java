@@ -29,9 +29,9 @@ class XlsxDatosWriterTest {
         // InflationAnalyzer no puede fijar año base y la hoja "MiInflación" se deja tal cual.
         List<PurchasedItemRecord> records = List.of(
                 new PurchasedItemRecord("BARRA DE PAN", LocalDateTime.of(2026, 9, 1, 10, 0), 1,
-                        new BigDecimal("1.10"), null, null, new BigDecimal("1.10")),
+                        new BigDecimal("1.10"), null, null, new BigDecimal("1.10"), "2145-013-000001"),
                 new PurchasedItemRecord("TOMATE PERA & CO", LocalDateTime.of(2026, 9, 2, 11, 30), 1,
-                        null, new BigDecimal("0.750"), new BigDecimal("2.00"), new BigDecimal("1.50"))
+                        null, new BigDecimal("0.750"), new BigDecimal("2.00"), new BigDecimal("1.50"), null)
         );
 
         File outputFile = Files.createTempFile("Mercadona-test", ".xlsx").toFile();
@@ -59,7 +59,16 @@ class XlsxDatosWriterTest {
         String newSheetXml = new String(outputEntries.get(changedEntry), StandardCharsets.UTF_8);
         assertTrue(newSheetXml.contains("BARRA DE PAN"));
         assertTrue(newSheetXml.contains("TOMATE PERA &amp; CO"), "El id con '&' debe ir escapado en el XML");
-        assertTrue(newSheetXml.contains("ref=\"A1:G3\""), "dimension/autoFilter deben cubrir cabecera + 2 filas");
+        assertTrue(newSheetXml.contains("ref=\"A1:H3\""), "dimension/autoFilter deben cubrir cabecera + 2 filas");
+        // 02/09/2026 11:30 -> 46267 días desde la época de Excel + 690/1440 del día, con el estilo
+        // fecha+hora (cellXfs 18) de la plantilla.
+        assertTrue(newSheetXml.contains("<c r=\"B3\" s=\"18\"><v>46267.4791666667</v></c>"),
+                "La fecha debe incluir la hora como fracción del día: " + newSheetXml);
+        assertTrue(newSheetXml.contains("<c r=\"B2\" s=\"18\"><v>46266.4166666667</v></c>"),
+                "La fecha debe incluir la hora como fracción del día: " + newSheetXml);
+        assertTrue(newSheetXml.contains("<c r=\"H2\" t=\"inlineStr\"><is><t>2145-013-000001</t></is></c>"),
+                "La columna H debe llevar el número de factura: " + newSheetXml);
+        assertFalse(newSheetXml.contains("r=\"H3\""), "Sin número de factura no se escribe la celda");
         assertFalse(newSheetXml.contains("COCKTAIL RODEO"), "Los datos de ejemplo deben desaparecer");
     }
 
@@ -71,13 +80,13 @@ class XlsxDatosWriterTest {
         // 2024: PAN comprado en 10 de 12 meses a 1,00€ -> año base, Laspeyres/Paasche = 100 (0,00%)
         for (int month = 1; month <= 10; month++) {
             records.add(new PurchasedItemRecord("PAN", LocalDateTime.of(2024, month, 1, 10, 0), 1,
-                    BigDecimal.ONE, null, null, BigDecimal.ONE));
+                    BigDecimal.ONE, null, null, BigDecimal.ONE, null));
         }
         // 2025: PAN sube a 1,10€ -> +10,00% (año incompleto, pero se muestra igualmente)
         records.add(new PurchasedItemRecord("PAN", LocalDateTime.of(2025, 1, 1, 10, 0), 1,
-                new BigDecimal("1.10"), null, null, new BigDecimal("1.10")));
+                new BigDecimal("1.10"), null, null, new BigDecimal("1.10"), null));
         records.add(new PurchasedItemRecord("PAN", LocalDateTime.of(2025, 2, 1, 10, 0), 1,
-                new BigDecimal("1.10"), null, null, new BigDecimal("1.10")));
+                new BigDecimal("1.10"), null, null, new BigDecimal("1.10"), null));
 
         File outputFile = Files.createTempFile("Mercadona-test", ".xlsx").toFile();
         outputFile.deleteOnExit();

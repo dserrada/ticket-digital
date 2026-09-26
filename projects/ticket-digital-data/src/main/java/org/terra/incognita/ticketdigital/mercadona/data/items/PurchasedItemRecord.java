@@ -19,9 +19,11 @@ import java.util.List;
  * @param weightKg el peso del producto en kilogramos (incompatible con producto comprado por unidades)
  * @param pricePerKg el precio por kilogramo del producto
  * @param price el precio total de la compra del producto
+ * @param invoiceNumber el número de la factura simplificada del ticket en el que se compró
  */
 public record PurchasedItemRecord(String id, LocalDateTime date, Integer units, BigDecimal unitPrice,
-                                  BigDecimal weightKg, BigDecimal pricePerKg, BigDecimal price) {
+                                  BigDecimal weightKg, BigDecimal pricePerKg, BigDecimal price,
+                                  String invoiceNumber) {
 
     // El listado de compras se muestra de la más reciente a la más antigua.
     public static final Comparator<PurchasedItemRecord> BY_DATE_DESCENDING =
@@ -29,17 +31,18 @@ public record PurchasedItemRecord(String id, LocalDateTime date, Integer units, 
 
     public static  List<PurchasedItemRecord> fromTicket(TicketMercadona ticket) {
         LocalDateTime date = ticket.header().purchaseDate();
+        String invoiceNumber = ticket.header().simplifiedInvoiceNumber();
         return ticket.items().stream()
                 .map(item -> switch (item) {
                     case OneItemByUnit u ->
-                            new PurchasedItemRecord(ProductNameNormalizer.normalize(u.id()), date, u.quantity(), unitPriceOrFallback(u.quantity(), u.unitPrice(), u.price()), null, null, u.price());
+                            new PurchasedItemRecord(ProductNameNormalizer.normalize(u.id()), date, u.quantity(), unitPriceOrFallback(u.quantity(), u.unitPrice(), u.price()), null, null, u.price(), invoiceNumber);
                     case NItemsByUnit n ->
-                            new PurchasedItemRecord(ProductNameNormalizer.normalize(n.id()), date, n.quantity(), unitPriceOrFallback(n.quantity(), n.unitPrice(), n.price()), null, null, n.price());
+                            new PurchasedItemRecord(ProductNameNormalizer.normalize(n.id()), date, n.quantity(), unitPriceOrFallback(n.quantity(), n.unitPrice(), n.price()), null, null, n.price(), invoiceNumber);
                     case ItemByWeight w ->
                             // INFO: Lo de poner el 1 a huevo no se si es buena idea o no.
-                            new PurchasedItemRecord(ProductNameNormalizer.normalize(w.id()), date, 1, null, w.weightKg(), w.pricePerKilogram(), w.price());
+                            new PurchasedItemRecord(ProductNameNormalizer.normalize(w.id()), date, 1, null, w.weightKg(), w.pricePerKilogram(), w.price(), invoiceNumber);
                     case FreshItemByWeight f ->
-                            new PurchasedItemRecord(ProductNameNormalizer.normalize(f.id()), date, 1, null, f.weightKg(), f.pricePerKilogram(), f.price());
+                            new PurchasedItemRecord(ProductNameNormalizer.normalize(f.id()), date, 1, null, f.weightKg(), f.pricePerKilogram(), f.price(), invoiceNumber);
                 })
                 .toList();
     }
@@ -53,16 +56,17 @@ public record PurchasedItemRecord(String id, LocalDateTime date, Integer units, 
     public String toCSV() {
         return String.join(";",
                 escapeCSV(id),
-                escapeCSV(DateTimeFormatter.ofPattern("dd/MM/yyyy").format(date)),
+                escapeCSV(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").format(date)),
                 escapeCSV(String.valueOf(units)),
                 escapeCSV(unitPrice == null ? "" : unitPrice.toString().replace('.', ',')),
                 escapeCSV(weightKg == null ? "" : weightKg.toString().replace('.', ',')),
                 escapeCSV(pricePerKg == null ? "" : pricePerKg.toString().replace('.', ',')),
-                escapeCSV(price == null ? "" : price.toString().replace('.', ',')));
+                escapeCSV(price == null ? "" : price.toString().replace('.', ',')),
+                escapeCSV(invoiceNumber == null ? "" : invoiceNumber));
     }
 
     public static String headerCSV() {
-        return String.join(";", "id", "fecha", "unidades", "precioPorUnidad", "pesoKg", "precioKg", "precio");
+        return String.join(";", "id", "fecha", "unidades", "precioPorUnidad", "pesoKg", "precioKg", "precio", "factura");
     }
 
     // RFC 4180 adaptado al delimitador ';' que usa este fichero: si el valor contiene el

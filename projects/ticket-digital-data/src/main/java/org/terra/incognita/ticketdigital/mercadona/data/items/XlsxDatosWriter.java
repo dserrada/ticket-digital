@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -57,7 +58,7 @@ public class XlsxDatosWriter {
     private static final String TEMPLATE_RESOURCE = "/Mercadona-base.xlsx";
     private static final String DATOS_SHEET_NAME = "Datos";
     private static final int DATOS_HEADER_ROW = 1;
-    private static final String DATOS_COLUMN_ORDER = "ABCDEFG";
+    private static final String DATOS_COLUMN_ORDER = "ABCDEFGH";
     private static final String INFLACION_SHEET_NAME = "MiInflación";
     private static final int INFLACION_HEADER_ROW = 6;
     private static final String INFLACION_COLUMN_ORDER = "ABCDEF";
@@ -65,7 +66,10 @@ public class XlsxDatosWriter {
     // porcentaje "0.00%" incorporado de Excel.
     private static final String PERCENT_CELL_STYLE = "8";
     private static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
+    // Estilo añadido a xl/styles.xml (cellXfs índice 18) con el formato "dd/mm/yyyy hh:mm".
+    private static final String DATE_TIME_CELL_STYLE = "18";
     private static final LocalDate EXCEL_EPOCH = LocalDate.of(1899, 12, 30);
+    private static final BigDecimal MINUTES_PER_DAY = BigDecimal.valueOf(24 * 60);
 
     public static void writeXlsxToFile(Path ticketsDir, File outputFile) throws IOException {
         logger.debug("Iniciando la escritura del fichero xlsx, ticketsDir: {}, outputFile: {}", ticketsDir, outputFile.getAbsolutePath());
@@ -231,6 +235,7 @@ public class XlsxDatosWriter {
         appendNumericCell(doc, row, "E" + rowNum, record.weightKg());
         appendNumericCell(doc, row, "F" + rowNum, record.pricePerKg());
         appendNumericCell(doc, row, "G" + rowNum, record.price());
+        appendInlineStringCell(doc, row, "H" + rowNum, record.invoiceNumber());
 
         return row;
     }
@@ -302,9 +307,15 @@ public class XlsxDatosWriter {
         if (date == null) return;
         Element c = doc.createElementNS(NS_MAIN, "c");
         c.setAttribute("r", ref);
-        c.setAttribute("s", "1"); // Reutiliza el estilo de fecha ya definido en la plantilla para la columna B
+        c.setAttribute("s", DATE_TIME_CELL_STYLE);
+        // Fecha de Excel: días desde la época como parte entera y la hora como fracción del día.
+        // Se redondea a 10 decimales (precisión de sobra para minutos) para no arrastrar una
+        // fracción periódica como 1/1440.
+        long days = ChronoUnit.DAYS.between(EXCEL_EPOCH, date.toLocalDate());
+        BigDecimal dayFraction = BigDecimal.valueOf(date.getHour() * 60L + date.getMinute())
+                .divide(MINUTES_PER_DAY, 10, RoundingMode.HALF_UP);
         Element v = doc.createElementNS(NS_MAIN, "v");
-        v.setTextContent(String.valueOf(ChronoUnit.DAYS.between(EXCEL_EPOCH, date.toLocalDate())));
+        v.setTextContent(BigDecimal.valueOf(days).add(dayFraction).stripTrailingZeros().toPlainString());
         c.appendChild(v);
         row.appendChild(c);
     }
