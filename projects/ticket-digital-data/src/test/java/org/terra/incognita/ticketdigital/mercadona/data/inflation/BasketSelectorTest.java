@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class BasketSelectorTest {
 
     private static PurchasedItemRecord unitRecord(String id, LocalDateTime date) {
-        return new PurchasedItemRecord(id, date, 1, BigDecimal.ONE, null, null, BigDecimal.ONE);
+        return new PurchasedItemRecord(id, date, 1, BigDecimal.ONE, null, null, BigDecimal.ONE, null);
     }
 
     private static final int MIN_COMPLETE_MONTHS = 10;

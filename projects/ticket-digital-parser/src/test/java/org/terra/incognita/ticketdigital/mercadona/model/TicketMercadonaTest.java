@@ -60,8 +60,10 @@ class TicketMercadonaTest {
         assertEquals(new BigDecimal("110.60"), vat.totalTaxableBase());
         assertEquals(new BigDecimal("11.45"), vat.totalVatAmount());
 
+        // Últimos 4 dígitos anonimizados con TicketPdfAnonymizer (ver README): el PDF de test ya
+        // no lleva los dígitos reales de la tarjeta.
         CardPayment cardPayment = ticket.cardPayment();
-        assertEquals("1293", cardPayment.lastFourDigits());
+        assertEquals("0000", cardPayment.lastFourDigits());
         assertEquals("032849226", cardPayment.nc());
         assertEquals("724541", cardPayment.aut());
         assertEquals("A0000000031010", cardPayment.aid());
@@ -123,8 +125,10 @@ class TicketMercadonaTest {
         assertEquals(new BigDecimal("71.14"), vat.totalTaxableBase());
         assertEquals(new BigDecimal("6.57"), vat.totalVatAmount());
 
+        // Últimos 4 dígitos anonimizados con TicketPdfAnonymizer (ver README): el PDF de test ya
+        // no lleva los dígitos reales de la tarjeta.
         CardPayment cardPayment = ticket.cardPayment();
-        assertEquals("3851", cardPayment.lastFourDigits());
+        assertEquals("0000", cardPayment.lastFourDigits());
         assertEquals("003812591", cardPayment.nc());
         assertEquals("R65107", cardPayment.aut());
         assertEquals("A0000000041010", cardPayment.aid());

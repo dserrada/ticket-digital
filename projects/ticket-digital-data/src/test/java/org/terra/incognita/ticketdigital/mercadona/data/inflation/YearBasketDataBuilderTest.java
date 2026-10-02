@@ -15,12 +15,12 @@ class YearBasketDataBuilderTest {
 
     private static PurchasedItemRecord unitRecord(String id, LocalDateTime date, int units, BigDecimal unitPrice) {
         BigDecimal price = unitPrice.multiply(BigDecimal.valueOf(units));
-        return new PurchasedItemRecord(id, date, units, unitPrice, null, null, price);
+        return new PurchasedItemRecord(id, date, units, unitPrice, null, null, price, null);
     }
 
     private static PurchasedItemRecord weightRecord(String id, LocalDateTime date, BigDecimal weightKg, BigDecimal pricePerKg) {
         BigDecimal price = weightKg.multiply(pricePerKg);
-        return new PurchasedItemRecord(id, date, 1, null, weightKg, pricePerKg, price);
+        return new PurchasedItemRecord(id, date, 1, null, weightKg, pricePerKg, price, null);
     }
 
     @Test

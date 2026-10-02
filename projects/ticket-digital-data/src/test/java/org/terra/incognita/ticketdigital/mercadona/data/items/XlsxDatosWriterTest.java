@@ -22,16 +22,16 @@ import static org.junit.jupiter.api.Assertions.*;
 class XlsxDatosWriterTest {
 
     @Test
-    void writeXlsxReplacesOnlyTheDatosSheetContentWhenThereIsNotEnoughHistoryForInflation() throws IOException {
+    void writeXlsxReplacesOnlyDatosAndFacturasWhenThereIsNotEnoughHistoryForInflation() throws IOException {
         byte[] template = readTemplate();
 
         // Un único mes de compras: no hay ningún año "completo" (10 de 12 meses), así que
         // InflationAnalyzer no puede fijar año base y la hoja "MiInflación" se deja tal cual.
         List<PurchasedItemRecord> records = List.of(
                 new PurchasedItemRecord("BARRA DE PAN", LocalDateTime.of(2026, 9, 1, 10, 0), 1,
-                        new BigDecimal("1.10"), null, null, new BigDecimal("1.10")),
+                        new BigDecimal("1.10"), null, null, new BigDecimal("1.10"), "2145-013-000001"),
                 new PurchasedItemRecord("TOMATE PERA & CO", LocalDateTime.of(2026, 9, 2, 11, 30), 1,
-                        null, new BigDecimal("0.750"), new BigDecimal("2.00"), new BigDecimal("1.50"))
+                        null, new BigDecimal("0.750"), new BigDecimal("2.00"), new BigDecimal("1.50"), null)
         );
 
         File outputFile = Files.createTempFile("Mercadona-test", ".xlsx").toFile();
@@ -44,22 +44,24 @@ class XlsxDatosWriterTest {
         // El conjunto de partes del paquete no cambia: no se añaden ni eliminan entradas.
         assertEquals(originalEntries.keySet(), outputEntries.keySet());
 
-        String changedEntry = null;
-        for (Map.Entry<String, byte[]> entry : originalEntries.entrySet()) {
-            String name = entry.getKey();
-            if (!java.util.Arrays.equals(entry.getValue(), outputEntries.get(name))) {
-                assertNull(changedEntry, "Más de una entrada del zip cambió: " + changedEntry + " y " + name);
-                changedEntry = name;
-            }
-        }
-
-        assertNotNull(changedEntry, "Ninguna entrada cambió");
-        assertEquals("xl/worksheets/sheet1.xml", changedEntry, "La hoja 'Datos' de esta plantilla es sheet1.xml");
+        assertEquals(List.of("xl/worksheets/sheet1.xml", "xl/worksheets/sheet13.xml"),
+                changedEntries(originalEntries, outputEntries),
+                "Solo deben cambiar 'Datos' (sheet1.xml) y 'Facturas' (sheet13.xml) en esta plantilla");
+        String changedEntry = "xl/worksheets/sheet1.xml";
 
         String newSheetXml = new String(outputEntries.get(changedEntry), StandardCharsets.UTF_8);
         assertTrue(newSheetXml.contains("BARRA DE PAN"));
         assertTrue(newSheetXml.contains("TOMATE PERA &amp; CO"), "El id con '&' debe ir escapado en el XML");
-        assertTrue(newSheetXml.contains("ref=\"A1:G3\""), "dimension/autoFilter deben cubrir cabecera + 2 filas");
+        assertTrue(newSheetXml.contains("ref=\"A1:H3\""), "dimension/autoFilter deben cubrir cabecera + 2 filas");
+        // 02/09/2026 11:30 -> 46267 días desde la época de Excel + 690/1440 del día, con el estilo
+        // fecha+hora (cellXfs 18) de la plantilla.
+        assertTrue(newSheetXml.contains("<c r=\"B3\" s=\"18\"><v>46267.4791666667</v></c>"),
+                "La fecha debe incluir la hora como fracción del día: " + newSheetXml);
+        assertTrue(newSheetXml.contains("<c r=\"B2\" s=\"18\"><v>46266.4166666667</v></c>"),
+                "La fecha debe incluir la hora como fracción del día: " + newSheetXml);
+        assertTrue(newSheetXml.contains("<c r=\"H2\" t=\"inlineStr\"><is><t>2145-013-000001</t></is></c>"),
+                "La columna H debe llevar el número de factura: " + newSheetXml);
+        assertFalse(newSheetXml.contains("r=\"H3\""), "Sin número de factura no se escribe la celda");
         assertFalse(newSheetXml.contains("COCKTAIL RODEO"), "Los datos de ejemplo deben desaparecer");
     }
 
@@ -71,13 +73,13 @@ class XlsxDatosWriterTest {
         // 2024: PAN comprado en 10 de 12 meses a 1,00€ -> año base, Laspeyres/Paasche = 100 (0,00%)
         for (int month = 1; month <= 10; month++) {
             records.add(new PurchasedItemRecord("PAN", LocalDateTime.of(2024, month, 1, 10, 0), 1,
-                    BigDecimal.ONE, null, null, BigDecimal.ONE));
+                    BigDecimal.ONE, null, null, BigDecimal.ONE, null));
         }
         // 2025: PAN sube a 1,10€ -> +10,00% (año incompleto, pero se muestra igualmente)
         records.add(new PurchasedItemRecord("PAN", LocalDateTime.of(2025, 1, 1, 10, 0), 1,
-                new BigDecimal("1.10"), null, null, new BigDecimal("1.10")));
+                new BigDecimal("1.10"), null, null, new BigDecimal("1.10"), null));
         records.add(new PurchasedItemRecord("PAN", LocalDateTime.of(2025, 2, 1, 10, 0), 1,
-                new BigDecimal("1.10"), null, null, new BigDecimal("1.10")));
+                new BigDecimal("1.10"), null, null, new BigDecimal("1.10"), null));
 
         File outputFile = Files.createTempFile("Mercadona-test", ".xlsx").toFile();
         outputFile.deleteOnExit();
@@ -88,14 +90,9 @@ class XlsxDatosWriterTest {
 
         assertEquals(originalEntries.keySet(), outputEntries.keySet());
 
-        List<String> changedEntries = new ArrayList<>();
-        for (Map.Entry<String, byte[]> entry : originalEntries.entrySet()) {
-            String name = entry.getKey();
-            if (!java.util.Arrays.equals(entry.getValue(), outputEntries.get(name))) {
-                changedEntries.add(name);
-            }
-        }
-        assertEquals(2, changedEntries.size(), "Deben cambiar 'Datos' y 'MiInflación': " + changedEntries);
+        List<String> changedEntries = changedEntries(originalEntries, outputEntries);
+        assertEquals(3, changedEntries.size(), "Deben cambiar 'Datos', 'Facturas' y 'MiInflación': " + changedEntries);
+        assertTrue(changedEntries.contains("xl/worksheets/sheet13.xml"), "La hoja 'Facturas' es sheet13.xml");
         assertTrue(changedEntries.contains("xl/worksheets/sheet1.xml"), "La hoja 'Datos' es sheet1.xml");
         assertTrue(changedEntries.contains("xl/worksheets/sheet3.xml"), "La hoja 'MiInflación' es sheet3.xml en esta plantilla");
 
@@ -114,6 +111,49 @@ class XlsxDatosWriterTest {
         // Año base (2024): 0,00% también con formato porcentaje, no como número plano.
         assertTrue(inflacionSheetXml.contains("<c r=\"D7\" s=\"8\"><v>0.00</v></c>"),
                 "D7 (Laspeyres año base) debe ser 0,00% con formato porcentaje: " + inflacionSheetXml);
+    }
+
+    @Test
+    void writeXlsxFillsFacturasSheetWithOneRowPerInvoice() throws IOException {
+        byte[] template = readTemplate();
+
+        List<PurchasedItemRecord> records = List.of(
+                new PurchasedItemRecord("LECHE", LocalDateTime.of(2026, 9, 2, 11, 30), 6,
+                        new BigDecimal("0.95"), null, null, new BigDecimal("5.70"), "2145-013-000002"),
+                // A peso: cuenta como 1 unidad (así lo guarda PurchasedItemRecord).
+                new PurchasedItemRecord("TOMATE", LocalDateTime.of(2026, 9, 2, 11, 30), 1,
+                        null, new BigDecimal("0.750"), new BigDecimal("2.00"), new BigDecimal("1.50"), "2145-013-000002"),
+                new PurchasedItemRecord("BARRA DE PAN", LocalDateTime.of(2026, 9, 1, 10, 0), 1,
+                        new BigDecimal("1.10"), null, null, new BigDecimal("1.10"), "2145-013-000001"),
+                // Sin número de factura: no se puede atribuir a ningún ticket y se omite.
+                new PurchasedItemRecord("HUEVOS", LocalDateTime.of(2026, 8, 1, 10, 0), 1,
+                        new BigDecimal("2.00"), null, null, new BigDecimal("2.00"), null)
+        );
+
+        File outputFile = Files.createTempFile("Mercadona-test", ".xlsx").toFile();
+        outputFile.deleteOnExit();
+        XlsxDatosWriter.writeXlsx(template, records, outputFile);
+
+        String facturasSheetXml = new String(readZipEntries(Files.readAllBytes(outputFile.toPath()))
+                .get("xl/worksheets/sheet13.xml"), StandardCharsets.UTF_8);
+        assertTrue(facturasSheetXml.contains("<row r=\"2\"><c r=\"A2\" t=\"inlineStr\"><is><t>2145-013-000002</t></is></c>"
+                        + "<c r=\"B2\" s=\"18\"><v>46267.4791666667</v></c><c r=\"C2\"><v>2026</v></c>"
+                        + "<c r=\"D2\"><v>2</v></c><c r=\"E2\"><v>7</v></c><c r=\"F2\" s=\"6\"><v>7.20</v></c></row>"),
+                "Fila 2: primera factura en aparecer, con 2 líneas, 7 unidades y 7,20 € de importe: " + facturasSheetXml);
+        assertTrue(facturasSheetXml.contains("<c r=\"A3\" t=\"inlineStr\"><is><t>2145-013-000001</t></is></c>"));
+        assertFalse(facturasSheetXml.contains("r=\"A4\""), "El registro sin factura no genera fila");
+        assertTrue(facturasSheetXml.contains("ref=\"A1:F3\""), "dimension/autoFilter deben cubrir cabecera + 2 facturas");
+        assertFalse(facturasSheetXml.contains("0000-000-000001"), "Los datos de ejemplo deben desaparecer");
+    }
+
+    private static List<String> changedEntries(Map<String, byte[]> originalEntries, Map<String, byte[]> outputEntries) {
+        List<String> changed = new ArrayList<>();
+        for (Map.Entry<String, byte[]> entry : originalEntries.entrySet()) {
+            if (!java.util.Arrays.equals(entry.getValue(), outputEntries.get(entry.getKey()))) {
+                changed.add(entry.getKey());
+            }
+        }
+        return changed;
     }
 
     private static byte[] readTemplate() throws IOException {

@@ -15,7 +15,7 @@ class InflationAnalyzerBasketCompositionTest {
     private static final int MIN_TOTAL_PURCHASE_COUNT = 3;
 
     private static PurchasedItemRecord unitRecord(String id, LocalDateTime date, BigDecimal price) {
-        return new PurchasedItemRecord(id, date, 1, price, null, null, price);
+        return new PurchasedItemRecord(id, date, 1, price, null, null, price, null);
     }
 
     @Test

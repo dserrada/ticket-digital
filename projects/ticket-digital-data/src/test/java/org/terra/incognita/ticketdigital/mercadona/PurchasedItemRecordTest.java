@@ -16,8 +16,8 @@ class PurchasedItemRecordTest {
     void testFromTicketWithAllItemTypes() {
         // Arrange
         LocalDateTime purchaseDate = LocalDateTime.of(2024, 4, 18, 10, 30);
-        TicketHeader header = new TicketHeader(purchaseDate, "123", "456");
-        
+        TicketHeader header = new TicketHeader(purchaseDate, "123", "2145-013-000456");
+
         PurchasedItem item1 = new OneItemByUnit("Item 1", 1, new BigDecimal("1.50"),new BigDecimal("1.50"));
         PurchasedItem item2 = new NItemsByUnit("Item 2", 2, new BigDecimal("2.00"),new BigDecimal("4.00"));
         PurchasedItem item3 = new ItemByWeight("Item 3", new BigDecimal("0.500"), new BigDecimal("10.00"),new BigDecimal("5.00")); // 500g
@@ -79,6 +79,18 @@ class PurchasedItemRecordTest {
         assertEquals(new BigDecimal("1.250"), record4.weightKg());
         assertEquals(new BigDecimal("8.00"), record4.pricePerKg());
         assertEquals(new BigDecimal("0.00"), record4.price());
+
+        // Todos los items del ticket llevan el número de factura de su cabecera
+        records.forEach(r -> assertEquals("2145-013-000456", r.invoiceNumber()));
+    }
+
+    @Test
+    void toCSVIncluyeLaHoraDeLaCompraYElNumeroDeFactura() {
+        PurchasedItemRecord record = new PurchasedItemRecord("PAN", LocalDateTime.of(2024, 4, 8, 9, 5), 2,
+                new BigDecimal("0.55"), null, null, new BigDecimal("1.10"), "2145-013-000456");
+
+        assertEquals("id;fecha;unidades;precioPorUnidad;pesoKg;precioKg;precio;factura", PurchasedItemRecord.headerCSV());
+        assertEquals("PAN;08/04/2024 09:05;2;0,55;;;1,10;2145-013-000456", record.toCSV());
     }
 
     @Test
@@ -133,8 +145,8 @@ class PurchasedItemRecordTest {
     @Test
     void byDateDescendingMantieneElOrdenOriginalEntreItemsDeLaMismaFecha() {
         LocalDateTime sameDate = LocalDateTime.of(2024, 6, 15, 10, 0);
-        PurchasedItemRecord first = new PurchasedItemRecord("PAN", sameDate, 1, null, null, null, BigDecimal.ONE);
-        PurchasedItemRecord second = new PurchasedItemRecord("LECHE", sameDate, 1, null, null, null, BigDecimal.ONE);
+        PurchasedItemRecord first = new PurchasedItemRecord("PAN", sameDate, 1, null, null, null, BigDecimal.ONE, null);
+        PurchasedItemRecord second = new PurchasedItemRecord("LECHE", sameDate, 1, null, null, null, BigDecimal.ONE, null);
 
         List<PurchasedItemRecord> sorted = List.of(first, second).stream()
                 .sorted(PurchasedItemRecord.BY_DATE_DESCENDING)
@@ -144,6 +156,6 @@ class PurchasedItemRecordTest {
     }
 
     private static PurchasedItemRecord itemAt(LocalDateTime date) {
-        return new PurchasedItemRecord("ITEM", date, 1, null, null, null, BigDecimal.ONE);
+        return new PurchasedItemRecord("ITEM", date, 1, null, null, null, BigDecimal.ONE, null);
     }
 }
