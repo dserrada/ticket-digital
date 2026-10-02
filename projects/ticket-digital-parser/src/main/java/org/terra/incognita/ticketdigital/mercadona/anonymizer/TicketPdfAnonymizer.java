@@ -345,6 +345,9 @@ public final class TicketPdfAnonymizer {
         private final COSString cosString;
         private final PDFont font;
         private final int globalStart;
+        // Buffer mutable a propósito (las sustituciones se aplican sobre él); un TextRun solo vive
+        // mientras se procesa una página en anonymizePage, así que no hay riesgo de fuga de memoria.
+        @SuppressWarnings("PMD.AvoidStringBufferField")
         private final StringBuilder text;
         private boolean modified;
 
