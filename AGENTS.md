@@ -68,7 +68,7 @@ CLI y generación de CSV.
 |---|---|
 | `Main` | CLI picocli. Subcomandos `write-items-csv`, `write-items-xlsx`, `inflation-index`, `basket-composition`. |
 | `CSVGenerator` | Orquesta el proceso: `TicketRecordsReader.readAll()` → escribe CSV. |
-| `XlsxDatosWriter` | Igual que `CSVGenerator` pero generando el XLSX a partir de `Mercadona-base.xlsx`. |
+| `XlsxDatosWriter` | Igual que `CSVGenerator` pero generando el XLSX a partir de `Mercadona-base.xlsx`: rellena las hojas `Datos`, `Facturas` (una fila por ticket) y `MiInflación`. |
 | `TicketRecordsReader` | Punto único de lectura: busca PDFs (`FileUtils`) → `TicketMercadona.parse()` → `PurchasedItemRecord.fromTicket()`. Lo usan `CSVGenerator`, `XlsxDatosWriter` e `InflationIndexCommand`. |
 | `PurchasedItemRecord` | Representación tabular de una compra. Método `fromTicket()` para convertir, `toCSV()` para serializar. |
 | `ProductNameNormalizer` | Corrige erratas de nombre de producto (acentos, puntuación) según `nombres-normalizacion.csv`. Se aplica dentro de `PurchasedItemRecord.fromTicket()`; el CSV se carga una única vez en un mapa estático. |

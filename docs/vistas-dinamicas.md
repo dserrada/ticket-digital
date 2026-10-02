@@ -181,3 +181,20 @@ Añadida a `Mercadona-base.xlsx`, justo antes de "T_Precio":
   campo agrupado (`#VALUE!`) y no se podía verificar fuera de Excel.
 - En lugar de comparar totales anuales (engañoso con el primer/último año incompletos), la fila
   "Total (meses comparables)" solo suma los meses con gasto en los dos años.
+
+### C (parcial) — Hojas `Facturas` y `FacturasUnid` (2026-09-27)
+
+Sustituye a la hoja `FacturasUnid` hecha a mano con Power Query (agrupaba `Datos` por factura,
+sumaba unidades y contaba facturas por decenas):
+
+- `XlsxDatosWriter` rellena la hoja `Facturas` (justo después de "Datos") con una fila por ticket:
+  `factura`, `fecha`, `año`, `lineas`, `unidades`, `importe`. Un producto a peso cuenta como 1
+  unidad, igual que en `Datos`. Los registros sin número de factura se omiten.
+- Hoja `FacturasUnid` (al final): tabla dinámica `TablaDinámicaFacturasUnid` con **su propia
+  caché** (cacheId 5) sobre el nombre definido `FacturasTablaDinamica`, que usa
+  `COUNTA(Facturas!$A:$A)` como alto para no generar un rango "(en blanco)". `unidades` está
+  agrupado de 10 en 10 desde 0 (`rangePr startNum="0" groupInterval="10"`); muestra
+  "Facturas" (cuenta), "% facturas" (% de la columna) e "Importe medio"; filtro de página por
+  `año`.
+- Se descartó copiar el Power Query: obliga a convertir `Datos` en tabla de Excel (y a que el
+  writer mantenga su rango), hay que refrescarlo a mano y LibreOffice no lo puede verificar.

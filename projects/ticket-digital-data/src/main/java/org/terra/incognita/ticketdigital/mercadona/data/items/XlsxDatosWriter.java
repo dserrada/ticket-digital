@@ -42,7 +42,8 @@ import java.util.zip.ZipOutputStream;
 
 /**
  * Genera un fichero xlsx a partir de la plantilla {@code Mercadona-base.xlsx}, sustituyendo el
- * contenido de la hoja "Datos" por los datos reales de los tickets, y el de la hoja "MiInflación"
+ * contenido de la hoja "Datos" por los datos reales de los tickets, el de la hoja "Facturas" por un
+ * resumen de esos mismos datos con una fila por ticket, y el de la hoja "MiInflación"
  * por el índice de inflación anual (Laspeyres/Paasche) calculado sobre esos mismos datos (ver
  * {@link InflationAnalyzer}); si no hay histórico suficiente para calcular un año base, esa hoja
  * se deja tal cual está en la plantilla. El resto de la plantilla (tablas y gráficos dinámicos,
@@ -59,6 +60,11 @@ public class XlsxDatosWriter {
     private static final String DATOS_SHEET_NAME = "Datos";
     private static final int DATOS_HEADER_ROW = 1;
     private static final String DATOS_COLUMN_ORDER = "ABCDEFGH";
+    private static final String FACTURAS_SHEET_NAME = "Facturas";
+    private static final int FACTURAS_HEADER_ROW = 1;
+    private static final String FACTURAS_COLUMN_ORDER = "ABCDEF";
+    // Estilo de la plantilla (cellXfs índice 6) con el formato moneda "#,##0.00 €".
+    private static final String CURRENCY_CELL_STYLE = "6";
     private static final String INFLACION_SHEET_NAME = "MiInflación";
     private static final int INFLACION_HEADER_ROW = 6;
     private static final String INFLACION_COLUMN_ORDER = "ABCDEF";
@@ -92,6 +98,9 @@ public class XlsxDatosWriter {
 
         String datosSheetPart = resolveSheetPart(template, DATOS_SHEET_NAME);
         replacedParts.put(datosSheetPart, buildDatosSheetXml(template, datosSheetPart, records));
+
+        String facturasSheetPart = resolveSheetPart(template, FACTURAS_SHEET_NAME);
+        replacedParts.put(facturasSheetPart, buildFacturasSheetXml(template, facturasSheetPart, records));
 
         try {
             InflationReport report = InflationAnalyzer.analyze(records);
@@ -162,6 +171,42 @@ public class XlsxDatosWriter {
         replaceDataRows(sheetDoc, DATOS_SHEET_NAME, DATOS_HEADER_ROW, DATOS_COLUMN_ORDER, rows);
 
         return serialize(sheetDoc);
+    }
+
+    private static byte[] buildFacturasSheetXml(byte[] template, String sheetPart, List<PurchasedItemRecord> records) throws IOException {
+        Document sheetDoc = parseZipEntry(template, sheetPart);
+
+        List<Element> rows = new ArrayList<>();
+        int rowNum = FACTURAS_HEADER_ROW + 1;
+        for (InvoiceSummary invoice : summarizeByInvoice(records)) {
+            rows.add(buildFacturasRow(sheetDoc, rowNum, invoice));
+            rowNum++;
+        }
+        replaceDataRows(sheetDoc, FACTURAS_SHEET_NAME, FACTURAS_HEADER_ROW, FACTURAS_COLUMN_ORDER, rows);
+
+        return serialize(sheetDoc);
+    }
+
+    // Una fila por ticket (número de factura), en el mismo orden en que aparece cada factura por
+    // primera vez en los registros. Los registros sin número de factura no se pueden atribuir a
+    // ningún ticket y se omiten.
+    static List<InvoiceSummary> summarizeByInvoice(List<PurchasedItemRecord> records) {
+        Map<String, InvoiceSummary> invoices = new LinkedHashMap<>();
+        for (PurchasedItemRecord record : records) {
+            if (record.invoiceNumber() == null) continue;
+            int units = record.units() == null ? 0 : record.units();
+            BigDecimal price = record.price() == null ? BigDecimal.ZERO : record.price();
+            invoices.merge(record.invoiceNumber(),
+                    new InvoiceSummary(record.invoiceNumber(), record.date(), 1, units, price),
+                    InvoiceSummary::plus);
+        }
+        return new ArrayList<>(invoices.values());
+    }
+
+    record InvoiceSummary(String invoiceNumber, LocalDateTime date, int lines, int units, BigDecimal amount) {
+        InvoiceSummary plus(InvoiceSummary other) {
+            return new InvoiceSummary(invoiceNumber, date, lines + other.lines, units + other.units, amount.add(other.amount));
+        }
     }
 
     private static byte[] buildInflacionSheetXml(byte[] template, String sheetPart, InflationReport report) throws IOException {
@@ -240,6 +285,20 @@ public class XlsxDatosWriter {
         return row;
     }
 
+    private static Element buildFacturasRow(Document doc, int rowNum, InvoiceSummary invoice) {
+        Element row = doc.createElementNS(NS_MAIN, "row");
+        row.setAttribute("r", String.valueOf(rowNum));
+
+        appendInlineStringCell(doc, row, "A" + rowNum, invoice.invoiceNumber());
+        appendDateCell(doc, row, "B" + rowNum, invoice.date());
+        appendNumericCell(doc, row, "C" + rowNum, invoice.date() == null ? null : BigDecimal.valueOf(invoice.date().getYear()));
+        appendNumericCell(doc, row, "D" + rowNum, BigDecimal.valueOf(invoice.lines()));
+        appendNumericCell(doc, row, "E" + rowNum, BigDecimal.valueOf(invoice.units()));
+        appendCurrencyCell(doc, row, "F" + rowNum, invoice.amount());
+
+        return row;
+    }
+
     private static Element buildInflacionRow(Document doc, int rowNum, YearInflationIndex index) {
         Element row = doc.createElementNS(NS_MAIN, "row");
         row.setAttribute("r", String.valueOf(rowNum));
@@ -273,6 +332,17 @@ public class XlsxDatosWriter {
         if (value == null) return;
         Element c = doc.createElementNS(NS_MAIN, "c");
         c.setAttribute("r", ref);
+        Element v = doc.createElementNS(NS_MAIN, "v");
+        v.setTextContent(value.toPlainString());
+        c.appendChild(v);
+        row.appendChild(c);
+    }
+
+    private static void appendCurrencyCell(Document doc, Element row, String ref, BigDecimal value) {
+        if (value == null) return;
+        Element c = doc.createElementNS(NS_MAIN, "c");
+        c.setAttribute("r", ref);
+        c.setAttribute("s", CURRENCY_CELL_STYLE);
         Element v = doc.createElementNS(NS_MAIN, "v");
         v.setTextContent(value.toPlainString());
         c.appendChild(v);
