@@ -182,6 +182,24 @@ Añadida a `Mercadona-base.xlsx`, justo antes de "T_Precio":
 - En lugar de comparar totales anuales (engañoso con el primer/último año incompletos), la fila
   "Total (meses comparables)" solo suma los meses con gasto en los dos años.
 
+### A.3 — Hoja `MapaCalor` (2026-10-02)
+
+Añadida a `Mercadona-base.xlsx`, justo después de "Interanual":
+
+- Tabla dinámica `TablaDinámicaMapaCalor` sobre la caché común: productos (`id`) en filas,
+  Años + meses (agrupación de `fecha`) en columnas, suma de precio como "Gasto" en € redondeados
+  a la unidad (`numFmtId="1"`, para que las 40+ columnas sean estrechas).
+- Filas limitadas a los 50 productos de más gasto en todo el periodo (filtro de valor
+  "Diez mejores", `top10 val="50"`) y ordenadas por gasto descendente; mes "(en blanco)" oculto.
+- Sin totales generales (`rowGrandTotals="0" colGrandTotals="0"`) ni subtotales por año: si no,
+  esas celdas entran en la escala de color y el resto del mapa sale pálido.
+- La escala de color (blanco → naranja → rojo, percentil 50 en el centro) es un **formato
+  condicional asociado a la tabla dinámica**: `<conditionalFormats>` con `scope="data"` en la
+  definición de la tabla (antes de `pivotTableStyleInfo`, si no Excel pide reparar el fichero) y
+  `<conditionalFormatting pivot="1">` en la hoja. Un formato condicional normal sobre un rango
+  fijo desaparece cuando Excel refresca la tabla al abrir. LibreOffice no muestra estos colores;
+  solo se pueden comprobar en Excel.
+
 ### C (parcial) — Hojas `Facturas` y `FacturasUnid` (2026-09-27)
 
 Sustituye a la hoja `FacturasUnid` hecha a mano con Power Query (agrupaba `Datos` por factura,
