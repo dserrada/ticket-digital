@@ -7,6 +7,17 @@ Registro de cambios del proyecto. Formato basado en
 De momento solo se registran aquí los cambios que llevan asociado un cambio de versión
 (es decir, cada release), no cada commit individual.
 
+## [0.0.3] - 2026-10-03
+
+Corrige tickets duplicados en los informes.
+
+### Corregido
+
+- El downloader de Gmail ya no guarda una segunda copia de un ticket ya descargado
+  (`...-<idMensaje>.pdf`) al volver a pasar por él en el solape de la descarga incremental.
+- La lectura de tickets descarta los que tienen el mismo nº de factura y fecha, para que
+  sus compras no salgan duplicadas en el CSV, el XLSX ni los índices de inflación.
+
 ## [0.0.2] - 2026-10-02
 
 Nuevas vistas de análisis en la plantilla XLSX que genera `write-items-xlsx`.
@@ -46,5 +57,6 @@ correctamente más de 500 tickets reales.
   `write-items-csv`, `write-items-xlsx`, `inflation-index` y `basket-composition`.
 - Análisis de calidad y seguridad en el build: OWASP Dependency-Check, PMD y SpotBugs.
 
+[0.0.3]: https://github.com/dserrada/ticket-digital/releases/tag/v0.0.3
 [0.0.2]: https://github.com/dserrada/ticket-digital/releases/tag/v0.0.2
 [0.0.1]: https://github.com/dserrada/ticket-digital/releases/tag/v0.0.1
