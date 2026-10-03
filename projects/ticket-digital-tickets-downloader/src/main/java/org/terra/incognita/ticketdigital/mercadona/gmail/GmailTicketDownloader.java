@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -148,16 +149,16 @@ public class GmailTicketDownloader {
         }
         for (MessagePart attachmentPart : attachments) {
             String safeFilename = sanitizeFilename(attachmentPart.getFilename());
-            Path target = uniqueTarget(dataDir, message.getId(), safeFilename);
-            if (target == null) {
-                logger.debug("Ya existe, se omite: adjunto {} del mensaje {}", safeFilename, message.getId());
-                continue;
-            }
             logger.debug("Descargando adjunto {} del mensaje {}...", attachmentPart.getFilename(), message.getId());
             MessagePartBody body = service.users().messages().attachments()
                     .get(USER_ID, message.getId(), attachmentPart.getBody().getAttachmentId())
                     .execute();
             byte[] bytes = Base64.getUrlDecoder().decode(body.getData());
+            Path target = uniqueTarget(dataDir, message.getId(), safeFilename, bytes);
+            if (target == null) {
+                logger.debug("Ya existe, se omite: adjunto {} del mensaje {}", safeFilename, message.getId());
+                continue;
+            }
             Files.write(target, bytes);
             logger.info("Descargado {}", target);
             downloaded++;
@@ -177,27 +178,35 @@ public class GmailTicketDownloader {
         return fileName;
     }
 
-    // Si ya existe un fichero con ese nombre (p.ej. porque el remitente reutiliza el mismo nombre
-    // de adjunto en varios correos), se añade el id del mensaje para no pisar ni descartar
-    // silenciosamente un ticket distinto: dos adjuntos con el mismo nombre pero de mensajes
-    // distintos son, casi con toda seguridad, tickets distintos. Si el fichero ya desambiguado
-    // con este mismo id de mensaje también existe, es que este adjunto concreto ya se descargó
-    // (p.ej. un reintento tras un fallo a mitad de la página anterior) y se omite.
-    private static Path uniqueTarget(Path dataDir, String messageId, String filename) {
+    // Si ya existe un fichero con ese nombre y el mismo contenido, es este mismo adjunto ya
+    // descargado (p.ej. al volver a pasar por el mensaje en el solape de DownloadState, o en un
+    // reintento tras un fallo a mitad de página) y se omite. Hay que comparar el contenido, no
+    // solo el nombre: la primera descarga se guarda sin el id del mensaje, así que el nombre no
+    // basta para saber de qué mensaje vino. Si el contenido es distinto (p.ej. porque el
+    // remitente reutiliza el mismo nombre de adjunto en varios correos), se añade el id del
+    // mensaje para no pisar ni descartar silenciosamente un ticket distinto.
+    static Path uniqueTarget(Path dataDir, String messageId, String filename, byte[] content) throws IOException {
         Path target = dataDir.resolve(filename);
         if (!Files.exists(target)) {
             return target;
+        }
+        if (hasContent(target, content)) {
+            return null;
         }
         int dot = filename.lastIndexOf('.');
         String base = dot >= 0 ? filename.substring(0, dot) : filename;
         String extension = dot >= 0 ? filename.substring(dot) : "";
         Path disambiguated = dataDir.resolve(base + "-" + messageId + extension);
-        if (Files.exists(disambiguated)) {
+        if (Files.exists(disambiguated) && hasContent(disambiguated, content)) {
             return null;
         }
-        logger.warn("Ya existe un fichero llamado {}: se guarda como {} para no perder el adjunto del mensaje {}.",
-                target, disambiguated, messageId);
+        logger.warn("Ya existe un fichero llamado {} con otro contenido: se guarda como {} para no perder "
+                + "el adjunto del mensaje {}.", target, disambiguated, messageId);
         return disambiguated;
+    }
+
+    private static boolean hasContent(Path file, byte[] content) throws IOException {
+        return Files.size(file) == content.length && Arrays.equals(Files.readAllBytes(file), content);
     }
 
     private Credential authorize(NetHttpTransport httpTransport, Path credentialsFile, Path tokenDirectory)

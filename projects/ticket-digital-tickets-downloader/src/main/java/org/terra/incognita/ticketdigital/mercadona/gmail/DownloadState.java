@@ -15,7 +15,7 @@ import java.util.Properties;
  * Se aplica un margen de solape ({@link #OVERLAP}) al construir la cláusula
  * {@code after:} de la query, para cubrir mensajes que pudieran llegar con fecha
  * ligeramente anterior a la última vista (zonas horarias, entregas tardías). El propio
- * {@link GmailTicketDownloader} evita redescargar ficheros que ya existen en disco, lo
+ * {@link GmailTicketDownloader} no vuelve a guardar los adjuntos que ya existen en disco, lo
  * que hace inofensivo ese solape.
  */
 public final class DownloadState {
