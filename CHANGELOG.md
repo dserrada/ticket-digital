@@ -7,6 +7,15 @@ Registro de cambios del proyecto. Formato basado en
 De momento solo se registran aquí los cambios que llevan asociado un cambio de versión
 (es decir, cada release), no cada commit individual.
 
+## [0.0.4] - 2026-10-03
+
+Cierra las alertas de Dependabot sobre Jackson.
+
+### Seguridad
+
+- El build fuerza Jackson 2.22.3, que corrige 7 vulnerabilidades de la versión 2.22.1 que
+  traía el plugin OWASP Dependency-Check (solo en el build, no en lo que se distribuye).
+
 ## [0.0.3] - 2026-10-03
 
 Corrige tickets duplicados en los informes.
@@ -57,6 +66,7 @@ correctamente más de 500 tickets reales.
   `write-items-csv`, `write-items-xlsx`, `inflation-index` y `basket-composition`.
 - Análisis de calidad y seguridad en el build: OWASP Dependency-Check, PMD y SpotBugs.
 
+[0.0.4]: https://github.com/dserrada/ticket-digital/releases/tag/v0.0.4
 [0.0.3]: https://github.com/dserrada/ticket-digital/releases/tag/v0.0.3
 [0.0.2]: https://github.com/dserrada/ticket-digital/releases/tag/v0.0.2
 [0.0.1]: https://github.com/dserrada/ticket-digital/releases/tag/v0.0.1

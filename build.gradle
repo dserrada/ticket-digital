@@ -1,3 +1,13 @@
+// El plugin de OWASP Dependency-Check 13.0.0 (última versión publicada) arrastra Jackson
+// 2.22.1, con varias vulnerabilidades corregidas en 2.22.3 (alertas de Dependabot). Solo
+// afecta al classpath del build, no a lo que se distribuye, pero se fuerza la versión
+// corregida vía el BOM de Jackson. Quitar cuando el plugin traiga ya una versión >= 2.22.3.
+buildscript {
+    dependencies {
+        classpath platform('com.fasterxml.jackson:jackson-bom:2.22.3')
+    }
+}
+
 plugins {
     id 'org.owasp.dependencycheck' version '13.0.0'
     id 'com.github.spotbugs' version '6.5.11' apply false
@@ -7,7 +17,7 @@ apply plugin: 'base'   // da una tarea `check` a nivel de raíz a la que enganch
 
 allprojects {
     group = 'org.terra.incognita'
-    version = '0.0.3'
+    version = '0.0.4'
 }
 
 // Escaneo de vulnerabilidades conocidas (CVE) en las dependencias de los 4 módulos.
